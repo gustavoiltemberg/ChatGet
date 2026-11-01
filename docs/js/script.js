@@ -100,12 +100,11 @@ const createMessageElement = (msg, docId) => {
     const div = document.createElement("div");
     div.dataset.id = docId; 
     
-    // REGRA DE HIERARQUIA UNIFICADA
-    // Admin pode apagar tudo. Moderador pode apagar tudo, EXCETO do admin.
-    const podeApagar = user.isAdmin || (user.isModerator && msg.userName.toLowerCase() !== "admin");
-    
+    // REGRA DE HIERARQUIA
     let btnDelete = "";
-    if (podeApagar) {
+    if (user.isAdmin) {
+        btnDelete = `<button class="delete-btn" data-id="${docId}">[Apagar]</button>`;
+    } else if (user.isModerator && msg.userName.toLowerCase() !== "admin") {
         btnDelete = `<button class="delete-btn" data-id="${docId}">[Apagar]</button>`;
     }
     
@@ -119,11 +118,10 @@ const createMessageElement = (msg, docId) => {
         div.innerHTML = `<span class="message--sender" style="color: ${msg.userColor}">${msg.userName}</span><div class="message--content">${formattedContent}</div> ${btnDelete}`;
     }
 
-    if (podeApagar) {
+    if (btnDelete) {
         const btn = div.querySelector('.delete-btn');
         if (btn) {
             btn.addEventListener('click', async () => {
-                // Trava extra de segurança no clique
                 if (!user.isAdmin && msg.userName.toLowerCase() === "admin") {
                     return alert("Você não tem permissão para apagar mensagens do Administrador.");
                 }
@@ -134,15 +132,27 @@ const createMessageElement = (msg, docId) => {
     return div;
 };
 
-// OUVINTE DE CARGO (Atualiza a tela caso o cargo mude em tempo real)
+// OUVINTE DE CARGO (Atualiza a tela na hora em que vira moderador)
 const listenToMyRole = () => {
     if (unsubscribeMyRole) unsubscribeMyRole();
+    
     const myRoleRef = doc(db, "cargos", user.name.toLowerCase());
     
     unsubscribeMyRole = onSnapshot(myRoleRef, (docSnap) => {
         const isMod = docSnap.exists() && docSnap.data().isModerator;
+        
         if (user.isModerator !== isMod) {
-            window.location.reload(); // Recarrega a página para aplicar as novas permissões
+            user.isModerator = isMod;
+            
+            // Recarrega a tela na mesma hora para aplicar o botão
+            const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
+            getDocs(q).then((snapshot) => {
+                chatMessages.innerHTML = "";
+                snapshot.forEach((docSnap) => {
+                    chatMessages.appendChild(createMessageElement(docSnap.data(), docSnap.id));
+                });
+                scrollScreen();
+            });
         }
     });
 };
@@ -366,7 +376,7 @@ loginForm.addEventListener("submit", async (event) => {
 
             if (limpouAlgo) await batchLimpeza.commit();
 
-            // 1. PRIMEIRO BUSCA O CARGO (antes de desenhar a tela)
+            // 1. CHECA O CARGO ANTES DE QUALQUER COISA
             const cargoDoc = await getDoc(doc(db, "cargos", user.name.toLowerCase()));
             if (cargoDoc.exists() && cargoDoc.data().isModerator) {
                 user.isModerator = true;
@@ -374,14 +384,14 @@ loginForm.addEventListener("submit", async (event) => {
                 user.isModerator = false;
             }
 
-            // 2. ATUALIZA A LISTA ONLINE
+            // 2. ADICIONA NA LISTA ONLINE COM O CARGO CORRETO
             await setDoc(doc(db, "usuarios_online", user.id), { 
                 name: user.name, 
                 color: user.color, 
                 isModerator: user.isModerator 
             }, { merge: true });
 
-            // 3. SÓ AGORA CARREGA AS MENSAGENS E OUVINTES
+            // 3. SÓ AGORA RENDERIZA AS MENSAGENS
             listenToMessages(); 
             listenToOnlineUsers();
             listenToMyRole(); 
