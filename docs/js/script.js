@@ -125,19 +125,46 @@ const createMessageElement = (msg, docId) => {
     return div;
 };
 
-// OUVINTE DE CARGO
+// OUVINTE DE CARGO (Atualiza o botão dinamicamente na tela atual)
 const listenToMyRole = () => {
     if (unsubscribeMyRole) unsubscribeMyRole();
-    const myRef = doc(db, "usuarios_online", user.id);
     
-    unsubscribeMyRole = onSnapshot(myRef, (docSnap) => {
-        if (docSnap.exists()) {
-            const isMod = docSnap.data().isModerator || false;
-            // Só atualiza se o cargo realmente mudou
-            if (user.isModerator !== isMod) {
-                user.isModerator = isMod;
-                listenToMessages(); // Redesenha as mensagens com a nova permissão
-            }
+    // Ouve a coleção permanente "cargos"
+    const myRoleRef = doc(db, "cargos", user.name.toLowerCase());
+    
+    unsubscribeMyRole = onSnapshot(myRoleRef, (docSnap) => {
+        const isMod = docSnap.exists() && docSnap.data().isModerator;
+        
+        if (user.isModerator !== isMod) {
+            user.isModerator = isMod;
+            
+            // Dá um pequeno delay para o Firebase garantir que as mensagens foram atualizadas
+            setTimeout(() => {
+                // Atualiza a tela sem gastar leituras
+                chatMessages.querySelectorAll('.message--self, .message--other').forEach(div => {
+                    let senderName = user.name;
+                    if (div.classList.contains('message--other')) {
+                        senderName = div.querySelector('.message--sender')?.innerText || "";
+                    }
+
+                    const btnExiste = div.querySelector('.delete-btn');
+
+                    if (user.isAdmin || (user.isModerator && senderName.toLowerCase() !== "admin")) {
+                        if (!btnExiste) {
+                            const btn = document.createElement('button');
+                            btn.className = 'delete-btn';
+                            btn.innerText = '[Apagar]';
+                            btn.dataset.id = div.dataset.id;
+                            btn.addEventListener('click', async () => { 
+                                await deleteDoc(doc(db, "mensagens", div.dataset.id)); 
+                            });
+                            div.appendChild(btn);
+                        }
+                    } else {
+                        if (btnExiste) btnExiste.remove();
+                    }
+                });
+            }, 1000); // 1 segundo de delay
         }
     });
 };
@@ -214,9 +241,9 @@ const listenToOnlineUsers = () => {
                     const acao = u.isModerator ? "remover o cargo de moderador de" : "tornar moderador";
                     if (confirm(`Tem certeza que deseja ${acao} "${u.name}"?`)) {
                         try {
-                            // Salva o cargo na coleção "cargos" permanentemente
+                            // Salva permanentemente na coleção "cargos"
                             await setDoc(doc(db, "cargos", u.name.toLowerCase()), { isModerator: !u.isModerator });
-                            // Atualiza na tela de quem está online também
+                            // Atualiza na sessão atual (para o escudo aparecer para todos na hora)
                             await setDoc(doc(db, "usuarios_online", docSnap.id), { isModerator: !u.isModerator }, { merge: true });
                         } catch (e) { console.error("Erro ao moderar:", e); }
                     }
@@ -363,11 +390,9 @@ loginForm.addEventListener("submit", async (event) => {
 
             if (limpouAlgo) await batchLimpeza.commit();
 
-            // Verifica se o usuário tem cargo de moderador na coleção "cargos"
+            // VERIFICA O CARGO PERMANENTE
             const cargoDoc = await getDoc(doc(db, "cargos", user.name.toLowerCase()));
-            let cargoModerador = false;
             if (cargoDoc.exists() && cargoDoc.data().isModerator) {
-                cargoModerador = true;
                 user.isModerator = true;
             } else {
                 user.isModerator = false;
@@ -377,7 +402,7 @@ loginForm.addEventListener("submit", async (event) => {
             await setDoc(doc(db, "usuarios_online", user.id), { 
                 name: user.name, 
                 color: user.color, 
-                isModerator: cargoModerador 
+                isModerator: user.isModerator 
             }, { merge: true });
 
             listenToMessages(); 
