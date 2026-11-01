@@ -100,8 +100,11 @@ const createMessageElement = (msg, docId) => {
     const div = document.createElement("div");
     div.dataset.id = docId; 
     
+    // REGRA DE HIERARQUIA: Admin apaga tudo. Moderador não apaga do Admin.
     let btnDelete = "";
-    if (user.isAdmin || user.isModerator) {
+    if (user.isAdmin) {
+        btnDelete = `<button class="delete-btn" data-id="${docId}">[Apagar]</button>`;
+    } else if (user.isModerator && msg.userName.toLowerCase() !== "admin") {
         btnDelete = `<button class="delete-btn" data-id="${docId}">[Apagar]</button>`;
     }
     
@@ -115,7 +118,7 @@ const createMessageElement = (msg, docId) => {
         div.innerHTML = `<span class="message--sender" style="color: ${msg.userColor}">${msg.userName}</span><div class="message--content">${formattedContent}</div> ${btnDelete}`;
     }
 
-    if (user.isAdmin || user.isModerator) {
+    if (btnDelete) {
         const btn = div.querySelector('.delete-btn');
         if (btn) btn.addEventListener('click', async () => { await deleteDoc(doc(db, "mensagens", docId)); });
     }
@@ -133,22 +136,15 @@ const listenToMyRole = () => {
             if (user.isModerator !== isMod) {
                 user.isModerator = isMod;
                 
-                // Força o redesenho da tela para atualizar os botões [Apagar]
-                if (user.isAdmin || user.isModerator) {
-                    chatMessages.querySelectorAll('.message--self, .message--other').forEach(div => {
-                        if (!div.querySelector('.delete-btn')) {
-                            const btn = document.createElement('button');
-                            btn.className = 'delete-btn';
-                            btn.innerText = '[Apagar]';
-                            btn.dataset.id = div.dataset.id;
-                            btn.addEventListener('click', async () => { await deleteDoc(doc(db, "mensagens", div.dataset.id)); });
-                            div.appendChild(btn);
-                        }
+                // Força a recriação de todas as mensagens na tela!
+                chatMessages.innerHTML = ""; 
+                const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
+                getDocs(q).then((snapshot) => {
+                    snapshot.forEach((docSnap) => {
+                        chatMessages.appendChild(createMessageElement(docSnap.data(), docSnap.id));
                     });
-                } else {
-                    // Se perdeu o cargo, remove os botões
-                    chatMessages.querySelectorAll('.delete-btn').forEach(btn => btn.remove());
-                }
+                    scrollScreen();
+                });
             }
         }
     });
