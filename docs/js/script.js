@@ -22,7 +22,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Elementos do DOM
+// ================= ELEMENTOS DO DOM =================
 const loginSection = document.querySelector(".login");
 const loginForm = document.querySelector("#auth-form");
 const chatSection = document.querySelector(".chat");
@@ -42,7 +42,6 @@ const emailInput = document.querySelector("#email");
 const forgotPasswordContainer = document.querySelector("#forgot-password-container");
 const forgotPasswordLink = document.querySelector("#forgot-password");
 
-// NOVOS ELEMENTOS DO MODAL DE BANIDOS
 const btnManageBans = document.querySelector("#btn-manage-bans");
 const bansModal = document.querySelector("#bans-modal");
 const closeBansModal = document.querySelector("#close-bans-modal");
@@ -83,6 +82,7 @@ const isImageURL = (url) => {
     if (urlLower.includes("./emojis/")) return true; 
     return false;
 };
+
 const formatMessageContent = (content) => isImageURL(content) ? `<img src="${content}" alt="Imagem" />` : content;
 
 const createMessageElement = (msg, docId) => {
@@ -200,7 +200,6 @@ toggleLink.addEventListener("click", (e) => {
     toggleMsg.innerText = isLoginMode ? "Não tem conta?" : "Já tem conta?";
     toggleLink.innerText = isLoginMode ? "Cadastre-se" : "Faça Login";
     
-    // O e-mail agora fica sempre visível, então não precisamos esconder
     forgotPasswordContainer.style.display = isLoginMode ? "block" : "none";
 });
 
@@ -241,6 +240,22 @@ loginForm.addEventListener("submit", async (event) => {
             
             if (!somAtivado) btnSom.style.display = "block";
             
+            // --- INÍCIO DA LIMPEZA DE DUPLICADOS ---
+            const qUsuarios = query(collection(db, "usuarios_online"));
+            const snapUsuarios = await getDocs(qUsuarios);
+            const batchLimpeza = writeBatch(db);
+            let limpouAlgo = false;
+
+            snapUsuarios.forEach((d) => {
+                if (d.data().name.toLowerCase() === user.name.toLowerCase() && d.id !== user.id) {
+                    batchLimpeza.delete(d.ref);
+                    limpouAlgo = true;
+                }
+            });
+
+            if (limpouAlgo) await batchLimpeza.commit();
+            // --- FIM DA LIMPEZA DE DUPLICADOS ---
+
             await setDoc(doc(db, "usuarios_online", user.id), { name: user.name, color: user.color });
             listenToMessages(); 
             listenToOnlineUsers();
@@ -270,12 +285,12 @@ loginForm.addEventListener("submit", async (event) => {
 // ================= EVENTOS DO MODAL DE BANIDOS =================
 btnManageBans.addEventListener("click", () => {
     bansModal.classList.add("show");
-    listenToBans(); // Começa a ouvir a lista de banidos quando abre
+    listenToBans(); 
 });
 
 closeBansModal.addEventListener("click", () => {
     bansModal.classList.remove("show");
-    if (unsubscribeBans) unsubscribeBans(); // Para de ouvir quando fecha
+    if (unsubscribeBans) unsubscribeBans(); 
 });
 
 window.addEventListener("click", (e) => {
@@ -376,4 +391,46 @@ const sendMessageToDb = async (content) => {
             content: content,
             timestamp: Date.now()
         });
-        if
+        if (somAtivado) {
+            audioMensagem.currentTime = 0;
+            audioMensagem.play().catch(e => console.log(e));
+        }
+    } catch (e) { console.error("Erro ao enviar:", e); }
+};
+
+chatForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    sendMessageToDb(chatInput.value.trim());
+    chatInput.value = "";
+});
+
+stickersBar.addEventListener("click", (e) => {
+    const btn = e.target.closest(".sticker-btn");
+    if (btn) sendMessageToDb(btn.dataset.emoji);
+});
+
+btnGifKeyboard.addEventListener("click", () => {
+    stickersBar.classList.toggle("show");
+    btnGifKeyboard.classList.toggle("active");
+    if (stickersBar.classList.contains("show")) chatInput.focus();
+});
+
+btnClearAll.addEventListener("click", async () => {
+    if (confirm("Apagar TODAS as mensagens?")) {
+        try {
+            const q = query(collection(db, "mensagens"));
+            const snapshot = await getDocs(q);
+            const batch = writeBatch(db);
+            snapshot.forEach((docSnap) => batch.delete(docSnap.ref));
+            await batch.commit();
+        } catch (e) { console.error(e); }
+    }
+});
+
+btnSom.addEventListener("click", () => {
+    audioEntrou.currentTime = 0;
+    audioEntrou.play().then(() => {
+        somAtivado = true;
+        btnSom.style.display = "none"; 
+    }).catch(e => alert("O navegador não conseguiu tocar o som."));
+});
