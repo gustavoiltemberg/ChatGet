@@ -175,6 +175,7 @@ toggleLink.addEventListener("click", (e) => {
     toggleMsg.innerText = isLoginMode ? "Não tem conta?" : "Já tem conta?";
     toggleLink.innerText = isLoginMode ? "Cadastre-se" : "Faça Login";
     
+    // Controla a visibilidade do e-mail e do link de esqueci a senha
     emailInput.style.display = isLoginMode ? "none" : "block"; 
     forgotPasswordContainer.style.display = isLoginMode ? "block" : "none";
 });

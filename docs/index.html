@@ -16,19 +16,23 @@
             <h2 id="form-title">Login</h2>
             <form class="login__form" id="auth-form">
                 <input type="text" class="login__input" id="username" placeholder="Seu nome de exibição" required />
-                <!-- CAMPO DE E-MAIL ADICIONADO -->
-                <input type="email" class="login__input" id="email" placeholder="Seu e-mail" required />
+                
+                <!-- Campo de e-mail (Some no Login, aparece no Cadastro) -->
+                <input type="email" class="login__input" id="email" placeholder="Seu e-mail" style="display: none;" required />
+                
                 <input type="password" class="login__input" id="password" placeholder="Sua senha" required />
+                
                 <button type="submit" class="login__button" id="submit-btn">Entrar</button>
             </form>
             
+            <!-- LINK DE ESQUECI A SENHA -->
+            <p class="login__toggle" id="forgot-password-container" style="margin-bottom: 10px;">
+                <a href="#" id="forgot-password" style="color: #aaa; font-size: 0.8rem;">Esqueci minha senha</a>
+            </p>
+
             <p class="login__toggle">
                 <span id="toggle-msg">Não tem conta?</span> 
                 <a href="#" id="toggle-auth">Cadastre-se</a>
-            </p>
-            <!-- LINK DE ESQUECI A SENHA -->
-            <p class="login__toggle" id="forgot-password-container" style="display: none; margin-top: 5px;">
-                <a href="#" id="forgot-password">Esqueci minha senha</a>
             </p>
         </section>
 
@@ -42,7 +46,6 @@
                 </div>
                 
                 <button id="btn-edit-name" class="btn-edit-name" style="display: none;">✏️ Editar Nome</button>
-                <!-- NOVO BOTÃO: ALTERAR E-MAIL -->
                 <button id="btn-edit-email" class="btn-edit-name" style="display: none;">📧 Alterar E-mail</button>
 
                 <button id="btn-som" class="btn-som" style="display: none;">🔇 Ativar Som</button>
