@@ -24,7 +24,6 @@ import {
     limit
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// COLE SUAS CHAVES AQUI
 const firebaseConfig = {
   apiKey: "AIzaSyDZlENtMvC3u6HRr4T1n_TnnlbkxRfNid4",
   authDomain: "chat-get-ed551.firebaseapp.com",
@@ -37,7 +36,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-// =============================================================
 
 // Elementos do DOM
 const loginSection = document.querySelector(".login");
@@ -55,12 +53,10 @@ const btnEditEmail = document.querySelector("#btn-edit-email");
 const stickersBar = document.querySelector("#stickers-bar");
 const btnGifKeyboard = document.querySelector("#btn-gif-keyboard");
 
-// Novos elementos
 const emailInput = document.querySelector("#email");
 const forgotPasswordContainer = document.querySelector("#forgot-password-container");
 const forgotPasswordLink = document.querySelector("#forgot-password");
 
-// Configuração dos Áudios
 const audioEntrou = new Audio("./sounds/entrou.mp3");
 const audioSaiu = new Audio("./sounds/saiu.mp3");
 const audioMensagem = new Audio("./sounds/mensagem.mp3");
@@ -86,7 +82,6 @@ let isLoginMode = true;
 let unsubscribeMessages = null;
 let unsubscribeUsers = null;
 
-// ================= FUNÇÕES AUXILIARES =================
 const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
 const scrollScreen = () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
 const isImageURL = (url) => {
@@ -127,7 +122,6 @@ const createMessageElement = (msg, docId) => {
     return div;
 };
 
-// ================= LÓGICA DE MENSAGENS E USUÁRIOS =================
 const listenToMessages = () => {
     if (unsubscribeMessages) unsubscribeMessages();
     const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
@@ -173,7 +167,6 @@ const sendSystemMessage = async (text) => {
     catch (e) { console.error(e); }
 };
 
-// ================= AUTENTICAÇÃO =================
 toggleLink.addEventListener("click", (e) => {
     e.preventDefault();
     isLoginMode = !isLoginMode;
@@ -182,12 +175,10 @@ toggleLink.addEventListener("click", (e) => {
     toggleMsg.innerText = isLoginMode ? "Não tem conta?" : "Já tem conta?";
     toggleLink.innerText = isLoginMode ? "Cadastre-se" : "Faça Login";
     
-    // Mostrar ou esconder o campo de e-mail e o link de recuperação
-    emailInput.style.display = isLoginMode ? "none" : "block"; // No login, ocultamos o e-mail (pode logar só com nome)
+    emailInput.style.display = isLoginMode ? "none" : "block"; 
     forgotPasswordContainer.style.display = isLoginMode ? "block" : "none";
 });
 
-// LOGIN E CADASTRO
 loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const name = usernameInput.value.trim();
@@ -196,9 +187,6 @@ loginForm.addEventListener("submit", async (event) => {
 
     try {
         if (isLoginMode) {
-            // No Login, o Firebase exige um e-mail. Vamos buscar o e-mail real associado ao nome.
-            // Como não temos como buscar isso sem o e-mail, vamos usar o e-mail digitado ou fazer uma busca por nome no Firestore.
-            // MUDANÇA: Agora o login exige e-mail para ser seguro.
             if (!email) return alert("Por favor, digite seu e-mail para fazer login.");
             
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -206,7 +194,6 @@ loginForm.addEventListener("submit", async (event) => {
             user.name = name;
             user.color = getRandomColor();
 
-            // Verifica se o nome é admin para dar poderes
             if (name.toLowerCase() === "admin") {
                 user.isAdmin = true;
                 document.body.classList.add("is-admin");
@@ -230,13 +217,9 @@ loginForm.addEventListener("submit", async (event) => {
             await sendSystemMessage(`👉 ${user.name} entrou no chat!`);
 
         } else {
-            // NOVO CADASTRO
             if (!email) return alert("Por favor, digite um e-mail válido para se cadastrar.");
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            
-            // Atualiza o perfil do Firebase Auth com o nome de exibição
             await updateProfile(userCredential.user, { displayName: name });
-            
             alert("Cadastro realizado com sucesso! Faça login.");
             toggleLink.click(); 
         }
@@ -248,7 +231,6 @@ loginForm.addEventListener("submit", async (event) => {
     }
 });
 
-// ESQUECI A SENHA
 forgotPasswordLink.addEventListener("click", async (e) => {
     e.preventDefault();
     const email = prompt("Digite seu e-mail para receber o link de recuperação:");
@@ -262,20 +244,15 @@ forgotPasswordLink.addEventListener("click", async (e) => {
     }
 });
 
-// ================= ALTERAÇÕES DE PERFIL =================
 btnEditName.addEventListener("click", async () => {
     const novoNome = prompt("Digite o seu novo nome de exibição:", user.name);
     if (novoNome && novoNome.trim() !== "" && novoNome.trim() !== user.name) {
         const nomeFormatado = novoNome.trim();
         user.name = nomeFormatado;
         
-        // Atualiza no Firebase Auth
         await updateProfile(auth.currentUser, { displayName: nomeFormatado });
-        
-        // Atualiza no Firestore (usuários online)
         await setDoc(doc(db, "usuarios_online", user.id), { name: user.name, color: user.color }, { merge: true });
 
-        // Atualiza mensagens antigas
         const q = query(collection(db, "mensagens"));
         const snapshot = await getDocs(q);
         const batch = writeBatch(db);
@@ -292,7 +269,6 @@ btnEditEmail.addEventListener("click", async () => {
     const novoEmail = prompt("Digite o NOVO e-mail para sua conta:", auth.currentUser.email);
     if (novoEmail && novoEmail.includes("@")) {
         try {
-            // O Firebase envia um link de confirmação para o NOVO e-mail
             await verifyBeforeUpdateEmail(auth.currentUser, novoEmail);
             alert("Um link de confirmação foi enviado para o novo e-mail. Clique nele para concluir a alteração.");
         } catch (error) {
@@ -305,7 +281,6 @@ btnEditEmail.addEventListener("click", async () => {
     }
 });
 
-// ================= SAIR DA CONTA =================
 btnLogout.addEventListener("click", async () => {
     if (somAtivado) {
         audioSaiu.currentTime = 0;
@@ -336,7 +311,6 @@ btnLogout.addEventListener("click", async () => {
     if (!isLoginMode) toggleLink.click();
 });
 
-// ================= ENVIO DE MENSAGENS E SONS =================
 const sendMessageToDb = async (content) => {
     if (!content) return;
     try {
