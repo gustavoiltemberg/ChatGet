@@ -239,7 +239,7 @@ body {
 }
 
 .chat__button-gif.active {
-    color: cadetblue; /* Cor quando a barra está aberta */
+    color: cadetblue;
 }
 
 .chat__messages > div {
@@ -283,7 +283,7 @@ body {
     display: block;
 }
 
-/* Botão de apagar (Lixeira) */
+/* Botão de apagar (Lixeira) - CORRIGIDO */
 .delete-btn {
     background: none;
     border: none;
@@ -292,12 +292,10 @@ body {
     font-size: 0.8rem;
     margin-left: 10px;
     padding: 0;
-    display: none;
+    display: inline-block; /* Agora fica visível para quem tem o botão no HTML */
 }
 
-body.is-admin .delete-btn {
-    display: inline-block;
-}
+/* Removemos a regra body.is-admin .delete-btn que escondia dos moderadores */
 
 .delete-btn:hover {
     text-decoration: underline;
@@ -305,12 +303,12 @@ body.is-admin .delete-btn {
 
 /* ================= STICKERS (Imagens) ================= */
 .chat__stickers {
-    display: none; /* ESCONDIDO POR PADRÃO */
+    display: none;
     gap: 10px;
     padding: 10px 20px;
     background-color: #191919;
     position: fixed;
-    bottom: 65px; /* Logo acima do input */
+    bottom: 65px;
     left: 0;
     width: 100%;
     z-index: 9;
@@ -318,7 +316,6 @@ body.is-admin .delete-btn {
     border-top: 1px solid #333;
 }
 
-/* Classe que o JS adiciona para mostrar a barra */
 .chat__stickers.show {
     display: flex;
 }
@@ -455,14 +452,14 @@ body.is-admin .btn-delete-user {
 
 /* ================= MODAL DE BANIDOS ================= */
 .modal {
-    display: none; /* Escondido por padrão */
+    display: none;
     position: fixed;
     z-index: 100;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7); /* Fundo escuro */
+    background-color: rgba(0, 0, 0, 0.7);
     align-items: center;
     justify-content: center;
 }
@@ -520,6 +517,36 @@ body.is-admin .btn-delete-user {
     background-color: #27ae60;
 }
 
+/* ================= BOTÃO DE MODERADOR ================= */
+.btn-moderate-user {
+    background: transparent;
+    border: none;
+    color: #f1c40f;
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 3px;
+    transition: background 0.2s, color 0.2s;
+    visibility: hidden; 
+}
+
+body.is-admin .btn-moderate-user {
+    visibility: visible;
+}
+
+.btn-moderate-user:hover {
+    background: #f1c40f;
+    color: white;
+}
+
+/* Tag visual de quem é moderador na lista */
+.moderator-badge {
+    font-size: 0.7rem;
+    margin-left: 4px;
+    color: #f1c40f;
+}
+
 /* ================= RESPONSIVIDADE (CELULAR) ================= */
 @media (max-width: 600px) {
     .chat__sidebar {
@@ -549,34 +576,4 @@ body.is-admin .btn-delete-user {
         padding-left: 30px;
         padding-top: 20px;
     }
-}
-
-/* ================= BOTÃO DE MODERADOR ================= */
-.btn-moderate-user {
-    background: transparent;
-    border: none;
-    color: #f1c40f; /* Cor de escudo/ouro */
-    font-size: 0.8rem;
-    font-weight: bold;
-    cursor: pointer;
-    padding: 2px 5px;
-    border-radius: 3px;
-    transition: background 0.2s, color 0.2s;
-    visibility: hidden; 
-}
-
-body.is-admin .btn-moderate-user {
-    visibility: visible;
-}
-
-.btn-moderate-user:hover {
-    background: #f1c40f;
-    color: white;
-}
-
-/* Tag visual de quem é moderador na lista */
-.moderator-badge {
-    font-size: 0.7rem;
-    margin-left: 4px;
-    color: #f1c40f;
 }
