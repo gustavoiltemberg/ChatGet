@@ -70,6 +70,7 @@ let isLoginMode = true;
 let unsubscribeMessages = null;
 let unsubscribeUsers = null;
 let unsubscribeBans = null;
+let unsubscribeBanCheck = null;
 
 // ================= FUNÇÕES AUXILIARES =================
 const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
@@ -160,6 +161,18 @@ const listenToOnlineUsers = () => {
     });
 };
 
+const listenToOwnBanStatus = () => {
+    if (unsubscribeBanCheck) unsubscribeBanCheck();
+    const banCheckRef = doc(db, "banidos", user.name.toLowerCase());
+    
+    unsubscribeBanCheck = onSnapshot(banCheckRef, (docSnap) => {
+        if (docSnap.exists()) {
+            alert("Você foi banido do chat pelo administrador!");
+            btnLogout.click(); 
+        }
+    });
+};
+
 const listenToBans = () => {
     if (unsubscribeBans) unsubscribeBans();
     const q = query(collection(db, "banidos"));
@@ -200,6 +213,8 @@ toggleLink.addEventListener("click", (e) => {
     toggleMsg.innerText = isLoginMode ? "Não tem conta?" : "Já tem conta?";
     toggleLink.innerText = isLoginMode ? "Cadastre-se" : "Faça Login";
     
+    // Esconde o e-mail no login e mostra no cadastro
+    emailInput.style.display = isLoginMode ? "none" : "block";
     forgotPasswordContainer.style.display = isLoginMode ? "block" : "none";
 });
 
@@ -211,14 +226,22 @@ loginForm.addEventListener("submit", async (event) => {
 
     try {
         if (isLoginMode) {
-            if (!email) return alert("Por favor, digite seu e-mail para fazer login.");
+            if (!name) return alert("Por favor, digite seu nome de usuário.");
             
             const banidoDoc = await getDoc(doc(db, "banidos", name.toLowerCase()));
             if (banidoDoc.exists()) {
                 return alert("Este usuário foi banido do chat pelo administrador.");
             }
 
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            // NOVO: Busca o e-mail real no banco de dados, baseado no nome digitado
+            const perfilDoc = await getDoc(doc(db, "perfis", name.toLowerCase()));
+            if (!perfilDoc.exists()) {
+                return alert("Usuário não encontrado! Verifique o nome ou cadastre-se.");
+            }
+            const emailParaLogin = perfilDoc.data().email;
+
+            // Faz o login com o e-mail encontrado e a senha digitada
+            const userCredential = await signInWithEmailAndPassword(auth, emailParaLogin, password);
             user.id = userCredential.user.uid;
             user.name = name;
             user.color = getRandomColor();
@@ -240,7 +263,7 @@ loginForm.addEventListener("submit", async (event) => {
             
             if (!somAtivado) btnSom.style.display = "block";
             
-            // --- INÍCIO DA LIMPEZA DE DUPLICADOS ---
+            // Limpeza de duplicados
             const qUsuarios = query(collection(db, "usuarios_online"));
             const snapUsuarios = await getDocs(qUsuarios);
             const batchLimpeza = writeBatch(db);
@@ -254,14 +277,17 @@ loginForm.addEventListener("submit", async (event) => {
             });
 
             if (limpouAlgo) await batchLimpeza.commit();
-            // --- FIM DA LIMPEZA DE DUPLICADOS ---
 
             await setDoc(doc(db, "usuarios_online", user.id), { name: user.name, color: user.color });
             listenToMessages(); 
             listenToOnlineUsers();
+            
+            if (!user.isAdmin) listenToOwnBanStatus(); 
+            
             await sendSystemMessage(`👉 ${user.name} entrou no chat!`);
 
         } else {
+            // CADASTRO
             if (!email) return alert("Por favor, digite um e-mail válido para se cadastrar.");
             
             const banidoDoc = await getDoc(doc(db, "banidos", name.toLowerCase()));
@@ -271,12 +297,16 @@ loginForm.addEventListener("submit", async (event) => {
 
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             await updateProfile(userCredential.user, { displayName: name });
+            
+            // NOVO: Salva o perfil para podermos buscar o e-mail pelo nome depois
+            await setDoc(doc(db, "perfis", name.toLowerCase()), { email: email });
+
             alert("Cadastro realizado com sucesso! Faça login.");
             toggleLink.click(); 
         }
     } catch (error) {
         if (error.code === "auth/email-already-in-use") alert("Este e-mail já está em uso!");
-        else if (error.code === "auth/invalid-credential") alert("E-mail ou senha incorretos!");
+        else if (error.code === "auth/invalid-credential") alert("Nome ou senha incorretos!");
         else if (error.code === "auth/weak-password") alert("A senha precisa ter pelo menos 6 caracteres!");
         else alert("Erro: " + error.message);
     }
@@ -303,7 +333,7 @@ window.addEventListener("click", (e) => {
 // ================= OUTRAS FUNÇÕES =================
 forgotPasswordLink.addEventListener("click", async (e) => {
     e.preventDefault();
-    const email = prompt("Digite seu e-mail para receber o link de recuperação:");
+    const email = prompt("Digite seu E-MAIL cadastrado para receber o link de recuperação:");
     if (email) {
         try {
             await sendPasswordResetEmail(auth, email);
@@ -318,6 +348,13 @@ btnEditName.addEventListener("click", async () => {
     const novoNome = prompt("Digite o seu novo nome de exibição:", user.name);
     if (novoNome && novoNome.trim() !== "" && novoNome.trim() !== user.name) {
         const nomeFormatado = novoNome.trim();
+        
+        // Verifica se o novo nome já existe
+        const perfilExistente = await getDoc(doc(db, "perfis", nomeFormatado.toLowerCase()));
+        if (perfilExistente.exists()) {
+            return alert("Este nome já está em uso por outra pessoa.");
+        }
+
         user.name = nomeFormatado;
         
         await updateProfile(auth.currentUser, { displayName: nomeFormatado });
@@ -362,6 +399,7 @@ btnLogout.addEventListener("click", async () => {
     }
     if (unsubscribeMessages) unsubscribeMessages();
     if (unsubscribeUsers) unsubscribeUsers();
+    if (unsubscribeBanCheck) unsubscribeBanCheck();
     
     await signOut(auth);
     
@@ -383,6 +421,14 @@ btnLogout.addEventListener("click", async () => {
 
 const sendMessageToDb = async (content) => {
     if (!content) return;
+    
+    const banCheck = await getDoc(doc(db, "banidos", user.name.toLowerCase()));
+    if (banCheck.exists()) {
+        alert("Você está banido e não pode enviar mensagens!");
+        btnLogout.click();
+        return;
+    }
+
     try {
         await addDoc(collection(db, "mensagens"), {
             userId: user.id,

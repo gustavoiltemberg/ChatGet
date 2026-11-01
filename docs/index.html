@@ -15,10 +15,10 @@
         <section class="login">
             <h2 id="form-title">Login</h2>
             <form class="login__form" id="auth-form">
-                <input type="text" class="login__input" id="username" placeholder="Seu nome de exibição" required />
+                <input type="text" class="login__input" id="username" placeholder="Seu nome de usuário" required />
                 
-                <!-- E-mail sempre visível agora -->
-                <input type="email" class="login__input" id="email" placeholder="Seu e-mail" required />
+                <!-- E-mail escondido e sem "required" -->
+                <input type="email" class="login__input" id="email" placeholder="Seu e-mail" style="display: none;" />
                 
                 <input type="password" class="login__input" id="password" placeholder="Sua senha" required />
                 
@@ -38,7 +38,6 @@
         <!-- ================= TELA DO CHAT ================= -->
         <section class="chat">
             
-            <!-- Barra Superior (Admin e Sair) -->
             <div class="chat__header">
                 <div id="admin-bar" style="display: none;">
                     <button id="btn-clear-all" class="btn-admin">Limpar Tudo</button>
@@ -85,9 +84,7 @@
         <div class="modal-content">
             <span class="close-modal" id="close-bans-modal">&times;</span>
             <h2>Usuários Banidos</h2>
-            <ul id="bans-list" style="margin-top: 20px; list-style: none;">
-                <!-- A lista vai aparecer aqui -->
-            </ul>
+            <ul id="bans-list" style="margin-top: 20px; list-style: none;"></ul>
         </div>
     </div>
 
