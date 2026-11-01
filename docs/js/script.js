@@ -127,7 +127,18 @@ const createMessageElement = (msg, docId) => {
                 if (!isAdmin && isAdminMessage) {
                     return alert("Você não tem permissão para apagar mensagens do Administrador.");
                 }
+
+                // 1. Tira o foco do botão para o navegador não pular para o topo
+                btn.blur();
+
+                // 2. Salva a posição exata do scroll antes de apagar
+                const scrollAtual = window.scrollY;
+
+                // 3. Apaga a mensagem no banco
                 await deleteDoc(doc(db, "mensagens", docId)); 
+
+                // 4. Devolve a tela para a posição que estava (instantaneamente)
+                window.scrollTo({ top: scrollAtual, behavior: "instant" });
             });
         }
     }
@@ -200,7 +211,7 @@ const listenToMessages = () => {
                     scrollScreen();
                 } 
                 else if (change.type === "removed") {
-                    // Quando uma mensagem é apagada, remove apenas o elemento do HTML, sem redesenhar tudo
+                    // Remove apenas o elemento específico do HTML, sem redesenhar tudo
                     const msgElement = chatMessages.querySelector(`[data-id="${change.doc.id}"]`);
                     if (msgElement) {
                         msgElement.remove();
@@ -406,7 +417,6 @@ loginForm.addEventListener("submit", async (event) => {
             listenToOnlineUsers();
             listenToMyRole(); 
             
-            // CORREÇÃO AQUI (listenToOwnBanStatus em vez de listenToOwnBanCheck)
             if (!user.isAdmin) listenToOwnBanStatus(); 
             
             await sendSystemMessage(`👉 ${user.name} entrou no chat!`);
