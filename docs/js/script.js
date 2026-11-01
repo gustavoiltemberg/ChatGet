@@ -100,7 +100,7 @@ const createMessageElement = (msg, docId) => {
     const div = document.createElement("div");
     div.dataset.id = docId; 
     
-    // REGRA DE HIERARQUIA: Admin apaga tudo. Moderador não apaga do Admin.
+    // REGRA DE HIERARQUIA VISUAL
     let btnDelete = "";
     if (user.isAdmin) {
         btnDelete = `<button class="delete-btn" data-id="${docId}">[Apagar]</button>`;
@@ -120,7 +120,15 @@ const createMessageElement = (msg, docId) => {
 
     if (btnDelete) {
         const btn = div.querySelector('.delete-btn');
-        if (btn) btn.addEventListener('click', async () => { await deleteDoc(doc(db, "mensagens", docId)); });
+        if (btn) {
+            btn.addEventListener('click', async () => {
+                // TRAVA DE SEGURANÇA NO CLIQUE
+                if (!user.isAdmin && msg.userName.toLowerCase() === "admin") {
+                    return alert("Você não tem permissão para apagar mensagens do Administrador.");
+                }
+                await deleteDoc(doc(db, "mensagens", docId)); 
+            });
+        }
     }
     return div;
 };
@@ -134,10 +142,9 @@ const listenToMyRole = () => {
     unsubscribeMyRole = onSnapshot(myRoleRef, (docSnap) => {
         const isMod = docSnap.exists() && docSnap.data().isModerator;
         
-        // Se o status de moderador mudou (seja para virar ou para perder o cargo)
         if (user.isModerator !== isMod) {
-            // O "Plano B" infalível: Recarrega a página inteira para atualizar todas as permissões
-            window.location.reload();
+            user.isModerator = isMod;
+            window.location.reload(); // Recarrega para aplicar
         }
     });
 };
@@ -361,6 +368,7 @@ loginForm.addEventListener("submit", async (event) => {
 
             if (limpouAlgo) await batchLimpeza.commit();
 
+            // 1. PRIMEIRO BUSCA O CARGO
             const cargoDoc = await getDoc(doc(db, "cargos", user.name.toLowerCase()));
             if (cargoDoc.exists() && cargoDoc.data().isModerator) {
                 user.isModerator = true;
@@ -368,12 +376,14 @@ loginForm.addEventListener("submit", async (event) => {
                 user.isModerator = false;
             }
 
+            // 2. DEPOIS ATUALIZA A LISTA ONLINE
             await setDoc(doc(db, "usuarios_online", user.id), { 
                 name: user.name, 
                 color: user.color, 
                 isModerator: user.isModerator 
             }, { merge: true });
 
+            // 3. SÓ AGORA CARREGA AS MENSAGENS (garantindo que ele já sabe que é moderador)
             listenToMessages(); 
             listenToOnlineUsers();
             listenToMyRole(); 
