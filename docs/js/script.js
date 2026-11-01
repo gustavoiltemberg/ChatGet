@@ -71,7 +71,7 @@ let unsubscribeMessages = null;
 let unsubscribeUsers = null;
 let unsubscribeBans = null;
 let unsubscribeBanCheck = null;
-let unsubscribeMyRole = null; // NOVO
+let unsubscribeMyRole = null;
 let ultimoTimestampCarregado = 0;
 
 // ================= FUNÇÕES AUXILIARES =================
@@ -100,7 +100,6 @@ const createMessageElement = (msg, docId) => {
     const div = document.createElement("div");
     div.dataset.id = docId; 
     
-    // Se for admin OU moderador, mostra o botão de apagar mensagem
     let btnDelete = "";
     if (user.isAdmin || user.isModerator) {
         btnDelete = `<button class="delete-btn" data-id="${docId}">[Apagar]</button>`;
@@ -123,7 +122,7 @@ const createMessageElement = (msg, docId) => {
     return div;
 };
 
-// NOVO: Fica ouvindo em tempo real se o seu cargo mudou (para atualizar a tela na hora)
+// OUVINTE DE CARGO (O Segredo para aparecer na hora)
 const listenToMyRole = () => {
     if (unsubscribeMyRole) unsubscribeMyRole();
     const myRef = doc(db, "usuarios_online", user.id);
@@ -133,8 +132,23 @@ const listenToMyRole = () => {
             const isMod = docSnap.data().isModerator || false;
             if (user.isModerator !== isMod) {
                 user.isModerator = isMod;
-                // Recarrega as mensagens para atualizar os botões de apagar
-                listenToMessages();
+                
+                // Força o redesenho da tela para atualizar os botões [Apagar]
+                if (user.isAdmin || user.isModerator) {
+                    chatMessages.querySelectorAll('.message--self, .message--other').forEach(div => {
+                        if (!div.querySelector('.delete-btn')) {
+                            const btn = document.createElement('button');
+                            btn.className = 'delete-btn';
+                            btn.innerText = '[Apagar]';
+                            btn.dataset.id = div.dataset.id;
+                            btn.addEventListener('click', async () => { await deleteDoc(doc(db, "mensagens", div.dataset.id)); });
+                            div.appendChild(btn);
+                        }
+                    });
+                } else {
+                    // Se perdeu o cargo, remove os botões
+                    chatMessages.querySelectorAll('.delete-btn').forEach(btn => btn.remove());
+                }
             }
         }
     });
@@ -367,7 +381,7 @@ loginForm.addEventListener("submit", async (event) => {
 
             listenToMessages(); 
             listenToOnlineUsers();
-            listenToMyRole(); // NOVO: Começa a ouvir se for promovido/rebaixado
+            listenToMyRole(); 
             
             if (!user.isAdmin) listenToOwnBanStatus(); 
             
@@ -484,7 +498,7 @@ btnLogout.addEventListener("click", async () => {
     if (unsubscribeMessages) unsubscribeMessages();
     if (unsubscribeUsers) unsubscribeUsers();
     if (unsubscribeBanCheck) unsubscribeBanCheck();
-    if (unsubscribeMyRole) unsubscribeMyRole(); // NOVO
+    if (unsubscribeMyRole) unsubscribeMyRole();
     
     await signOut(auth);
     
