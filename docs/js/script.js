@@ -100,7 +100,7 @@ const createMessageElement = (msg, docId) => {
     const div = document.createElement("div");
     div.dataset.id = docId; 
     
-    // REGRA DE HIERARQUIA: Admin apaga tudo. Moderador não apaga do Admin.
+    // REGRA DE HIERARQUIA
     let btnDelete = "";
     if (user.isAdmin) {
         btnDelete = `<button class="delete-btn" data-id="${docId}">[Apagar]</button>`;
@@ -125,7 +125,7 @@ const createMessageElement = (msg, docId) => {
     return div;
 };
 
-// OUVINTE DE CARGO (Solução definitiva para o botão aparecer na hora)
+// OUVINTE DE CARGO (A Mágica para aparecer na mesma hora)
 const listenToMyRole = () => {
     if (unsubscribeMyRole) unsubscribeMyRole();
     
@@ -134,22 +134,22 @@ const listenToMyRole = () => {
     unsubscribeMyRole = onSnapshot(myRoleRef, (docSnap) => {
         const isMod = docSnap.exists() && docSnap.data().isModerator;
         
+        // Se o status de moderador mudou...
         if (user.isModerator !== isMod) {
             user.isModerator = isMod;
             
-            // Se virou moderador, recarrega as mensagens da tela na mesma hora
-            if (unsubscribeMessages) {
-                unsubscribeMessages(); 
-            }
+            // Para o ouvinte de mensagens
+            if (unsubscribeMessages) unsubscribeMessages(); 
             
+            // Recarrega todas as mensagens (desenha tudo de novo na tela)
             const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
             getDocs(q).then((snapshot) => {
-                chatMessages.innerHTML = ""; 
+                chatMessages.innerHTML = ""; // Limpa
                 snapshot.forEach((docSnap) => {
-                    chatMessages.appendChild(createMessageElement(docSnap.data(), docSnap.id));
+                    chatMessages.appendChild(createMessageElement(docSnap.data(), docSnap.id)); // Redesenha com o botão
                 });
                 scrollScreen();
-                listenToMessages(); 
+                listenToMessages(); // Volta a ouvir novas mensagens
             });
         }
     });
