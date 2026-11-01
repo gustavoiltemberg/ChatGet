@@ -1,27 +1,12 @@
 // ================= CONFIGURAÇÃO DO FIREBASE =================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
-    getAuth, 
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword, 
-    signOut,
-    sendPasswordResetEmail,
-    verifyBeforeUpdateEmail,
-    updateProfile
+    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
+    sendPasswordResetEmail, verifyBeforeUpdateEmail, updateProfile
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
-    getFirestore, 
-    collection, 
-    addDoc, 
-    onSnapshot, 
-    query, 
-    orderBy, 
-    deleteDoc, 
-    doc, 
-    getDocs,
-    writeBatch,
-    setDoc,
-    limit
+    getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, getDocs,
+    getDoc, writeBatch, setDoc, limit
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -57,12 +42,16 @@ const emailInput = document.querySelector("#email");
 const forgotPasswordContainer = document.querySelector("#forgot-password-container");
 const forgotPasswordLink = document.querySelector("#forgot-password");
 
+// NOVOS ELEMENTOS DO MODAL DE BANIDOS
+const btnManageBans = document.querySelector("#btn-manage-bans");
+const bansModal = document.querySelector("#bans-modal");
+const closeBansModal = document.querySelector("#close-bans-modal");
+const bansList = document.querySelector("#bans-list");
+
 const audioEntrou = new Audio("./sounds/entrou.mp3");
 const audioSaiu = new Audio("./sounds/saiu.mp3");
 const audioMensagem = new Audio("./sounds/mensagem.mp3");
-audioEntrou.volume = 1.0;
-audioSaiu.volume = 1.0;
-audioMensagem.volume = 1.0;
+audioEntrou.volume = 1.0; audioSaiu.volume = 1.0; audioMensagem.volume = 1.0;
 let somAtivado = false;
 
 const onlineList = document.querySelector("#online-list");
@@ -81,9 +70,12 @@ const user = { id: "", name: "", color: "", isAdmin: false };
 let isLoginMode = true;
 let unsubscribeMessages = null;
 let unsubscribeUsers = null;
+let unsubscribeBans = null;
 
+// ================= FUNÇÕES AUXILIARES =================
 const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
 const scrollScreen = () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+
 const isImageURL = (url) => {
     const urlLower = url.toLowerCase();
     if (urlLower.match(/\.(gif|jpe?g|png|webp|bmp)$/)) return true;
@@ -147,12 +139,18 @@ const listenToOnlineUsers = () => {
             userInfo.innerText = u.name;
             li.appendChild(userInfo);
             li.classList.add("user--online");
+            
             if (user.isAdmin && u.name.toLowerCase() !== "admin") {
                 const btnDeleteUser = document.createElement("button");
                 btnDeleteUser.innerHTML = "✖"; 
                 btnDeleteUser.classList.add("btn-delete-user");
                 btnDeleteUser.addEventListener("click", async () => {
-                    if (confirm(`Expulsar "${u.name}" do chat?`)) await deleteDoc(doc(db, "usuarios_online", docSnap.id));
+                    if (confirm(`Tem certeza que deseja BANIR "${u.name}"?`)) {
+                        try {
+                            await setDoc(doc(db, "banidos", u.name.toLowerCase()), { banido: true });
+                            await deleteDoc(doc(db, "usuarios_online", docSnap.id));
+                        } catch (e) { console.error("Erro ao banir:", e); }
+                    }
                 });
                 li.appendChild(btnDeleteUser);
             }
@@ -162,11 +160,38 @@ const listenToOnlineUsers = () => {
     });
 };
 
+const listenToBans = () => {
+    if (unsubscribeBans) unsubscribeBans();
+    const q = query(collection(db, "banidos"));
+    unsubscribeBans = onSnapshot(q, (snapshot) => {
+        bansList.innerHTML = "";
+        if (snapshot.empty) {
+            bansList.innerHTML = "<li style='justify-content:center; color: #888;'>Nenhum usuário banido.</li>";
+            return;
+        }
+        snapshot.forEach((docSnap) => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+                <span style="text-transform: capitalize;">${docSnap.id}</span>
+                <button class="btn-unban" data-id="${docSnap.id}">Desbanir</button>
+            `;
+            
+            li.querySelector(".btn-unban").addEventListener("click", async () => {
+                if (confirm(`Remover o banimento de "${docSnap.id}"?`)) {
+                    await deleteDoc(doc(db, "banidos", docSnap.id));
+                }
+            });
+            bansList.appendChild(li);
+        });
+    });
+};
+
 const sendSystemMessage = async (text) => {
     try { await addDoc(collection(db, "mensagens"), { isSystem: true, content: text, timestamp: Date.now() }); } 
     catch (e) { console.error(e); }
 };
 
+// ================= AUTENTICAÇÃO E LOGIN =================
 toggleLink.addEventListener("click", (e) => {
     e.preventDefault();
     isLoginMode = !isLoginMode;
@@ -175,8 +200,7 @@ toggleLink.addEventListener("click", (e) => {
     toggleMsg.innerText = isLoginMode ? "Não tem conta?" : "Já tem conta?";
     toggleLink.innerText = isLoginMode ? "Cadastre-se" : "Faça Login";
     
-    // Controla a visibilidade do e-mail e do link de esqueci a senha
-    emailInput.style.display = isLoginMode ? "none" : "block"; 
+    // O e-mail agora fica sempre visível, então não precisamos esconder
     forgotPasswordContainer.style.display = isLoginMode ? "block" : "none";
 });
 
@@ -190,6 +214,11 @@ loginForm.addEventListener("submit", async (event) => {
         if (isLoginMode) {
             if (!email) return alert("Por favor, digite seu e-mail para fazer login.");
             
+            const banidoDoc = await getDoc(doc(db, "banidos", name.toLowerCase()));
+            if (banidoDoc.exists()) {
+                return alert("Este usuário foi banido do chat pelo administrador.");
+            }
+
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             user.id = userCredential.user.uid;
             user.name = name;
@@ -219,6 +248,12 @@ loginForm.addEventListener("submit", async (event) => {
 
         } else {
             if (!email) return alert("Por favor, digite um e-mail válido para se cadastrar.");
+            
+            const banidoDoc = await getDoc(doc(db, "banidos", name.toLowerCase()));
+            if (banidoDoc.exists()) {
+                return alert("Este nome de usuário está banido e não pode ser cadastrado.");
+            }
+
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             await updateProfile(userCredential.user, { displayName: name });
             alert("Cadastro realizado com sucesso! Faça login.");
@@ -232,6 +267,25 @@ loginForm.addEventListener("submit", async (event) => {
     }
 });
 
+// ================= EVENTOS DO MODAL DE BANIDOS =================
+btnManageBans.addEventListener("click", () => {
+    bansModal.classList.add("show");
+    listenToBans(); // Começa a ouvir a lista de banidos quando abre
+});
+
+closeBansModal.addEventListener("click", () => {
+    bansModal.classList.remove("show");
+    if (unsubscribeBans) unsubscribeBans(); // Para de ouvir quando fecha
+});
+
+window.addEventListener("click", (e) => {
+    if (e.target === bansModal) {
+        bansModal.classList.remove("show");
+        if (unsubscribeBans) unsubscribeBans();
+    }
+});
+
+// ================= OUTRAS FUNÇÕES =================
 forgotPasswordLink.addEventListener("click", async (e) => {
     e.preventDefault();
     const email = prompt("Digite seu e-mail para receber o link de recuperação:");
@@ -322,46 +376,4 @@ const sendMessageToDb = async (content) => {
             content: content,
             timestamp: Date.now()
         });
-        if (somAtivado) {
-            audioMensagem.currentTime = 0;
-            audioMensagem.play().catch(e => console.log(e));
-        }
-    } catch (e) { console.error("Erro ao enviar:", e); }
-};
-
-chatForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    sendMessageToDb(chatInput.value.trim());
-    chatInput.value = "";
-});
-
-stickersBar.addEventListener("click", (e) => {
-    const btn = e.target.closest(".sticker-btn");
-    if (btn) sendMessageToDb(btn.dataset.emoji);
-});
-
-btnGifKeyboard.addEventListener("click", () => {
-    stickersBar.classList.toggle("show");
-    btnGifKeyboard.classList.toggle("active");
-    if (stickersBar.classList.contains("show")) chatInput.focus();
-});
-
-btnClearAll.addEventListener("click", async () => {
-    if (confirm("Apagar TODAS as mensagens?")) {
-        try {
-            const q = query(collection(db, "mensagens"));
-            const snapshot = await getDocs(q);
-            const batch = writeBatch(db);
-            snapshot.forEach((docSnap) => batch.delete(docSnap.ref));
-            await batch.commit();
-        } catch (e) { console.error(e); }
-    }
-});
-
-btnSom.addEventListener("click", () => {
-    audioEntrou.currentTime = 0;
-    audioEntrou.play().then(() => {
-        somAtivado = true;
-        btnSom.style.display = "none"; 
-    }).catch(e => alert("O navegador não conseguiu tocar o som."));
-});
+        if

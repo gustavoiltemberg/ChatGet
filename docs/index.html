@@ -17,15 +17,14 @@
             <form class="login__form" id="auth-form">
                 <input type="text" class="login__input" id="username" placeholder="Seu nome de exibição" required />
                 
-                <!-- Campo de e-mail (Some no Login, aparece no Cadastro) -->
-                <input type="email" class="login__input" id="email" placeholder="Seu e-mail" style="display: none;" required />
+                <!-- E-mail sempre visível agora -->
+                <input type="email" class="login__input" id="email" placeholder="Seu e-mail" required />
                 
                 <input type="password" class="login__input" id="password" placeholder="Sua senha" required />
                 
                 <button type="submit" class="login__button" id="submit-btn">Entrar</button>
             </form>
             
-            <!-- LINK DE ESQUECI A SENHA -->
             <p class="login__toggle" id="forgot-password-container" style="margin-bottom: 10px;">
                 <a href="#" id="forgot-password" style="color: #aaa; font-size: 0.8rem;">Esqueci minha senha</a>
             </p>
@@ -43,6 +42,7 @@
             <div class="chat__header">
                 <div id="admin-bar" style="display: none;">
                     <button id="btn-clear-all" class="btn-admin">Limpar Tudo</button>
+                    <button id="btn-manage-bans" class="btn-admin" style="background-color: #8e44ad;">Gerenciar Banidos</button>
                 </div>
                 
                 <button id="btn-edit-name" class="btn-edit-name" style="display: none;">✏️ Editar Nome</button>
@@ -79,6 +79,17 @@
         </section>
 
     </section>
+
+    <!-- ================= MODAL DE BANIDOS ================= -->
+    <div id="bans-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-bans-modal">&times;</span>
+            <h2>Usuários Banidos</h2>
+            <ul id="bans-list" style="margin-top: 20px; list-style: none;">
+                <!-- A lista vai aparecer aqui -->
+            </ul>
+        </div>
+    </div>
 
     <script type="module" src="./js/script.js"></script>
 </body>
