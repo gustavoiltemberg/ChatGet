@@ -100,11 +100,13 @@ const createMessageElement = (msg, docId) => {
     const div = document.createElement("div");
     div.dataset.id = docId; 
     
-    // REGRA DE HIERARQUIA
+    // REGRA BLINDADA (Aceita admin, e aceita moderador desde que não seja a msg do admin)
+    const isAdmin = user.isAdmin;
+    const isMod = user.isModerator;
+    const isAdminMessage = msg.userName.toLowerCase() === "admin";
+
     let btnDelete = "";
-    if (user.isAdmin) {
-        btnDelete = `<button class="delete-btn" data-id="${docId}">[Apagar]</button>`;
-    } else if (user.isModerator && msg.userName.toLowerCase() !== "admin") {
+    if (isAdmin || (isMod && !isAdminMessage)) {
         btnDelete = `<button class="delete-btn" data-id="${docId}">[Apagar]</button>`;
     }
     
@@ -122,7 +124,7 @@ const createMessageElement = (msg, docId) => {
         const btn = div.querySelector('.delete-btn');
         if (btn) {
             btn.addEventListener('click', async () => {
-                if (!user.isAdmin && msg.userName.toLowerCase() === "admin") {
+                if (!isAdmin && isAdminMessage) {
                     return alert("Você não tem permissão para apagar mensagens do Administrador.");
                 }
                 await deleteDoc(doc(db, "mensagens", docId)); 
@@ -132,7 +134,7 @@ const createMessageElement = (msg, docId) => {
     return div;
 };
 
-// OUVINTE DE CARGO
+// OUVINTE DE CARGO (Atualiza a tela se o cargo mudar em tempo real)
 const listenToMyRole = () => {
     if (unsubscribeMyRole) unsubscribeMyRole();
     
@@ -144,6 +146,7 @@ const listenToMyRole = () => {
         if (user.isModerator !== isMod) {
             user.isModerator = isMod;
             
+            // Redesenha as mensagens para aplicar o botão imediatamente
             const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
             getDocs(q).then((snapshot) => {
                 chatMessages.innerHTML = "";
@@ -162,39 +165,49 @@ const listenToMessages = () => {
     
     const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
     
-    unsubscribeMessages = onSnapshot(q, (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-            if (change.type === "added") {
-                const msg = change.doc.data();
-                
-                if (msg.timestamp > ultimoTimestampCarregado && msg.userId !== user.id) {
-                    if (somAtivado) {
-                        if (msg.isSystem) {
-                            if (msg.content.includes("👉")) {
-                                audioEntrou.currentTime = 0;
-                                audioEntrou.play().catch(e => console.log(e));
-                            } else if (msg.content.includes("👈")) {
-                                audioSaiu.currentTime = 0;
-                                audioSaiu.play().catch(e => console.log(e));
-                            }
-                        } else {
-                            audioMensagem.currentTime = 0;
-                            audioMensagem.play().catch(e => console.log(e));
-                        }
-                    }
-                }
-                
-                if (msg.timestamp > ultimoTimestampCarregado) {
-                    ultimoTimestampCarregado = msg.timestamp;
-                }
-            }
-        });
-
+    // Leitura inicial para garantir que as mensagens sejam desenhadas após o cargo ser carregado
+    getDocs(q).then((initialSnapshot) => {
         chatMessages.innerHTML = ""; 
-        snapshot.forEach((docSnap) => {
+        initialSnapshot.forEach((docSnap) => {
             chatMessages.appendChild(createMessageElement(docSnap.data(), docSnap.id));
         });
         scrollScreen();
+
+        // Depois de desenhar, começa a ouvir atualizações em tempo real
+        unsubscribeMessages = onSnapshot(q, (snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added") {
+                    const msg = change.doc.data();
+                    
+                    if (msg.timestamp > ultimoTimestampCarregado && msg.userId !== user.id) {
+                        if (somAtivado) {
+                            if (msg.isSystem) {
+                                if (msg.content.includes("👉")) {
+                                    audioEntrou.currentTime = 0;
+                                    audioEntrou.play().catch(e => console.log(e));
+                                } else if (msg.content.includes("👈")) {
+                                    audioSaiu.currentTime = 0;
+                                    audioSaiu.play().catch(e => console.log(e));
+                                }
+                            } else {
+                                audioMensagem.currentTime = 0;
+                                audioMensagem.play().catch(e => console.log(e));
+                            }
+                        }
+                    }
+                    
+                    if (msg.timestamp > ultimoTimestampCarregado) {
+                        ultimoTimestampCarregado = msg.timestamp;
+                    }
+                }
+            });
+
+            chatMessages.innerHTML = ""; 
+            snapshot.forEach((docSnap) => {
+                chatMessages.appendChild(createMessageElement(docSnap.data(), docSnap.id));
+            });
+            scrollScreen();
+        });
     });
 };
 
@@ -375,7 +388,7 @@ loginForm.addEventListener("submit", async (event) => {
 
             if (limpouAlgo) await batchLimpeza.commit();
 
-            // CHECA O CARGO
+            // CHECA O CARGO ANTES DE RENDERIZAR QUALQUER COISA
             const cargoDoc = await getDoc(doc(db, "cargos", user.name.toLowerCase()));
             if (cargoDoc.exists() && cargoDoc.data().isModerator) {
                 user.isModerator = true;
@@ -383,15 +396,14 @@ loginForm.addEventListener("submit", async (event) => {
                 user.isModerator = false;
             }
 
-            // LOG PARA AJUDAR NO DEBUG
-            console.log("STATUS DE MODERADOR NO LOGIN:", user.isModerator);
-
+            // Adiciona ele na lista online com a permissão que acabou de ser lida
             await setDoc(doc(db, "usuarios_online", user.id), { 
                 name: user.name, 
                 color: user.color, 
                 isModerator: user.isModerator 
             }, { merge: true });
 
+            // SÓ AGORA ele desenha as mensagens na tela (agora ele tem certeza do cargo)
             listenToMessages(); 
             listenToOnlineUsers();
             listenToMyRole(); 
