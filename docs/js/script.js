@@ -132,7 +132,7 @@ const createMessageElement = (msg, docId) => {
     return div;
 };
 
-// OUVINTE DE CARGO (Atualiza a tela na hora em que vira moderador)
+// OUVINTE DE CARGO
 const listenToMyRole = () => {
     if (unsubscribeMyRole) unsubscribeMyRole();
     
@@ -144,7 +144,6 @@ const listenToMyRole = () => {
         if (user.isModerator !== isMod) {
             user.isModerator = isMod;
             
-            // Recarrega a tela na mesma hora para aplicar o botão
             const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
             getDocs(q).then((snapshot) => {
                 chatMessages.innerHTML = "";
@@ -376,7 +375,7 @@ loginForm.addEventListener("submit", async (event) => {
 
             if (limpouAlgo) await batchLimpeza.commit();
 
-            // 1. CHECA O CARGO ANTES DE QUALQUER COISA
+            // CHECA O CARGO
             const cargoDoc = await getDoc(doc(db, "cargos", user.name.toLowerCase()));
             if (cargoDoc.exists() && cargoDoc.data().isModerator) {
                 user.isModerator = true;
@@ -384,14 +383,15 @@ loginForm.addEventListener("submit", async (event) => {
                 user.isModerator = false;
             }
 
-            // 2. ADICIONA NA LISTA ONLINE COM O CARGO CORRETO
+            // LOG PARA AJUDAR NO DEBUG
+            console.log("STATUS DE MODERADOR NO LOGIN:", user.isModerator);
+
             await setDoc(doc(db, "usuarios_online", user.id), { 
                 name: user.name, 
                 color: user.color, 
                 isModerator: user.isModerator 
             }, { merge: true });
 
-            // 3. SÓ AGORA RENDERIZA AS MENSAGENS
             listenToMessages(); 
             listenToOnlineUsers();
             listenToMyRole(); 
