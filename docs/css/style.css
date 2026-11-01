@@ -550,3 +550,33 @@ body.is-admin .btn-delete-user {
         padding-top: 20px;
     }
 }
+
+/* ================= BOTÃO DE MODERADOR ================= */
+.btn-moderate-user {
+    background: transparent;
+    border: none;
+    color: #f1c40f; /* Cor de escudo/ouro */
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 2px 5px;
+    border-radius: 3px;
+    transition: background 0.2s, color 0.2s;
+    visibility: hidden; 
+}
+
+body.is-admin .btn-moderate-user {
+    visibility: visible;
+}
+
+.btn-moderate-user:hover {
+    background: #f1c40f;
+    color: white;
+}
+
+/* Tag visual de quem é moderador na lista */
+.moderator-badge {
+    font-size: 0.7rem;
+    margin-left: 4px;
+    color: #f1c40f;
+}

@@ -64,7 +64,7 @@ const toggleMsg = document.querySelector("#toggle-msg");
 const toggleLink = document.querySelector("#toggle-auth");
 
 const colors = ["cadetblue", "darkgoldenrod", "cornflowerblue", "darkkhaki", "hotpink", "gold"];
-const user = { id: "", name: "", color: "", isAdmin: false };
+const user = { id: "", name: "", color: "", isAdmin: false, isModerator: false };
 
 let isLoginMode = true;
 let unsubscribeMessages = null;
@@ -98,7 +98,13 @@ const createMessageElement = (msg, docId) => {
 
     const div = document.createElement("div");
     div.dataset.id = docId; 
-    let btnDelete = user.isAdmin ? `<button class="delete-btn" data-id="${docId}">[Apagar]</button>` : "";
+    
+    // NOVO: Se for admin OU moderador, mostra o botão de apagar mensagem
+    let btnDelete = "";
+    if (user.isAdmin || user.isModerator) {
+        btnDelete = `<button class="delete-btn" data-id="${docId}">[Apagar]</button>`;
+    }
+    
     const formattedContent = formatMessageContent(msg.content);
 
     if (msg.userId === user.id) {
@@ -109,7 +115,7 @@ const createMessageElement = (msg, docId) => {
         div.innerHTML = `<span class="message--sender" style="color: ${msg.userColor}">${msg.userName}</span><div class="message--content">${formattedContent}</div> ${btnDelete}`;
     }
 
-    if (user.isAdmin) {
+    if (user.isAdmin || user.isModerator) {
         const btn = div.querySelector('.delete-btn');
         if (btn) btn.addEventListener('click', async () => { await deleteDoc(doc(db, "mensagens", docId)); });
     }
@@ -127,7 +133,6 @@ const listenToMessages = () => {
             if (change.type === "added") {
                 const msg = change.doc.data();
                 
-                // Se for mensagem nova, não for sua e o som estiver ativado
                 if (msg.timestamp > ultimoTimestampCarregado && msg.userId !== user.id) {
                     if (somAtivado) {
                         if (msg.isSystem) {
@@ -172,11 +177,34 @@ const listenToOnlineUsers = () => {
             const li = document.createElement("li");
             const userInfo = document.createElement("div");
             userInfo.classList.add("user-info");
-            userInfo.innerText = u.name;
+            
+            // NOVO: Adiciona um escudo se o usuário for moderador
+            let badge = u.isModerator ? ` <span class="moderator-badge">🛡️</span>` : "";
+            userInfo.innerHTML = `${u.name}${badge}`;
+            
             li.appendChild(userInfo);
             li.classList.add("user--online");
             
+            // SÓ O ADMIN PODE BANIR OU TORNAR MODERADOR
             if (user.isAdmin && u.name.toLowerCase() !== "admin") {
+                
+                // Botão de Moderador (Escudo)
+                const btnModerateUser = document.createElement("button");
+                btnModerateUser.innerHTML = "🛡️"; 
+                btnModerateUser.classList.add("btn-moderate-user");
+                btnModerateUser.title = u.isModerator ? "Remover Moderador" : "Tornar Moderador";
+                
+                btnModerateUser.addEventListener("click", async () => {
+                    const acao = u.isModerator ? "remover o cargo de moderador de" : "tornar moderador";
+                    if (confirm(`Tem certeza que deseja ${acao} "${u.name}"?`)) {
+                        try {
+                            await setDoc(doc(db, "usuarios_online", docSnap.id), { isModerator: !u.isModerator }, { merge: true });
+                        } catch (e) { console.error("Erro ao moderar:", e); }
+                    }
+                });
+                li.appendChild(btnModerateUser);
+
+                // Botão de Banir (X)
                 const btnDeleteUser = document.createElement("button");
                 btnDeleteUser.innerHTML = "✖"; 
                 btnDeleteUser.classList.add("btn-delete-user");
@@ -287,9 +315,7 @@ loginForm.addEventListener("submit", async (event) => {
             }).catch((e) => {
                 somAtivado = false;
                 btnSom.style.display = "block";
-                console.log("Autoplay bloqueado. O usuário precisa clicar para ativar o som.", e);
             });
-            // -------------------------------
 
             if (name.toLowerCase() === "admin") {
                 user.isAdmin = true;
@@ -321,7 +347,15 @@ loginForm.addEventListener("submit", async (event) => {
 
             if (limpouAlgo) await batchLimpeza.commit();
 
-            await setDoc(doc(db, "usuarios_online", user.id), { name: user.name, color: user.color });
+            // Salva ou atualiza o usuário na lista online
+            await setDoc(doc(db, "usuarios_online", user.id), { name: user.name, color: user.color, isModerator: false }, { merge: true });
+            
+            // NOVO: Verifica se o usuário já é um moderador no banco de dados
+            const meuUserOnline = await getDoc(doc(db, "usuarios_online", user.id));
+            if (meuUserOnline.exists() && meuUserOnline.data().isModerator) {
+                user.isModerator = true;
+            }
+
             listenToMessages(); 
             listenToOnlineUsers();
             
@@ -443,7 +477,7 @@ btnLogout.addEventListener("click", async () => {
     
     await signOut(auth);
     
-    user.id = ""; user.name = ""; user.color = ""; user.isAdmin = false;
+    user.id = ""; user.name = ""; user.color = ""; user.isAdmin = false; user.isModerator = false;
     document.body.classList.remove("is-admin");
     chatMessages.innerHTML = "";
     onlineList.innerHTML = "";
