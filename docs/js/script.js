@@ -71,6 +71,7 @@ let unsubscribeMessages = null;
 let unsubscribeUsers = null;
 let unsubscribeBans = null;
 let unsubscribeBanCheck = null;
+let ultimoTimestampCarregado = 0;
 
 // ================= FUNÇÕES AUXILIARES =================
 const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
@@ -115,16 +116,50 @@ const createMessageElement = (msg, docId) => {
     return div;
 };
 
+// ================= OUVINTE DE MENSAGENS E SONS =================
 const listenToMessages = () => {
     if (unsubscribeMessages) unsubscribeMessages();
+    
     const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
+    
     unsubscribeMessages = onSnapshot(q, (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+            if (change.type === "added") {
+                const msg = change.doc.data();
+                
+                // Se for mensagem nova, não for sua e o som estiver ativado
+                if (msg.timestamp > ultimoTimestampCarregado && msg.userId !== user.id) {
+                    if (somAtivado) {
+                        if (msg.isSystem) {
+                            if (msg.content.includes("👉")) {
+                                audioEntrou.currentTime = 0;
+                                audioEntrou.play().catch(e => console.log(e));
+                            } else if (msg.content.includes("👈")) {
+                                audioSaiu.currentTime = 0;
+                                audioSaiu.play().catch(e => console.log(e));
+                            }
+                        } else {
+                            audioMensagem.currentTime = 0;
+                            audioMensagem.play().catch(e => console.log(e));
+                        }
+                    }
+                }
+                
+                if (msg.timestamp > ultimoTimestampCarregado) {
+                    ultimoTimestampCarregado = msg.timestamp;
+                }
+            }
+        });
+
         chatMessages.innerHTML = ""; 
-        snapshot.forEach((docSnap) => chatMessages.appendChild(createMessageElement(docSnap.data(), docSnap.id)));
+        snapshot.forEach((docSnap) => {
+            chatMessages.appendChild(createMessageElement(docSnap.data(), docSnap.id));
+        });
         scrollScreen();
     });
 };
 
+// ================= LISTA DE ONLINE E BANIDOS =================
 const listenToOnlineUsers = () => {
     if (unsubscribeUsers) unsubscribeUsers();
     const q = query(collection(db, "usuarios_online"));
@@ -213,7 +248,6 @@ toggleLink.addEventListener("click", (e) => {
     toggleMsg.innerText = isLoginMode ? "Não tem conta?" : "Já tem conta?";
     toggleLink.innerText = isLoginMode ? "Cadastre-se" : "Faça Login";
     
-    // Esconde o e-mail no login e mostra no cadastro
     emailInput.style.display = isLoginMode ? "none" : "block";
     forgotPasswordContainer.style.display = isLoginMode ? "block" : "none";
 });
@@ -233,14 +267,12 @@ loginForm.addEventListener("submit", async (event) => {
                 return alert("Este usuário foi banido do chat pelo administrador.");
             }
 
-            // NOVO: Busca o e-mail real no banco de dados, baseado no nome digitado
             const perfilDoc = await getDoc(doc(db, "perfis", name.toLowerCase()));
             if (!perfilDoc.exists()) {
                 return alert("Usuário não encontrado! Verifique o nome ou cadastre-se.");
             }
             const emailParaLogin = perfilDoc.data().email;
 
-            // Faz o login com o e-mail encontrado e a senha digitada
             const userCredential = await signInWithEmailAndPassword(auth, emailParaLogin, password);
             user.id = userCredential.user.uid;
             user.name = name;
@@ -287,7 +319,6 @@ loginForm.addEventListener("submit", async (event) => {
             await sendSystemMessage(`👉 ${user.name} entrou no chat!`);
 
         } else {
-            // CADASTRO
             if (!email) return alert("Por favor, digite um e-mail válido para se cadastrar.");
             
             const banidoDoc = await getDoc(doc(db, "banidos", name.toLowerCase()));
@@ -298,7 +329,6 @@ loginForm.addEventListener("submit", async (event) => {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             await updateProfile(userCredential.user, { displayName: name });
             
-            // NOVO: Salva o perfil para podermos buscar o e-mail pelo nome depois
             await setDoc(doc(db, "perfis", name.toLowerCase()), { email: email });
 
             alert("Cadastro realizado com sucesso! Faça login.");
@@ -349,7 +379,6 @@ btnEditName.addEventListener("click", async () => {
     if (novoNome && novoNome.trim() !== "" && novoNome.trim() !== user.name) {
         const nomeFormatado = novoNome.trim();
         
-        // Verifica se o novo nome já existe
         const perfilExistente = await getDoc(doc(db, "perfis", nomeFormatado.toLowerCase()));
         if (perfilExistente.exists()) {
             return alert("Este nome já está em uso por outra pessoa.");
@@ -415,6 +444,7 @@ btnLogout.addEventListener("click", async () => {
     btnEditEmail.style.display = "none";
     usernameInput.value = ""; passwordInput.value = ""; emailInput.value = "";
     btnSom.style.display = "none";
+    ultimoTimestampCarregado = 0;
     
     if (!isLoginMode) toggleLink.click();
 });
