@@ -278,6 +278,19 @@ loginForm.addEventListener("submit", async (event) => {
             user.name = name;
             user.color = getRandomColor();
 
+            // --- ATIVAÇÃO MÁGICA DO SOM ---
+            audioEntrou.volume = 0.01;
+            audioEntrou.play().then(() => {
+                somAtivado = true;
+                btnSom.style.display = "none"; 
+                audioEntrou.volume = 1.0; 
+            }).catch((e) => {
+                somAtivado = false;
+                btnSom.style.display = "block";
+                console.log("Autoplay bloqueado. O usuário precisa clicar para ativar o som.", e);
+            });
+            // -------------------------------
+
             if (name.toLowerCase() === "admin") {
                 user.isAdmin = true;
                 document.body.classList.add("is-admin");
@@ -292,8 +305,6 @@ loginForm.addEventListener("submit", async (event) => {
             chatSection.style.display = "flex";
             btnEditName.style.display = "block";
             btnEditEmail.style.display = "block";
-            
-            if (!somAtivado) btnSom.style.display = "block";
             
             // Limpeza de duplicados
             const qUsuarios = query(collection(db, "usuarios_online"));
