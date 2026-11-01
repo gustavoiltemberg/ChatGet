@@ -161,7 +161,7 @@ body {
 
 /* Botão de Ativar Som */
 .btn-som {
-    background-color: #2ecc71; /* Verde */
+    background-color: #2ecc71;
     color: white;
     border: none;
     padding: 8px 15px;
@@ -222,7 +222,7 @@ body {
     font-size: 1.8rem;
 }
 
-/* Botão de GIF (Agora Emoji) */
+/* Botão de GIF */
 .chat__button-gif {
     border: none;
     background: none;
@@ -283,7 +283,7 @@ body {
     display: block;
 }
 
-/* Botão de apagar (Lixeira) - CORRIGIDO */
+/* Botão de apagar (Lixeira) */
 .delete-btn {
     background: none;
     border: none;
@@ -292,16 +292,14 @@ body {
     font-size: 0.8rem;
     margin-left: 10px;
     padding: 0;
-    display: inline-block; /* Agora fica visível para quem tem o botão no HTML */
+    display: inline-block;
 }
-
-/* Removemos a regra body.is-admin .delete-btn que escondia dos moderadores */
 
 .delete-btn:hover {
     text-decoration: underline;
 }
 
-/* ================= STICKERS (Imagens) ================= */
+/* ================= STICKERS ================= */
 .chat__stickers {
     display: none;
     gap: 10px;
@@ -358,7 +356,7 @@ body {
     border-bottom: 1px solid #333;
 }
 
-/* ================= SIDEBAR (USUÁRIOS) ================= */
+/* ================= SIDEBAR ================= */
 .chat__sidebar {
     position: fixed;
     top: 50px;
@@ -547,7 +545,7 @@ body.is-admin .btn-moderate-user {
     color: #f1c40f;
 }
 
-/* ================= RESPONSIVIDADE (CELULAR) ================= */
+/* ================= RESPONSIVIDADE ================= */
 @media (max-width: 600px) {
     .chat__sidebar {
         position: static;

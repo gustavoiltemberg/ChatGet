@@ -406,7 +406,7 @@ loginForm.addEventListener("submit", async (event) => {
             listenToOnlineUsers();
             listenToMyRole(); 
             
-            if (!user.isAdmin) listenToOwnBanStatus(); 
+            if (!user.isAdmin) listenToOwnBanCheck(); 
             
             await sendSystemMessage(`👉 ${user.name} entrou no chat!`);
 
