@@ -100,11 +100,12 @@ const createMessageElement = (msg, docId) => {
     const div = document.createElement("div");
     div.dataset.id = docId; 
     
-    // REGRA DE HIERARQUIA VISUAL
+    // REGRA DE HIERARQUIA UNIFICADA
+    // Admin pode apagar tudo. Moderador pode apagar tudo, EXCETO do admin.
+    const podeApagar = user.isAdmin || (user.isModerator && msg.userName.toLowerCase() !== "admin");
+    
     let btnDelete = "";
-    if (user.isAdmin) {
-        btnDelete = `<button class="delete-btn" data-id="${docId}">[Apagar]</button>`;
-    } else if (user.isModerator && msg.userName.toLowerCase() !== "admin") {
+    if (podeApagar) {
         btnDelete = `<button class="delete-btn" data-id="${docId}">[Apagar]</button>`;
     }
     
@@ -118,11 +119,11 @@ const createMessageElement = (msg, docId) => {
         div.innerHTML = `<span class="message--sender" style="color: ${msg.userColor}">${msg.userName}</span><div class="message--content">${formattedContent}</div> ${btnDelete}`;
     }
 
-    if (btnDelete) {
+    if (podeApagar) {
         const btn = div.querySelector('.delete-btn');
         if (btn) {
             btn.addEventListener('click', async () => {
-                // TRAVA DE SEGURANÇA NO CLIQUE
+                // Trava extra de segurança no clique
                 if (!user.isAdmin && msg.userName.toLowerCase() === "admin") {
                     return alert("Você não tem permissão para apagar mensagens do Administrador.");
                 }
@@ -133,18 +134,15 @@ const createMessageElement = (msg, docId) => {
     return div;
 };
 
-// OUVINTE DE CARGO (A Mágica para aparecer na mesma hora)
+// OUVINTE DE CARGO (Atualiza a tela caso o cargo mude em tempo real)
 const listenToMyRole = () => {
     if (unsubscribeMyRole) unsubscribeMyRole();
-    
     const myRoleRef = doc(db, "cargos", user.name.toLowerCase());
     
     unsubscribeMyRole = onSnapshot(myRoleRef, (docSnap) => {
         const isMod = docSnap.exists() && docSnap.data().isModerator;
-        
         if (user.isModerator !== isMod) {
-            user.isModerator = isMod;
-            window.location.reload(); // Recarrega para aplicar
+            window.location.reload(); // Recarrega a página para aplicar as novas permissões
         }
     });
 };
@@ -368,7 +366,7 @@ loginForm.addEventListener("submit", async (event) => {
 
             if (limpouAlgo) await batchLimpeza.commit();
 
-            // 1. PRIMEIRO BUSCA O CARGO
+            // 1. PRIMEIRO BUSCA O CARGO (antes de desenhar a tela)
             const cargoDoc = await getDoc(doc(db, "cargos", user.name.toLowerCase()));
             if (cargoDoc.exists() && cargoDoc.data().isModerator) {
                 user.isModerator = true;
@@ -376,14 +374,14 @@ loginForm.addEventListener("submit", async (event) => {
                 user.isModerator = false;
             }
 
-            // 2. DEPOIS ATUALIZA A LISTA ONLINE
+            // 2. ATUALIZA A LISTA ONLINE
             await setDoc(doc(db, "usuarios_online", user.id), { 
                 name: user.name, 
                 color: user.color, 
                 isModerator: user.isModerator 
             }, { merge: true });
 
-            // 3. SÓ AGORA CARREGA AS MENSAGENS (garantindo que ele já sabe que é moderador)
+            // 3. SÓ AGORA CARREGA AS MENSAGENS E OUVINTES
             listenToMessages(); 
             listenToOnlineUsers();
             listenToMyRole(); 
