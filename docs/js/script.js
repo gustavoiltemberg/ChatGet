@@ -151,7 +151,11 @@ const updateUsersList = (users) => {
 
 // ================= LÓGICA DE WEBSOCKET =================
 const connectWebSocket = () => {
+<<<<<<< HEAD
     websocket = new WebSocket("ws://localhost:8080");
+=======
+    websocket = new WebSocket("wss://chatget-r7es.onrender.com");
+>>>>>>> 73238d7c02c5c98c214aedf18d8bc95559668236
 
     websocket.onmessage = ({ data }) => {
         const msg = JSON.parse(data);
