@@ -125,11 +125,10 @@ const createMessageElement = (msg, docId) => {
     return div;
 };
 
-// OUVINTE DE CARGO (Atualiza o botão dinamicamente na tela atual)
+// OUVINTE DE CARGO (Solução definitiva para o botão aparecer na hora)
 const listenToMyRole = () => {
     if (unsubscribeMyRole) unsubscribeMyRole();
     
-    // Ouve a coleção permanente "cargos"
     const myRoleRef = doc(db, "cargos", user.name.toLowerCase());
     
     unsubscribeMyRole = onSnapshot(myRoleRef, (docSnap) => {
@@ -138,33 +137,20 @@ const listenToMyRole = () => {
         if (user.isModerator !== isMod) {
             user.isModerator = isMod;
             
-            // Dá um pequeno delay para o Firebase garantir que as mensagens foram atualizadas
-            setTimeout(() => {
-                // Atualiza a tela sem gastar leituras
-                chatMessages.querySelectorAll('.message--self, .message--other').forEach(div => {
-                    let senderName = user.name;
-                    if (div.classList.contains('message--other')) {
-                        senderName = div.querySelector('.message--sender')?.innerText || "";
-                    }
-
-                    const btnExiste = div.querySelector('.delete-btn');
-
-                    if (user.isAdmin || (user.isModerator && senderName.toLowerCase() !== "admin")) {
-                        if (!btnExiste) {
-                            const btn = document.createElement('button');
-                            btn.className = 'delete-btn';
-                            btn.innerText = '[Apagar]';
-                            btn.dataset.id = div.dataset.id;
-                            btn.addEventListener('click', async () => { 
-                                await deleteDoc(doc(db, "mensagens", div.dataset.id)); 
-                            });
-                            div.appendChild(btn);
-                        }
-                    } else {
-                        if (btnExiste) btnExiste.remove();
-                    }
+            // Se virou moderador, recarrega as mensagens da tela na mesma hora
+            if (unsubscribeMessages) {
+                unsubscribeMessages(); 
+            }
+            
+            const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
+            getDocs(q).then((snapshot) => {
+                chatMessages.innerHTML = ""; 
+                snapshot.forEach((docSnap) => {
+                    chatMessages.appendChild(createMessageElement(docSnap.data(), docSnap.id));
                 });
-            }, 1000); // 1 segundo de delay
+                scrollScreen();
+                listenToMessages(); 
+            });
         }
     });
 };
@@ -241,9 +227,7 @@ const listenToOnlineUsers = () => {
                     const acao = u.isModerator ? "remover o cargo de moderador de" : "tornar moderador";
                     if (confirm(`Tem certeza que deseja ${acao} "${u.name}"?`)) {
                         try {
-                            // Salva permanentemente na coleção "cargos"
                             await setDoc(doc(db, "cargos", u.name.toLowerCase()), { isModerator: !u.isModerator });
-                            // Atualiza na sessão atual (para o escudo aparecer para todos na hora)
                             await setDoc(doc(db, "usuarios_online", docSnap.id), { isModerator: !u.isModerator }, { merge: true });
                         } catch (e) { console.error("Erro ao moderar:", e); }
                     }
@@ -390,7 +374,6 @@ loginForm.addEventListener("submit", async (event) => {
 
             if (limpouAlgo) await batchLimpeza.commit();
 
-            // VERIFICA O CARGO PERMANENTE
             const cargoDoc = await getDoc(doc(db, "cargos", user.name.toLowerCase()));
             if (cargoDoc.exists() && cargoDoc.data().isModerator) {
                 user.isModerator = true;
@@ -398,7 +381,6 @@ loginForm.addEventListener("submit", async (event) => {
                 user.isModerator = false;
             }
 
-            // Salva na lista online mantendo o status de moderador
             await setDoc(doc(db, "usuarios_online", user.id), { 
                 name: user.name, 
                 color: user.color, 
