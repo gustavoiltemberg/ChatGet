@@ -142,6 +142,39 @@ body {
     font-weight: 600;
 }
 
+/* Botão de Editar Nome e Alterar E-mail */
+.btn-edit-name {
+    background-color: #333;
+    color: #f2f2f2;
+    border: 1px solid #555;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-edit-name:hover {
+    background-color: cadetblue;
+    border-color: cadetblue;
+}
+
+/* Botão de Ativar Som */
+.btn-som {
+    background-color: #2ecc71; /* Verde */
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-som:hover {
+    background-color: #27ae60;
+}
+
 /* Container de Mensagens */
 .chat__messages {
     flex-grow: 1;
@@ -285,7 +318,6 @@ body.is-admin .delete-btn {
     border-top: 1px solid #333;
 }
 
-/* Classe que o JS adiciona para mostrar a barra */
 .chat__stickers.show {
     display: flex;
 }
@@ -416,6 +448,11 @@ body.is-admin .btn-delete-user {
     color: white;
 }
 
+/* NOVO: Espaçamento para o link de "Esqueci a senha" */
+#forgot-password-container {
+    margin-top: 5px;
+}
+
 /* ================= RESPONSIVIDADE (CELULAR) ================= */
 @media (max-width: 600px) {
     .chat__sidebar {
@@ -445,22 +482,4 @@ body.is-admin .btn-delete-user {
         padding-left: 30px;
         padding-top: 20px;
     }
-}
-
-/* ... (seu CSS anterior) ... */
-
-/* NOVO: Botão de Ativar Som */
-.btn-som {
-    background-color: #2ecc71; /* Verde */
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: 0.3s;
-}
-
-.btn-som:hover {
-    background-color: #27ae60;
 }

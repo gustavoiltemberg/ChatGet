@@ -15,7 +15,9 @@
         <section class="login">
             <h2 id="form-title">Login</h2>
             <form class="login__form" id="auth-form">
-                <input type="text" class="login__input" id="username" placeholder="Seu nome de usuário" required />
+                <input type="text" class="login__input" id="username" placeholder="Seu nome de exibição" required />
+                <!-- CAMPO DE E-MAIL ADICIONADO -->
+                <input type="email" class="login__input" id="email" placeholder="Seu e-mail" required />
                 <input type="password" class="login__input" id="password" placeholder="Sua senha" required />
                 <button type="submit" class="login__button" id="submit-btn">Entrar</button>
             </form>
@@ -23,6 +25,10 @@
             <p class="login__toggle">
                 <span id="toggle-msg">Não tem conta?</span> 
                 <a href="#" id="toggle-auth">Cadastre-se</a>
+            </p>
+            <!-- LINK DE ESQUECI A SENHA -->
+            <p class="login__toggle" id="forgot-password-container" style="display: none; margin-top: 5px;">
+                <a href="#" id="forgot-password">Esqueci minha senha</a>
             </p>
         </section>
 
@@ -35,46 +41,33 @@
                     <button id="btn-clear-all" class="btn-admin">Limpar Tudo</button>
                 </div>
                 
-                <!-- NOVO: Botão para ativar o som -->
+                <button id="btn-edit-name" class="btn-edit-name" style="display: none;">✏️ Editar Nome</button>
+                <!-- NOVO BOTÃO: ALTERAR E-MAIL -->
+                <button id="btn-edit-email" class="btn-edit-name" style="display: none;">📧 Alterar E-mail</button>
+
                 <button id="btn-som" class="btn-som" style="display: none;">🔇 Ativar Som</button>
-                
                 <button id="btn-logout" class="btn-logout">Sair</button>
             </div>
 
-            <!-- Painel de Usuários -->
             <aside class="chat__sidebar">
                 <h3>Usuários (<span id="online-count">0</span>)</h3>
                 <ul id="online-list"></ul>
             </aside>
 
-            <!-- Container de Mensagens -->
             <section class="chat__messages"></section>
 
-            <!-- Barra de Emoticons (Imagens) -->
             <div class="chat__stickers" id="stickers-bar">
-                <button type="button" class="sticker-btn" data-emoji="./emojis/coracao.gif">
-                    <img src="./emojis/coracao.gif" alt="Coração">
-                </button>
-                <button type="button" class="sticker-btn" data-emoji="./emojis/sorriso.gif">
-                    <img src="./emojis/sorriso.gif" alt="Sorriso">
-                </button>
-                <button type="button" class="sticker-btn" data-emoji="./emojis/fogo.gif">
-                    <img src="./emojis/fogo.gif" alt="Fogo">
-                </button>
-                <button type="button" class="sticker-btn" data-emoji="./emojis/rindo.gif">
-                    <img src="./emojis/rindo.gif" alt="Rindo">
-                </button>
+                <button type="button" class="sticker-btn" data-emoji="./emojis/coracao.gif"><img src="./emojis/coracao.gif" alt="Coração"></button>
+                <button type="button" class="sticker-btn" data-emoji="./emojis/sorriso.gif"><img src="./emojis/sorriso.gif" alt="Sorriso"></button>
+                <button type="button" class="sticker-btn" data-emoji="./emojis/fogo.gif"><img src="./emojis/fogo.gif" alt="Fogo"></button>
+                <button type="button" class="sticker-btn" data-emoji="./emojis/rindo.gif"><img src="./emojis/rindo.gif" alt="Rindo"></button>
             </div>
 
-            <!-- Formulário de Envio -->
             <form class="chat__form">
-                <!-- Botão que abre/fecha a barra de emoticons -->
                 <button type="button" class="chat__button-gif" id="btn-gif-keyboard" title="Mostrar/Esconder Emoticons">
                     <span class="material-symbols-outlined">gif_box</span>
                 </button>
-
                 <input type="text" class="chat__input" id="chat-input" placeholder="Digite uma mensagem..." required />
-                
                 <button type="submit" class="chat__button">
                     <span class="material-symbols-outlined">send</span>
                 </button>
@@ -84,6 +77,6 @@
 
     </section>
 
-    <script src="./js/script.js"></script>
+    <script type="module" src="./js/script.js"></script>
 </body>
 </html>
