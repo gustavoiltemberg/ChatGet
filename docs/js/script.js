@@ -71,6 +71,7 @@ let unsubscribeMessages = null;
 let unsubscribeUsers = null;
 let unsubscribeBans = null;
 let unsubscribeBanCheck = null;
+let unsubscribeMyRole = null; // NOVO
 let ultimoTimestampCarregado = 0;
 
 // ================= FUNÇÕES AUXILIARES =================
@@ -99,7 +100,7 @@ const createMessageElement = (msg, docId) => {
     const div = document.createElement("div");
     div.dataset.id = docId; 
     
-    // NOVO: Se for admin OU moderador, mostra o botão de apagar mensagem
+    // Se for admin OU moderador, mostra o botão de apagar mensagem
     let btnDelete = "";
     if (user.isAdmin || user.isModerator) {
         btnDelete = `<button class="delete-btn" data-id="${docId}">[Apagar]</button>`;
@@ -120,6 +121,23 @@ const createMessageElement = (msg, docId) => {
         if (btn) btn.addEventListener('click', async () => { await deleteDoc(doc(db, "mensagens", docId)); });
     }
     return div;
+};
+
+// NOVO: Fica ouvindo em tempo real se o seu cargo mudou (para atualizar a tela na hora)
+const listenToMyRole = () => {
+    if (unsubscribeMyRole) unsubscribeMyRole();
+    const myRef = doc(db, "usuarios_online", user.id);
+    
+    unsubscribeMyRole = onSnapshot(myRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const isMod = docSnap.data().isModerator || false;
+            if (user.isModerator !== isMod) {
+                user.isModerator = isMod;
+                // Recarrega as mensagens para atualizar os botões de apagar
+                listenToMessages();
+            }
+        }
+    });
 };
 
 // ================= OUVINTE DE MENSAGENS E SONS =================
@@ -178,17 +196,13 @@ const listenToOnlineUsers = () => {
             const userInfo = document.createElement("div");
             userInfo.classList.add("user-info");
             
-            // NOVO: Adiciona um escudo se o usuário for moderador
             let badge = u.isModerator ? ` <span class="moderator-badge">🛡️</span>` : "";
             userInfo.innerHTML = `${u.name}${badge}`;
             
             li.appendChild(userInfo);
             li.classList.add("user--online");
             
-            // SÓ O ADMIN PODE BANIR OU TORNAR MODERADOR
             if (user.isAdmin && u.name.toLowerCase() !== "admin") {
-                
-                // Botão de Moderador (Escudo)
                 const btnModerateUser = document.createElement("button");
                 btnModerateUser.innerHTML = "🛡️"; 
                 btnModerateUser.classList.add("btn-moderate-user");
@@ -204,7 +218,6 @@ const listenToOnlineUsers = () => {
                 });
                 li.appendChild(btnModerateUser);
 
-                // Botão de Banir (X)
                 const btnDeleteUser = document.createElement("button");
                 btnDeleteUser.innerHTML = "✖"; 
                 btnDeleteUser.classList.add("btn-delete-user");
@@ -306,7 +319,6 @@ loginForm.addEventListener("submit", async (event) => {
             user.name = name;
             user.color = getRandomColor();
 
-            // --- ATIVAÇÃO MÁGICA DO SOM ---
             audioEntrou.volume = 0.01;
             audioEntrou.play().then(() => {
                 somAtivado = true;
@@ -332,7 +344,6 @@ loginForm.addEventListener("submit", async (event) => {
             btnEditName.style.display = "block";
             btnEditEmail.style.display = "block";
             
-            // Limpeza de duplicados
             const qUsuarios = query(collection(db, "usuarios_online"));
             const snapUsuarios = await getDocs(qUsuarios);
             const batchLimpeza = writeBatch(db);
@@ -347,10 +358,8 @@ loginForm.addEventListener("submit", async (event) => {
 
             if (limpouAlgo) await batchLimpeza.commit();
 
-            // Salva ou atualiza o usuário na lista online
-            await setDoc(doc(db, "usuarios_online", user.id), { name: user.name, color: user.color, isModerator: false }, { merge: true });
+            await setDoc(doc(db, "usuarios_online", user.id), { name: user.name, color: user.color }, { merge: true });
             
-            // NOVO: Verifica se o usuário já é um moderador no banco de dados
             const meuUserOnline = await getDoc(doc(db, "usuarios_online", user.id));
             if (meuUserOnline.exists() && meuUserOnline.data().isModerator) {
                 user.isModerator = true;
@@ -358,6 +367,7 @@ loginForm.addEventListener("submit", async (event) => {
 
             listenToMessages(); 
             listenToOnlineUsers();
+            listenToMyRole(); // NOVO: Começa a ouvir se for promovido/rebaixado
             
             if (!user.isAdmin) listenToOwnBanStatus(); 
             
@@ -474,6 +484,7 @@ btnLogout.addEventListener("click", async () => {
     if (unsubscribeMessages) unsubscribeMessages();
     if (unsubscribeUsers) unsubscribeUsers();
     if (unsubscribeBanCheck) unsubscribeBanCheck();
+    if (unsubscribeMyRole) unsubscribeMyRole(); // NOVO
     
     await signOut(auth);
     
