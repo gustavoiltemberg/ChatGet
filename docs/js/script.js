@@ -125,7 +125,7 @@ const createMessageElement = (msg, docId) => {
     return div;
 };
 
-// OUVINTE DE CARGO (O Segredo para aparecer na hora)
+// OUVINTE DE CARGO
 const listenToMyRole = () => {
     if (unsubscribeMyRole) unsubscribeMyRole();
     const myRef = doc(db, "usuarios_online", user.id);
@@ -133,18 +133,10 @@ const listenToMyRole = () => {
     unsubscribeMyRole = onSnapshot(myRef, (docSnap) => {
         if (docSnap.exists()) {
             const isMod = docSnap.data().isModerator || false;
+            // Só atualiza se o cargo realmente mudou
             if (user.isModerator !== isMod) {
                 user.isModerator = isMod;
-                
-                // Força a recriação de todas as mensagens na tela!
-                chatMessages.innerHTML = ""; 
-                const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
-                getDocs(q).then((snapshot) => {
-                    snapshot.forEach((docSnap) => {
-                        chatMessages.appendChild(createMessageElement(docSnap.data(), docSnap.id));
-                    });
-                    scrollScreen();
-                });
+                listenToMessages(); // Redesenha as mensagens com a nova permissão
             }
         }
     });
@@ -222,6 +214,9 @@ const listenToOnlineUsers = () => {
                     const acao = u.isModerator ? "remover o cargo de moderador de" : "tornar moderador";
                     if (confirm(`Tem certeza que deseja ${acao} "${u.name}"?`)) {
                         try {
+                            // Salva o cargo na coleção "cargos" permanentemente
+                            await setDoc(doc(db, "cargos", u.name.toLowerCase()), { isModerator: !u.isModerator });
+                            // Atualiza na tela de quem está online também
                             await setDoc(doc(db, "usuarios_online", docSnap.id), { isModerator: !u.isModerator }, { merge: true });
                         } catch (e) { console.error("Erro ao moderar:", e); }
                     }
@@ -368,12 +363,22 @@ loginForm.addEventListener("submit", async (event) => {
 
             if (limpouAlgo) await batchLimpeza.commit();
 
-            await setDoc(doc(db, "usuarios_online", user.id), { name: user.name, color: user.color }, { merge: true });
-            
-            const meuUserOnline = await getDoc(doc(db, "usuarios_online", user.id));
-            if (meuUserOnline.exists() && meuUserOnline.data().isModerator) {
+            // Verifica se o usuário tem cargo de moderador na coleção "cargos"
+            const cargoDoc = await getDoc(doc(db, "cargos", user.name.toLowerCase()));
+            let cargoModerador = false;
+            if (cargoDoc.exists() && cargoDoc.data().isModerator) {
+                cargoModerador = true;
                 user.isModerator = true;
+            } else {
+                user.isModerator = false;
             }
+
+            // Salva na lista online mantendo o status de moderador
+            await setDoc(doc(db, "usuarios_online", user.id), { 
+                name: user.name, 
+                color: user.color, 
+                isModerator: cargoModerador 
+            }, { merge: true });
 
             listenToMessages(); 
             listenToOnlineUsers();
