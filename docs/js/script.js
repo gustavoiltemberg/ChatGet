@@ -100,7 +100,7 @@ const createMessageElement = (msg, docId) => {
     const div = document.createElement("div");
     div.dataset.id = docId; 
     
-    // REGRA BLINDADA (Aceita admin, e aceita moderador desde que não seja a msg do admin)
+    // REGRA BLINDADA
     const isAdmin = user.isAdmin;
     const isMod = user.isModerator;
     const isAdminMessage = msg.userName.toLowerCase() === "admin";
@@ -134,7 +134,7 @@ const createMessageElement = (msg, docId) => {
     return div;
 };
 
-// OUVINTE DE CARGO (Atualiza a tela se o cargo mudar em tempo real)
+// OUVINTE DE CARGO
 const listenToMyRole = () => {
     if (unsubscribeMyRole) unsubscribeMyRole();
     
@@ -146,7 +146,6 @@ const listenToMyRole = () => {
         if (user.isModerator !== isMod) {
             user.isModerator = isMod;
             
-            // Redesenha as mensagens para aplicar o botão imediatamente
             const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
             getDocs(q).then((snapshot) => {
                 chatMessages.innerHTML = "";
@@ -165,49 +164,50 @@ const listenToMessages = () => {
     
     const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
     
-    // Leitura inicial para garantir que as mensagens sejam desenhadas após o cargo ser carregado
-    getDocs(q).then((initialSnapshot) => {
-        chatMessages.innerHTML = ""; 
-        initialSnapshot.forEach((docSnap) => {
-            chatMessages.appendChild(createMessageElement(docSnap.data(), docSnap.id));
-        });
-        scrollScreen();
-
-        // Depois de desenhar, começa a ouvir atualizações em tempo real
-        unsubscribeMessages = onSnapshot(q, (snapshot) => {
-            snapshot.docChanges().forEach((change) => {
-                if (change.type === "added") {
-                    const msg = change.doc.data();
-                    
-                    if (msg.timestamp > ultimoTimestampCarregado && msg.userId !== user.id) {
-                        if (somAtivado) {
-                            if (msg.isSystem) {
-                                if (msg.content.includes("👉")) {
-                                    audioEntrou.currentTime = 0;
-                                    audioEntrou.play().catch(e => console.log(e));
-                                } else if (msg.content.includes("👈")) {
-                                    audioSaiu.currentTime = 0;
-                                    audioSaiu.play().catch(e => console.log(e));
-                                }
-                            } else {
-                                audioMensagem.currentTime = 0;
-                                audioMensagem.play().catch(e => console.log(e));
-                            }
-                        }
-                    }
-                    
-                    if (msg.timestamp > ultimoTimestampCarregado) {
-                        ultimoTimestampCarregado = msg.timestamp;
-                    }
-                }
-            });
-
+    unsubscribeMessages = onSnapshot(q, (snapshot) => {
+        // Se for a primeira carga (histórico)
+        if (snapshot.docChanges().length > 0 && ultimoTimestampCarregado === 0) {
             chatMessages.innerHTML = ""; 
             snapshot.forEach((docSnap) => {
                 chatMessages.appendChild(createMessageElement(docSnap.data(), docSnap.id));
             });
             scrollScreen();
-        });
+        } else {
+            // Atualizações em tempo real (novas mensagens ou exclusões)
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added") {
+                    const msg = change.doc.data();
+                    chatMessages.appendChild(createMessageElement(msg, change.doc.id));
+                    
+                    if (msg.timestamp > ultimoTimestampCarregado) {
+                        ultimoTimestampCarregado = msg.timestamp;
+                    }
+                    
+                    if (somAtivado && msg.userId !== user.id) {
+                        if (msg.isSystem) {
+                            if (msg.content.includes("👉")) {
+                                audioEntrou.currentTime = 0;
+                                audioEntrou.play().catch(e => console.log(e));
+                            } else if (msg.content.includes("👈")) {
+                                audioSaiu.currentTime = 0;
+                                audioSaiu.play().catch(e => console.log(e));
+                            }
+                        } else {
+                            audioMensagem.currentTime = 0;
+                            audioMensagem.play().catch(e => console.log(e));
+                        }
+                    }
+                    scrollScreen();
+                } 
+                else if (change.type === "removed") {
+                    // Quando uma mensagem é apagada, remove apenas o elemento do HTML, sem redesenhar tudo
+                    const msgElement = chatMessages.querySelector(`[data-id="${change.doc.id}"]`);
+                    if (msgElement) {
+                        msgElement.remove();
+                    }
+                }
+            });
+        }
     });
 };
 
@@ -388,7 +388,7 @@ loginForm.addEventListener("submit", async (event) => {
 
             if (limpouAlgo) await batchLimpeza.commit();
 
-            // CHECA O CARGO ANTES DE RENDERIZAR QUALQUER COISA
+            // CHECA O CARGO ANTES DE RENDERIZAR
             const cargoDoc = await getDoc(doc(db, "cargos", user.name.toLowerCase()));
             if (cargoDoc.exists() && cargoDoc.data().isModerator) {
                 user.isModerator = true;
@@ -396,14 +396,12 @@ loginForm.addEventListener("submit", async (event) => {
                 user.isModerator = false;
             }
 
-            // Adiciona ele na lista online com a permissão que acabou de ser lida
             await setDoc(doc(db, "usuarios_online", user.id), { 
                 name: user.name, 
                 color: user.color, 
                 isModerator: user.isModerator 
             }, { merge: true });
 
-            // SÓ AGORA ele desenha as mensagens na tela (agora ele tem certeza do cargo)
             listenToMessages(); 
             listenToOnlineUsers();
             listenToMyRole(); 
