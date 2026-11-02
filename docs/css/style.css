@@ -632,3 +632,204 @@ body.is-admin .btn-moderate-user {
         bottom: 120px;
     }
 }
+
+/* ================= MODO CLARO ================= */
+/* Quando <body> tem .light-mode, essas regras sobrescrevem as cores escuras */
+
+body.light-mode {
+    background: url("../images/background-light.png");
+    background-color: #f2f2f2; /* Fallback claro */
+    color: #121212;
+}
+
+/* LOGIN */
+body.light-mode .login {
+    background-color: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .login > h2 {
+    color: #121212;
+}
+
+body.light-mode .login__input {
+    background-color: #e8e8e8;
+    color: #121212;
+}
+
+body.light-mode .login__input:focus {
+    outline: 2px solid #212121;
+}
+
+body.light-mode .login__button {
+    background-color: #212121;
+    color: #f2f2f2;
+}
+
+body.light-mode .login__button:hover {
+    background-color: #333;
+}
+
+body.light-mode .login__toggle {
+    color: #555;
+}
+
+body.light-mode .login__toggle a {
+    color: #2980b9;
+}
+
+/* CHAT - HEADER */
+body.light-mode .chat__header {
+    background-color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .btn-logout {
+    background-color: #eee;
+    color: #121212;
+    border-color: #ccc;
+}
+
+body.light-mode .btn-logout:hover {
+    background-color: #c0392b;
+    color: white;
+    border-color: #c0392b;
+}
+
+body.light-mode .btn-edit-name {
+    background-color: #eee;
+    color: #121212;
+    border-color: #ccc;
+}
+
+body.light-mode .btn-edit-name:hover {
+    background-color: #2980b9;
+    color: white;
+    border-color: #2980b9;
+}
+
+body.light-mode .btn-admin {
+    background: #c0392b;
+    color: white;
+}
+
+/* BOTÃO DE SOM */
+body.light-mode .btn-som {
+    background-color: #27ae60;
+    color: white;
+}
+
+body.light-mode .btn-som.muted {
+    background-color: #e74c3c;
+}
+
+/* CHAT - MENSAGENS */
+body.light-mode .chat__messages {
+    /* O fundo é a imagem original, mas com opacidade reduzida para não brigar */
+}
+
+body.light-mode .message--self {
+    background-color: #2980b9;
+    color: #ffffff;
+}
+
+body.light-mode .message--other {
+    background-color: #ffffff;
+    color: #121212;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode .message--sender {
+    color: #2980b9;
+}
+
+body.light-mode .message--system {
+    color: #888 !important;
+    border-bottom-color: #ccc;
+}
+
+body.light-mode .delete-btn {
+    color: #c0392b;
+}
+
+/* CHAT - FORM */
+body.light-mode .chat__form {
+    background-color: #ffffff;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .chat__input {
+    background-color: #e8e8e8;
+    color: #121212;
+}
+
+body.light-mode .chat__button,
+body.light-mode .chat__button-gif {
+    color: #121212;
+}
+
+body.light-mode .chat__button-gif.active {
+    color: #2980b9;
+}
+
+/* STICKERS */
+body.light-mode .chat__stickers {
+    background-color: #ffffff;
+    border-top-color: #ccc;
+}
+
+body.light-mode .sticker-btn {
+    background: #eee;
+}
+
+body.light-mode .sticker-btn:hover {
+    background: #ddd;
+}
+
+/* SIDEBAR */
+body.light-mode .chat__sidebar {
+    background-color: #ffffff;
+    border-right-color: #ccc;
+}
+
+body.light-mode .chat__sidebar h3 {
+    color: #555;
+}
+
+body.light-mode .user--online .user-info {
+    color: #121212;
+}
+
+body.light-mode .user--guest .user-info {
+    color: #999;
+}
+
+/* MODAL DE BANIDOS */
+body.light-mode .modal-content {
+    background-color: #ffffff;
+    color: #121212;
+}
+
+body.light-mode .close-modal {
+    color: #888;
+}
+
+body.light-mode .close-modal:hover {
+    color: #121212;
+}
+
+body.light-mode #bans-list li {
+    background-color: #f5f5f5;
+    border-bottom-color: #ddd;
+}
+
+/* INDICADOR DE DIGITAÇÃO */
+body.light-mode .typing-indicator {
+    background-color: #ffffff;
+    color: #555;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .typing-indicator::before {
+    color: #2980b9;
+}
