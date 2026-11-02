@@ -25,11 +25,6 @@ import {
     criarDebounce 
 } from "./typing.js";
 
-import { 
-    inicializarTema, 
-    configurarBotaoTema 
-} from "./theme.js";
-
 const firebaseConfig = {
   apiKey: "AIzaSyDZlENtMvC3u6HRr4T1n_TnnlbkxRfNid4",
   authDomain: "chat-get-ed551.firebaseapp.com",
@@ -77,22 +72,6 @@ const formTitle = document.querySelector("#form-title");
 const submitBtn = document.querySelector("#submit-btn");
 const toggleMsg = document.querySelector("#toggle-msg");
 const toggleLink = document.querySelector("#toggle-auth");
-
-// ================= TEMA (CLARO/ESCURO) =================
-// 1. Aplica o tema salvo ao carregar a página (antes de qualquer outra coisa)
-inicializarTema();
-
-// 2. Cria o botão de tema dinamicamente (sem precisar mexer no HTML)
-const btnTema = document.createElement("button");
-btnTema.id = "btn-tema";
-btnTema.className = "btn-logout"; // Reusa o estilo visual do botão de logout
-btnTema.style.marginRight = "5px";
-
-// 3. Insere o botão antes do botão "Sair" no header
-btnLogout.parentNode.insertBefore(btnTema, btnLogout);
-
-// 4. Configura o comportamento (alternar + atualizar texto)
-configurarBotaoTema(btnTema);
 
 // ================= INDICADOR DE DIGITAÇÃO (UI) =================
 // Cria o elemento dinamicamente e insere antes do form de envio.

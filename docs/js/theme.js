@@ -58,10 +58,10 @@ export const inicializarTema = () => {
 export const atualizarBotaoTema = (btn) => {
     const tema = obterTemaSalvo();
     if (tema === "light") {
-        btn.innerText = "🌙 Modo Escuro";
+        btn.innerText = "🌙";
         btn.title = "Clique para ativar o modo escuro";
     } else {
-        btn.innerText = "☀️ Modo Claro";
+        btn.innerText = "☀️";
         btn.title = "Clique para ativar o modo claro";
     }
 };
