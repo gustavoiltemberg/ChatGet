@@ -68,7 +68,7 @@ audioMensagem.volume = 1.0;
 // Áudio silencioso (base64) para desbloquear o contexto de áudio do navegador
 const SILENT_AUDIO = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
 
-// Estado do som — sempre começa DESATIVADO
+// Estado do som — começa DESATIVADO
 let somAtivado = false;
 
 const colors = ["cadetblue", "darkgoldenrod", "cornflowerblue", "darkkhaki", "hotpink", "gold"];
@@ -108,7 +108,6 @@ const createMessageElement = (msg, docId) => {
     const div = document.createElement("div");
     div.dataset.id = docId; 
     
-    // REGRA BLINDADA
     const isAdmin = user.isAdmin;
     const isMod = user.isModerator;
     const isAdminMessage = msg.userName.toLowerCase() === "admin";
@@ -154,6 +153,25 @@ const playSound = (audio) => {
         audio.play().catch((e) => console.log("Erro ao tocar som:", e));
     } catch (e) {
         console.log("Erro ao tocar som:", e);
+    }
+};
+
+// ================= BOTÃO DE SOM =================
+/**
+ * Atualiza o texto, a classe e o título do botão de som conforme o estado atual.
+ * - somAtivado = true  → "🔊 Som Ligado"  (verde, sem animação)
+ * - somAtivado = false → "🔇 Som Desligado" (vermelho, com pulso)
+ */
+const atualizarBotaoSom = () => {
+    btnSom.style.display = "block";
+    if (somAtivado) {
+        btnSom.innerText = "🔊 Som Ligado";
+        btnSom.classList.remove("muted");
+        btnSom.title = "Clique para desligar o som";
+    } else {
+        btnSom.innerText = "🔇 Som Desligado";
+        btnSom.classList.add("muted");
+        btnSom.title = "Clique para ligar o som";
     }
 };
 
@@ -235,7 +253,6 @@ const listenToMessages = () => {
                 scrollScreen();
             } 
             else if (change.type === "removed") {
-                // Remoção de mensagem: remove só o elemento, sem redesenhar tudo
                 const msgElement = chatMessages.querySelector(`[data-id="${change.doc.id}"]`);
                 if (msgElement) {
                     msgElement.remove();
@@ -384,23 +401,19 @@ loginForm.addEventListener("submit", async (event) => {
             user.color = getRandomColor();
 
             // ===== LÓGICA DE SOM NO LOGIN =====
-            // Tenta autoplay. Na maioria dos navegadores será bloqueado,
-            // então mostramos o botão para o usuário ativar manualmente.
+            // Tenta autoplay. Se falhar, o botão fica visível para o usuário ativar.
             audioEntrou.volume = 0.01;
             audioEntrou.play().then(() => {
-                // Autoplay funcionou (raro, mas possível se o navegador permitir)
                 somAtivado = true;
-                btnSom.style.display = "none";
                 audioEntrou.volume = 1.0;
+                atualizarBotaoSom();
                 // Toca o som de entrada de verdade
                 audioEntrou.currentTime = 0;
                 audioEntrou.play().catch(() => {});
             }).catch(() => {
-                // Autoplay bloqueado — mostra o botão para ativar manualmente
                 somAtivado = false;
                 audioEntrou.volume = 1.0;
-                btnSom.style.display = "block";
-                btnSom.innerText = "🔊 Ativar Som";
+                atualizarBotaoSom();
             });
 
             if (name.toLowerCase() === "admin") {
@@ -583,6 +596,8 @@ btnLogout.addEventListener("click", async () => {
     btnEditEmail.style.display = "none";
     usernameInput.value = ""; passwordInput.value = ""; emailInput.value = "";
     btnSom.style.display = "none";
+    btnSom.classList.remove("muted");
+    somAtivado = false;
     ultimoTimestampCarregado = 0;
     
     if (!isLoginMode) toggleLink.click();
@@ -643,24 +658,35 @@ btnClearAll.addEventListener("click", async () => {
     }
 });
 
-// ================= BOTÃO DE ATIVAR SOM =================
+// ================= BOTÃO DE LIGAR/DESLIGAR SOM =================
 btnSom.addEventListener("click", () => {
-    // Toca um áudio silencioso para "desbloquear" o contexto de áudio do navegador.
-    // Depois disso, os áudios tocam sem bloqueio.
-    const silentAudio = new Audio(SILENT_AUDIO);
-    silentAudio.volume = 0.01;
-    
-    silentAudio.play().then(() => {
-        somAtivado = true;
-        btnSom.style.display = "none";
-        
-        // Toca o som de entrada como feedback para o usuário
-        audioEntrou.volume = 0.5;
-        audioEntrou.currentTime = 0;
-        audioEntrou.play().finally(() => { 
-            audioEntrou.volume = 1.0; 
+    if (somAtivado) {
+        // ---- DESLIGAR ----
+        somAtivado = false;
+        // Para qualquer áudio que esteja tocando
+        [audioEntrou, audioSaiu, audioMensagem].forEach(a => {
+            a.pause();
+            a.currentTime = 0;
         });
-    }).catch(() => {
-        alert("Não foi possível ativar o som. Verifique as permissões do navegador para este site.");
-    });
+        atualizarBotaoSom();
+    } else {
+        // ---- LIGAR ----
+        // Toca um áudio silencioso para desbloquear o contexto de áudio do navegador
+        const silentAudio = new Audio(SILENT_AUDIO);
+        silentAudio.volume = 0.01;
+
+        silentAudio.play().then(() => {
+            somAtivado = true;
+            atualizarBotaoSom();
+
+            // Feedback: toca um som de entrada baixinho
+            audioEntrou.volume = 0.5;
+            audioEntrou.currentTime = 0;
+            audioEntrou.play().finally(() => {
+                audioEntrou.volume = 1.0;
+            });
+        }).catch(() => {
+            alert("Não foi possível ativar o som. Verifique as permissões do navegador para este site.");
+        });
+    }
 });

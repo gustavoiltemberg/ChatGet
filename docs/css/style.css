@@ -159,7 +159,7 @@ body {
     border-color: cadetblue;
 }
 
-/* Botão de Ativar Som */
+/* ================= BOTÃO DE SOM (LIGA/DESLIGA) ================= */
 .btn-som {
     background-color: #2ecc71;
     color: white;
@@ -169,17 +169,26 @@ body {
     cursor: pointer;
     font-weight: 600;
     transition: 0.3s;
-    animation: pulseSom 1.5s infinite;
 }
 
 .btn-som:hover {
     background-color: #27ae60;
+}
+
+/* Estado DESLIGADO: cinza avermelhado + pulso */
+.btn-som.muted {
+    background-color: #7f3c3c;
+    animation: pulseSom 1.5s infinite;
+}
+
+.btn-som.muted:hover {
+    background-color: #c0392b;
     animation: none;
 }
 
 @keyframes pulseSom {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
-    50% { box-shadow: 0 0 0 8px rgba(46, 204, 113, 0); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.7); }
+    50% { box-shadow: 0 0 0 8px rgba(192, 57, 43, 0); }
 }
 
 /* Container de Mensagens */
