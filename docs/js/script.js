@@ -123,16 +123,10 @@ const createMessageElement = (msg, docId) => {
     if (btnDelete) {
         const btn = div.querySelector('.delete-btn');
         if (btn) {
-            btn.addEventListener('click', async (e) => {
-                e.preventDefault();
+            btn.addEventListener('click', async () => {
                 if (!isAdmin && isAdminMessage) {
                     return alert("Você não tem permissão para apagar mensagens do Administrador.");
                 }
-
-                // Remove o elemento da tela imediatamente, travando a rolagem
-                div.remove();
-                
-                // Depois avisa o Firebase para apagar do banco
                 await deleteDoc(doc(db, "mensagens", docId)); 
             });
         }
@@ -171,6 +165,7 @@ const listenToMessages = () => {
     const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
     
     unsubscribeMessages = onSnapshot(q, (snapshot) => {
+        // Se for a primeira carga (histórico)
         if (snapshot.docChanges().length > 0 && ultimoTimestampCarregado === 0) {
             chatMessages.innerHTML = ""; 
             snapshot.forEach((docSnap) => {
@@ -178,6 +173,7 @@ const listenToMessages = () => {
             });
             scrollScreen();
         } else {
+            // Atualizações em tempo real (novas mensagens ou exclusões)
             snapshot.docChanges().forEach((change) => {
                 if (change.type === "added") {
                     const msg = change.doc.data();
@@ -204,7 +200,7 @@ const listenToMessages = () => {
                     scrollScreen();
                 } 
                 else if (change.type === "removed") {
-                    // Remove apenas o elemento do HTML (mantém a rolagem intacta)
+                    // Quando uma mensagem é apagada, remove apenas o elemento do HTML, sem redesenhar tudo
                     const msgElement = chatMessages.querySelector(`[data-id="${change.doc.id}"]`);
                     if (msgElement) {
                         msgElement.remove();
@@ -392,6 +388,7 @@ loginForm.addEventListener("submit", async (event) => {
 
             if (limpouAlgo) await batchLimpeza.commit();
 
+            // CHECA O CARGO ANTES DE RENDERIZAR
             const cargoDoc = await getDoc(doc(db, "cargos", user.name.toLowerCase()));
             if (cargoDoc.exists() && cargoDoc.data().isModerator) {
                 user.isModerator = true;
@@ -409,6 +406,7 @@ loginForm.addEventListener("submit", async (event) => {
             listenToOnlineUsers();
             listenToMyRole(); 
             
+            // CORREÇÃO AQUI (listenToOwnBanStatus em vez de listenToOwnBanCheck)
             if (!user.isAdmin) listenToOwnBanStatus(); 
             
             await sendSystemMessage(`👉 ${user.name} entrou no chat!`);

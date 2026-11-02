@@ -185,7 +185,6 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    overflow-anchor: none; /* IMPEDE A TELA DE PULAR AO APAGAR MENSAGEM */
 }
 
 .chat__form {
