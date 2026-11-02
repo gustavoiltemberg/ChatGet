@@ -47,12 +47,6 @@ const bansModal = document.querySelector("#bans-modal");
 const closeBansModal = document.querySelector("#close-bans-modal");
 const bansList = document.querySelector("#bans-list");
 
-const audioEntrou = new Audio("./sounds/entrou.mp3");
-const audioSaiu = new Audio("./sounds/saiu.mp3");
-const audioMensagem = new Audio("./sounds/mensagem.mp3");
-audioEntrou.volume = 1.0; audioSaiu.volume = 1.0; audioMensagem.volume = 1.0;
-let somAtivado = false;
-
 const onlineList = document.querySelector("#online-list");
 const onlineCount = document.querySelector("#online-count");
 
@@ -62,6 +56,20 @@ const formTitle = document.querySelector("#form-title");
 const submitBtn = document.querySelector("#submit-btn");
 const toggleMsg = document.querySelector("#toggle-msg");
 const toggleLink = document.querySelector("#toggle-auth");
+
+// ================= ÁUDIOS =================
+const audioEntrou = new Audio("./sounds/entrou.mp3");
+const audioSaiu = new Audio("./sounds/saiu.mp3");
+const audioMensagem = new Audio("./sounds/mensagem.mp3");
+audioEntrou.volume = 1.0;
+audioSaiu.volume = 1.0;
+audioMensagem.volume = 1.0;
+
+// Áudio silencioso (base64) para desbloquear o contexto de áudio do navegador
+const SILENT_AUDIO = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+
+// Estado do som — sempre começa DESATIVADO
+let somAtivado = false;
 
 const colors = ["cadetblue", "darkgoldenrod", "cornflowerblue", "darkkhaki", "hotpink", "gold"];
 const user = { id: "", name: "", color: "", isAdmin: false, isModerator: false };
@@ -134,7 +142,22 @@ const createMessageElement = (msg, docId) => {
     return div;
 };
 
-// OUVINTE DE CARGO
+// ================= REPRODUÇÃO DE SOM =================
+/**
+ * Toca um áudio de forma segura, reiniciando o tempo.
+ * Só toca se o som estiver ativado.
+ */
+const playSound = (audio) => {
+    if (!somAtivado) return;
+    try {
+        audio.currentTime = 0;
+        audio.play().catch((e) => console.log("Erro ao tocar som:", e));
+    } catch (e) {
+        console.log("Erro ao tocar som:", e);
+    }
+};
+
+// ================= OUVINTE DE CARGO =================
 const listenToMyRole = () => {
     if (unsubscribeMyRole) unsubscribeMyRole();
     
@@ -161,53 +184,64 @@ const listenToMyRole = () => {
 // ================= OUVINTE DE MENSAGENS E SONS =================
 const listenToMessages = () => {
     if (unsubscribeMessages) unsubscribeMessages();
+
+    // Reset do timestamp ao recriar o listener
+    ultimoTimestampCarregado = 0;
     
     const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
     
     unsubscribeMessages = onSnapshot(q, (snapshot) => {
-        // Se for a primeira carga (histórico)
+        // ===== PRIMEIRA CARGA (histórico) — não toca som =====
         if (snapshot.docChanges().length > 0 && ultimoTimestampCarregado === 0) {
             chatMessages.innerHTML = ""; 
             snapshot.forEach((docSnap) => {
-                chatMessages.appendChild(createMessageElement(docSnap.data(), docSnap.id));
+                const data = docSnap.data();
+                chatMessages.appendChild(createMessageElement(data, docSnap.id));
+                const ts = data.timestamp || 0;
+                if (ts > ultimoTimestampCarregado) ultimoTimestampCarregado = ts;
             });
             scrollScreen();
-        } else {
-            // Atualizações em tempo real (novas mensagens ou exclusões)
-            snapshot.docChanges().forEach((change) => {
-                if (change.type === "added") {
-                    const msg = change.doc.data();
-                    chatMessages.appendChild(createMessageElement(msg, change.doc.id));
-                    
-                    if (msg.timestamp > ultimoTimestampCarregado) {
-                        ultimoTimestampCarregado = msg.timestamp;
-                    }
-                    
-                    if (somAtivado && msg.userId !== user.id) {
-                        if (msg.isSystem) {
-                            if (msg.content.includes("👉")) {
-                                audioEntrou.currentTime = 0;
-                                audioEntrou.play().catch(e => console.log(e));
-                            } else if (msg.content.includes("👈")) {
-                                audioSaiu.currentTime = 0;
-                                audioSaiu.play().catch(e => console.log(e));
-                            }
-                        } else {
-                            audioMensagem.currentTime = 0;
-                            audioMensagem.play().catch(e => console.log(e));
+            return;
+        }
+
+        // ===== ATUALIZAÇÕES EM TEMPO REAL =====
+        snapshot.docChanges().forEach((change) => {
+            if (change.type === "added") {
+                const msg = change.doc.data();
+                chatMessages.appendChild(createMessageElement(msg, change.doc.id));
+
+                // Verifica se é uma mensagem REALMENTE nova (evita duplicar histórico)
+                const isNewMessage = msg.timestamp > ultimoTimestampCarregado;
+                if (isNewMessage) {
+                    ultimoTimestampCarregado = msg.timestamp;
+                }
+
+                // Só toca som se:
+                // 1) O som estiver ativado
+                // 2) For uma mensagem nova (não do histórico inicial)
+                // 3) NÃO for do próprio usuário (para não duplicar com o som local do envio)
+                if (somAtivado && isNewMessage && msg.userId !== user.id) {
+                    if (msg.isSystem) {
+                        if (msg.content.includes("👉")) {
+                            playSound(audioEntrou);
+                        } else if (msg.content.includes("👈")) {
+                            playSound(audioSaiu);
                         }
-                    }
-                    scrollScreen();
-                } 
-                else if (change.type === "removed") {
-                    // Quando uma mensagem é apagada, remove apenas o elemento do HTML, sem redesenhar tudo
-                    const msgElement = chatMessages.querySelector(`[data-id="${change.doc.id}"]`);
-                    if (msgElement) {
-                        msgElement.remove();
+                    } else {
+                        playSound(audioMensagem);
                     }
                 }
-            });
-        }
+
+                scrollScreen();
+            } 
+            else if (change.type === "removed") {
+                // Remoção de mensagem: remove só o elemento, sem redesenhar tudo
+                const msgElement = chatMessages.querySelector(`[data-id="${change.doc.id}"]`);
+                if (msgElement) {
+                    msgElement.remove();
+                }
+            }
+        });
     });
 };
 
@@ -349,14 +383,24 @@ loginForm.addEventListener("submit", async (event) => {
             user.name = name;
             user.color = getRandomColor();
 
+            // ===== LÓGICA DE SOM NO LOGIN =====
+            // Tenta autoplay. Na maioria dos navegadores será bloqueado,
+            // então mostramos o botão para o usuário ativar manualmente.
             audioEntrou.volume = 0.01;
             audioEntrou.play().then(() => {
+                // Autoplay funcionou (raro, mas possível se o navegador permitir)
                 somAtivado = true;
-                btnSom.style.display = "none"; 
-                audioEntrou.volume = 1.0; 
-            }).catch((e) => {
+                btnSom.style.display = "none";
+                audioEntrou.volume = 1.0;
+                // Toca o som de entrada de verdade
+                audioEntrou.currentTime = 0;
+                audioEntrou.play().catch(() => {});
+            }).catch(() => {
+                // Autoplay bloqueado — mostra o botão para ativar manualmente
                 somAtivado = false;
+                audioEntrou.volume = 1.0;
                 btnSom.style.display = "block";
+                btnSom.innerText = "🔊 Ativar Som";
             });
 
             if (name.toLowerCase() === "admin") {
@@ -406,7 +450,6 @@ loginForm.addEventListener("submit", async (event) => {
             listenToOnlineUsers();
             listenToMyRole(); 
             
-            // CORREÇÃO AQUI (listenToOwnBanStatus em vez de listenToOwnBanCheck)
             if (!user.isAdmin) listenToOwnBanStatus(); 
             
             await sendSystemMessage(`👉 ${user.name} entrou no chat!`);
@@ -511,11 +554,13 @@ btnEditEmail.addEventListener("click", async () => {
 });
 
 btnLogout.addEventListener("click", async () => {
-    if (somAtivado) {
-        audioSaiu.currentTime = 0;
-        audioSaiu.play().catch(e => console.log(e));
-    }
     if (user.id) {
+        // Toca o som de saída LOCALMENTE (para o usuário que está saindo)
+        if (somAtivado) {
+            audioSaiu.currentTime = 0;
+            audioSaiu.play().catch(e => console.log(e));
+        }
+        
         await deleteDoc(doc(db, "usuarios_online", user.id));
         await sendSystemMessage(`👈 ${user.name} saiu do chat.`);
     }
@@ -561,6 +606,7 @@ const sendMessageToDb = async (content) => {
             content: content,
             timestamp: Date.now()
         });
+        // Toca o som LOCALMENTE para quem enviou (o listener ignora msg do próprio user)
         if (somAtivado) {
             audioMensagem.currentTime = 0;
             audioMensagem.play().catch(e => console.log(e));
@@ -597,10 +643,24 @@ btnClearAll.addEventListener("click", async () => {
     }
 });
 
+// ================= BOTÃO DE ATIVAR SOM =================
 btnSom.addEventListener("click", () => {
-    audioEntrou.currentTime = 0;
-    audioEntrou.play().then(() => {
+    // Toca um áudio silencioso para "desbloquear" o contexto de áudio do navegador.
+    // Depois disso, os áudios tocam sem bloqueio.
+    const silentAudio = new Audio(SILENT_AUDIO);
+    silentAudio.volume = 0.01;
+    
+    silentAudio.play().then(() => {
         somAtivado = true;
-        btnSom.style.display = "none"; 
-    }).catch(e => alert("O navegador não conseguiu tocar o som."));
+        btnSom.style.display = "none";
+        
+        // Toca o som de entrada como feedback para o usuário
+        audioEntrou.volume = 0.5;
+        audioEntrou.currentTime = 0;
+        audioEntrou.play().finally(() => { 
+            audioEntrou.volume = 1.0; 
+        });
+    }).catch(() => {
+        alert("Não foi possível ativar o som. Verifique as permissões do navegador para este site.");
+    });
 });

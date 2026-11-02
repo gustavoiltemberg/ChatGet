@@ -169,10 +169,17 @@ body {
     cursor: pointer;
     font-weight: 600;
     transition: 0.3s;
+    animation: pulseSom 1.5s infinite;
 }
 
 .btn-som:hover {
     background-color: #27ae60;
+    animation: none;
+}
+
+@keyframes pulseSom {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+    50% { box-shadow: 0 0 0 8px rgba(46, 204, 113, 0); }
 }
 
 /* Container de Mensagens */
