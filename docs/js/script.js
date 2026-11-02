@@ -9,14 +9,6 @@ import {
     getDoc, writeBatch, setDoc, limit
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// ================= IMPORTS LOCAIS =================
-import { 
-    carregarMensagensDoCache, 
-    adicionarMensagemAoCache, 
-    removerMensagemDoCache,
-    limparCache 
-} from "./storage.js";
-
 import { 
     marcarComoDigitando, 
     pararDeDigitar, 
@@ -233,18 +225,6 @@ const listenToMessages = () => {
 
     // Reset do timestamp ao recriar o listener
     ultimoTimestampCarregado = 0;
-
-    // ===== CACHE LOCAL: CARREGA INSTANTANEAMENTE ANTES DO FIRESTORE =====
-    const cacheLocal = carregarMensagensDoCache();
-    if (cacheLocal.length > 0 && chatMessages.children.length === 0) {
-        chatMessages.innerHTML = "";
-        cacheLocal.forEach((item) => {
-            chatMessages.appendChild(createMessageElement(item, item.id));
-        });
-        const maiorTs = Math.max(...cacheLocal.map(m => m.timestamp || 0), 0);
-        if (maiorTs > ultimoTimestampCarregado) ultimoTimestampCarregado = maiorTs;
-        scrollScreen();
-    }
     
     const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
     
@@ -267,9 +247,6 @@ const listenToMessages = () => {
             if (change.type === "added") {
                 const msg = change.doc.data();
                 chatMessages.appendChild(createMessageElement(msg, change.doc.id));
-
-                // ===== CACHE LOCAL: SALVA A NOVA MENSAGEM =====
-                adicionarMensagemAoCache({ ...msg, id: change.doc.id });
 
                 // Verifica se é uma mensagem REALMENTE nova (evita duplicar histórico)
                 const isNewMessage = msg.timestamp > ultimoTimestampCarregado;
@@ -300,8 +277,6 @@ const listenToMessages = () => {
                 if (msgElement) {
                     msgElement.remove();
                 }
-                // ===== CACHE LOCAL: REMOVE A MENSAGEM APAGADA =====
-                removerMensagemDoCache(change.doc.id);
             }
         });
     });
@@ -753,8 +728,6 @@ btnClearAll.addEventListener("click", async () => {
             const batch = writeBatch(db);
             snapshot.forEach((docSnap) => batch.delete(docSnap.ref));
             await batch.commit();
-            // ===== CACHE LOCAL: LIMPA O CACHE =====
-            limparCache();
         } catch (e) { console.error(e); }
     }
 });
