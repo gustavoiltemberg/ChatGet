@@ -123,22 +123,17 @@ const createMessageElement = (msg, docId) => {
     if (btnDelete) {
         const btn = div.querySelector('.delete-btn');
         if (btn) {
-            btn.addEventListener('click', async () => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
                 if (!isAdmin && isAdminMessage) {
                     return alert("Você não tem permissão para apagar mensagens do Administrador.");
                 }
 
-                // 1. Tira o foco do botão para o navegador não pular para o topo
-                btn.blur();
-
-                // 2. Salva a posição exata do scroll antes de apagar
-                const scrollAtual = window.scrollY;
-
-                // 3. Apaga a mensagem no banco
+                // Remove o elemento da tela imediatamente, travando a rolagem
+                div.remove();
+                
+                // Depois avisa o Firebase para apagar do banco
                 await deleteDoc(doc(db, "mensagens", docId)); 
-
-                // 4. Devolve a tela para a posição que estava (instantaneamente)
-                window.scrollTo({ top: scrollAtual, behavior: "instant" });
             });
         }
     }
@@ -176,7 +171,6 @@ const listenToMessages = () => {
     const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
     
     unsubscribeMessages = onSnapshot(q, (snapshot) => {
-        // Se for a primeira carga (histórico)
         if (snapshot.docChanges().length > 0 && ultimoTimestampCarregado === 0) {
             chatMessages.innerHTML = ""; 
             snapshot.forEach((docSnap) => {
@@ -184,7 +178,6 @@ const listenToMessages = () => {
             });
             scrollScreen();
         } else {
-            // Atualizações em tempo real (novas mensagens ou exclusões)
             snapshot.docChanges().forEach((change) => {
                 if (change.type === "added") {
                     const msg = change.doc.data();
@@ -211,7 +204,7 @@ const listenToMessages = () => {
                     scrollScreen();
                 } 
                 else if (change.type === "removed") {
-                    // Remove apenas o elemento específico do HTML, sem redesenhar tudo
+                    // Remove apenas o elemento do HTML (mantém a rolagem intacta)
                     const msgElement = chatMessages.querySelector(`[data-id="${change.doc.id}"]`);
                     if (msgElement) {
                         msgElement.remove();
@@ -399,7 +392,6 @@ loginForm.addEventListener("submit", async (event) => {
 
             if (limpouAlgo) await batchLimpeza.commit();
 
-            // CHECA O CARGO ANTES DE RENDERIZAR
             const cargoDoc = await getDoc(doc(db, "cargos", user.name.toLowerCase()));
             if (cargoDoc.exists() && cargoDoc.data().isModerator) {
                 user.isModerator = true;
