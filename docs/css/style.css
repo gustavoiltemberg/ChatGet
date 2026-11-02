@@ -591,3 +591,44 @@ body.is-admin .btn-moderate-user {
         padding-top: 20px;
     }
 }
+
+/* ================= INDICADOR DE DIGITAÇÃO ================= */
+.typing-indicator {
+    position: fixed;
+    bottom: 70px;
+    left: 180px;
+    padding: 6px 14px;
+    background-color: #191919;
+    color: #aaa;
+    font-size: 0.8rem;
+    font-style: italic;
+    border-radius: 12px;
+    z-index: 9;
+    pointer-events: none;
+    animation: typingFadeIn 0.3s ease-in-out;
+}
+
+.typing-indicator::before {
+    content: "● ● ●";
+    color: cadetblue;
+    margin-right: 8px;
+    letter-spacing: 2px;
+    animation: typingDots 1.2s infinite;
+}
+
+@keyframes typingFadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes typingDots {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+@media (max-width: 600px) {
+    .typing-indicator {
+        left: 30px;
+        bottom: 120px;
+    }
+}

@@ -9,6 +9,22 @@ import {
     getDoc, writeBatch, setDoc, limit
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// ================= IMPORTS LOCAIS =================
+import { 
+    carregarMensagensDoCache, 
+    adicionarMensagemAoCache, 
+    removerMensagemDoCache,
+    limparCache 
+} from "./storage.js";
+
+import { 
+    marcarComoDigitando, 
+    pararDeDigitar, 
+    ouvirDigitando, 
+    formatarTextoDigitando,
+    criarDebounce 
+} from "./typing.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyDZlENtMvC3u6HRr4T1n_TnnlbkxRfNid4",
   authDomain: "chat-get-ed551.firebaseapp.com",
@@ -57,6 +73,13 @@ const submitBtn = document.querySelector("#submit-btn");
 const toggleMsg = document.querySelector("#toggle-msg");
 const toggleLink = document.querySelector("#toggle-auth");
 
+// ================= INDICADOR DE DIGITAÇÃO (UI) =================
+// Cria o elemento dinamicamente e insere antes do form de envio.
+const typingIndicator = document.createElement("div");
+typingIndicator.className = "typing-indicator";
+typingIndicator.style.display = "none";
+chatForm.parentNode.insertBefore(typingIndicator, chatForm);
+
 // ================= ÁUDIOS =================
 const audioEntrou = new Audio("./sounds/entrou.mp3");
 const audioSaiu = new Audio("./sounds/saiu.mp3");
@@ -81,6 +104,11 @@ let unsubscribeBans = null;
 let unsubscribeBanCheck = null;
 let unsubscribeMyRole = null;
 let ultimoTimestampCarregado = 0;
+
+// Controle do indicador de digitação
+let unsubscribeTyping = null;
+let timeoutPararDigitando = null;
+let estaDigitando = false;
 
 // ================= FUNÇÕES AUXILIARES =================
 const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
@@ -205,6 +233,18 @@ const listenToMessages = () => {
 
     // Reset do timestamp ao recriar o listener
     ultimoTimestampCarregado = 0;
+
+    // ===== CACHE LOCAL: CARREGA INSTANTANEAMENTE ANTES DO FIRESTORE =====
+    const cacheLocal = carregarMensagensDoCache();
+    if (cacheLocal.length > 0 && chatMessages.children.length === 0) {
+        chatMessages.innerHTML = "";
+        cacheLocal.forEach((item) => {
+            chatMessages.appendChild(createMessageElement(item, item.id));
+        });
+        const maiorTs = Math.max(...cacheLocal.map(m => m.timestamp || 0), 0);
+        if (maiorTs > ultimoTimestampCarregado) ultimoTimestampCarregado = maiorTs;
+        scrollScreen();
+    }
     
     const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
     
@@ -227,6 +267,9 @@ const listenToMessages = () => {
             if (change.type === "added") {
                 const msg = change.doc.data();
                 chatMessages.appendChild(createMessageElement(msg, change.doc.id));
+
+                // ===== CACHE LOCAL: SALVA A NOVA MENSAGEM =====
+                adicionarMensagemAoCache({ ...msg, id: change.doc.id });
 
                 // Verifica se é uma mensagem REALMENTE nova (evita duplicar histórico)
                 const isNewMessage = msg.timestamp > ultimoTimestampCarregado;
@@ -257,6 +300,8 @@ const listenToMessages = () => {
                 if (msgElement) {
                     msgElement.remove();
                 }
+                // ===== CACHE LOCAL: REMOVE A MENSAGEM APAGADA =====
+                removerMensagemDoCache(change.doc.id);
             }
         });
     });
@@ -462,6 +507,18 @@ loginForm.addEventListener("submit", async (event) => {
             listenToMessages(); 
             listenToOnlineUsers();
             listenToMyRole(); 
+
+            // ===== INDICADOR DE DIGITAÇÃO =====
+            unsubscribeTyping = ouvirDigitando(db, user.id, (nomes) => {
+                const texto = formatarTextoDigitando(nomes);
+                if (texto) {
+                    typingIndicator.innerText = texto;
+                    typingIndicator.style.display = "block";
+                } else {
+                    typingIndicator.style.display = "none";
+                    typingIndicator.innerText = "";
+                }
+            });
             
             if (!user.isAdmin) listenToOwnBanStatus(); 
             
@@ -573,6 +630,11 @@ btnLogout.addEventListener("click", async () => {
             audioSaiu.currentTime = 0;
             audioSaiu.play().catch(e => console.log(e));
         }
+
+        // Para de digitar ao sair
+        estaDigitando = false;
+        clearTimeout(timeoutPararDigitando);
+        await pararDeDigitar(db, user.id).catch(() => {});
         
         await deleteDoc(doc(db, "usuarios_online", user.id));
         await sendSystemMessage(`👈 ${user.name} saiu do chat.`);
@@ -581,6 +643,7 @@ btnLogout.addEventListener("click", async () => {
     if (unsubscribeUsers) unsubscribeUsers();
     if (unsubscribeBanCheck) unsubscribeBanCheck();
     if (unsubscribeMyRole) unsubscribeMyRole();
+    if (unsubscribeTyping) unsubscribeTyping();
     
     await signOut(auth);
     
@@ -599,6 +662,12 @@ btnLogout.addEventListener("click", async () => {
     btnSom.classList.remove("muted");
     somAtivado = false;
     ultimoTimestampCarregado = 0;
+
+    // Reseta indicador de digitação
+    estaDigitando = false;
+    clearTimeout(timeoutPararDigitando);
+    typingIndicator.style.display = "none";
+    typingIndicator.innerText = "";
     
     if (!isLoginMode) toggleLink.click();
 });
@@ -633,6 +702,36 @@ chatForm.addEventListener("submit", (event) => {
     event.preventDefault();
     sendMessageToDb(chatInput.value.trim());
     chatInput.value = "";
+
+    // Para de digitar ao enviar
+    estaDigitando = false;
+    clearTimeout(timeoutPararDigitando);
+    pararDeDigitar(db, user.id).catch(() => {});
+});
+
+// ================= INDICADOR DE DIGITAÇÃO (INPUT) =================
+// Envia "digitando" a cada 1s no máximo (debounce)
+const enviarDigitandoDebounced = criarDebounce(() => {
+    if (!user.id) return;
+    marcarComoDigitando(db, user).catch(() => {});
+}, 1000);
+
+chatInput.addEventListener("input", () => {
+    if (!user.id) return;
+    
+    if (!estaDigitando) {
+        estaDigitando = true;
+        marcarComoDigitando(db, user).catch(() => {});
+    }
+    
+    enviarDigitandoDebounced();
+    
+    // Reseta o timer que vai "parar de digitar" após 3s sem teclar
+    clearTimeout(timeoutPararDigitando);
+    timeoutPararDigitando = setTimeout(() => {
+        estaDigitando = false;
+        pararDeDigitar(db, user.id).catch(() => {});
+    }, 3000);
 });
 
 stickersBar.addEventListener("click", (e) => {
@@ -654,6 +753,8 @@ btnClearAll.addEventListener("click", async () => {
             const batch = writeBatch(db);
             snapshot.forEach((docSnap) => batch.delete(docSnap.ref));
             await batch.commit();
+            // ===== CACHE LOCAL: LIMPA O CACHE =====
+            limparCache();
         } catch (e) { console.error(e); }
     }
 });
