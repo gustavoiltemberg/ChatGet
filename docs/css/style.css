@@ -595,7 +595,7 @@ body.is-admin .btn-moderate-user {
 /* ================= INDICADOR DE DIGITAÇÃO ================= */
 .typing-indicator {
     position: fixed;
-    bottom: 70px;
+    bottom: 90px; /* 80px do form + 10px de margem */
     left: 180px;
     padding: 6px 14px;
     background-color: #191919;
@@ -603,7 +603,7 @@ body.is-admin .btn-moderate-user {
     font-size: 0.8rem;
     font-style: italic;
     border-radius: 12px;
-    z-index: 9;
+    z-index: 15; /* Acima do form (10) */
     pointer-events: none;
     animation: typingFadeIn 0.3s ease-in-out;
 }
