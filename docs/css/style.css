@@ -566,10 +566,11 @@ body.is-admin .btn-moderate-user {
 }
 
 .moderator-badge {
-font-size: 0.7rem;
-margin-left: 4px;
-color: #f1c40f;
+    font-size: 0.7rem;
+    margin-left: 4px;
+    color: #f1c40f;
 }
+
 .typing-indicator {
 position: fixed;
 bottom: 90px;
@@ -616,11 +617,12 @@ left: 30px;
 body { background-attachment: fixed; background-size: cover; background-position: center; }
 .container { height: 100dvh; align-items: stretch; justify-content: stretch; }
 .login { margin: auto; max-width: 92%; padding: 22px 18px; }
+/* CORREÇÃO: Mudado de display: flex para display: none para iniciar oculto no mobile */
 .chat {
 position: relative;
 height: 100dvh;
 padding-top: 140px;
-display: flex;
+display: none;
 flex-direction: column;
 }
 .chat__header {
