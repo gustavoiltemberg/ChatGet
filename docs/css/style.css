@@ -204,7 +204,7 @@ body {
     flex-wrap: nowrap;
 }
 
-/* Container de Mensagens */
+/* Container de Mensagens (Desktop) */
 .chat__messages {
     flex-grow: 1;
     padding-left: 180px;
@@ -659,7 +659,7 @@ body.is-admin .btn-moderate-user {
         border-radius: 5px;
     }
 
-    /* Sidebar fixa logo abaixo do header */
+    /* Sidebar logo abaixo do header */
     .chat__sidebar {
         position: fixed;
         top: 48px; left: 0; width: 100%; height: auto; max-height: 90px;
@@ -674,19 +674,41 @@ body.is-admin .btn-moderate-user {
     .chat__sidebar ul { display: flex; gap: 12px; flex-wrap: nowrap; margin: 0; padding: 0; }
     .chat__sidebar li { margin: 0; flex-shrink: 0; font-size: 0.8rem; }
 
-    /* ✅ CORREÇÃO: mensagens começam visíveis, sem cobrir o topo */
+    /* ✅ CORREÇÃO DO ESPAÇO VAZIO E DO TOPO */
     .chat__messages {
         position: fixed;
-        top: 140px;                  /* header (48px) + sidebar (90px) + folga */
-        bottom: 60px;                /* espaço para o form */
+        top: 140px;    
+        bottom: 60px;  
         left: 0; right: 0;
-        padding: 10px 12px 20px 12px; /* padding-bottom pequeno; o bottom:60px já reserva o form */
+        padding: 10px 12px; 
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
+        display: flex;
+        flex-direction: column;
         justify-content: flex-start;
-        scroll-padding-top: 10px;    /* garante que a 1ª mensagem não fique atrás da borda */
     }
-    .chat__messages > div { max-width: 85%; font-size: 0.88rem; }
+
+    /* ✅ CORREÇÃO DA BOLHA E DOS GIFS NO CELULAR */
+    .chat__messages > div {
+        max-width: 85%;
+        font-size: 0.88rem;
+        display: flex;          /* Impede que a bolha estique 100% se a imagem for grande */
+        flex-direction: column; /* Organiza: Nome em cima, GIF embaixo */
+        width: fit-content;     /* A bolha se adapta ao tamanho do GIF */
+    }
+
+    .message--content img {
+        max-width: 100%;        /* Não deixa a imagem vazar para os lados */
+        max-height: 180px;      /* Aumentei um pouco para o GIF aparecer inteiro */
+        object-fit: contain;    /* Garante que o GIF inteiro caiba sem cortar */
+        border-radius: 8px;
+        margin-top: 5px;
+        display: block;
+    }
+
+    /* Garante que as mensagens fiquem alinhadas certinho no celular */
+    .message--self { align-self: flex-end; }
+    .message--other { align-self: flex-start; }
 
     .chat__form {
         position: fixed;
