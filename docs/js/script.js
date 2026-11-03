@@ -83,7 +83,12 @@ const SILENT_AUDIO = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwA
 
 let somAtivado = false;
 
-// ✅ CORREÇÃO: cor determinística baseada no uid (mesma pessoa = mesma cor sempre)
+// ✅ FUNÇÃO AUXILIAR: Formata o nome para exibição (primeira letra maiúscula)
+const formatarNomeExibicao = (nome) => {
+    if (!nome) return "Anônimo";
+    return nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
+};
+
 const colors = ["cadetblue", "darkgoldenrod", "cornflowerblue", "darkkhaki", "hotpink", "gold"];
 const colorFromId = (id) => {
     if (!id) return colors[0];
@@ -97,7 +102,6 @@ const user = { id: "", name: "", color: "", isAdmin: false, isModerator: false }
 let isLoginMode = true;
 let ultimoTimestampCarregado = 0;
 
-// ✅ CORREÇÃO: todos os unsubscribes centralizados
 const unsubs = {
     messages: null,
     users: null,
@@ -117,19 +121,18 @@ let timeoutPararDigitando = null;
 let estaDigitando = false;
 
 // ================= FUNÇÕES AUXILIARES =================
-
-// ✅ CORREÇÃO: rolar o CONTAINER, não a página (necessário no mobile)
 let scrollPending = false;
 const scrollScreen = () => {
     if (scrollPending) return;
     scrollPending = true;
     requestAnimationFrame(() => {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        if (chatMessages) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
         scrollPending = false;
     });
 };
 
-// ✅ CORREÇÃO: validação de domínio mais segura
 const isImageURL = (url) => {
     if (!url || typeof url !== "string") return false;
     const lower = url.toLowerCase();
@@ -144,7 +147,6 @@ const isImageURL = (url) => {
     }
 };
 
-// ✅ CORREÇÃO: usa textContent para evitar XSS
 const buildContentNode = (content) => {
     const container = document.createElement("div");
     container.className = "message--content";
@@ -164,7 +166,7 @@ const createMessageElement = (msg, docId) => {
     if (msg.isSystem) {
         const div = document.createElement("div");
         div.classList.add("message--system");
-        div.textContent = msg.content; // ✅ antes era innerHTML
+        div.textContent = msg.content;
         div.dataset.id = docId;
         return div;
     }
@@ -184,7 +186,7 @@ const createMessageElement = (msg, docId) => {
         const sender = document.createElement("span");
         sender.className = "message--sender";
         sender.style.color = msg.userColor || colorFromId(msg.userId);
-        sender.textContent = msg.userName || "Anônimo";
+        sender.textContent = formatarNomeExibicao(msg.userName) || "Anônimo";
         div.appendChild(sender);
     }
 
@@ -200,7 +202,7 @@ const createMessageElement = (msg, docId) => {
                 return alert("Você não tem permissão para apagar mensagens do Administrador.");
             }
             try { await deleteDoc(doc(db, "mensagens", docId)); }
-            catch (e) { console.error("Erro ao apagar:", e); }
+            catch (e) { console.error("Erro ao apagar:", e); alert("Erro ao apagar. Verifique se você tem permissão."); }
         });
         div.appendChild(btn);
     }
@@ -209,7 +211,6 @@ const createMessageElement = (msg, docId) => {
 };
 
 // ================= REPRODUÇÃO DE SOM =================
-// ✅ CORREÇÃO: sempre define volume antes de tocar
 const playSound = (audio, volume = 1.0) => {
     if (!somAtivado) return;
     try {
@@ -223,8 +224,6 @@ const playSound = (audio, volume = 1.0) => {
     }
 };
 
-// ================= BOTÃO DE SOM =================
-// ✅ CORREÇÃO: estado inicial consistente (desligado até login confirmar)
 const atualizarBotaoSom = () => {
     btnSom.style.display = "block";
     if (somAtivado) {
@@ -240,7 +239,7 @@ const atualizarBotaoSom = () => {
 
 // ================= OUVINTE DE CARGO =================
 const renderAllMessagesFromSnapshot = (snapshot) => {
-    const frag = document.createDocumentFragment(); // ✅ fragment = mais rápido
+    const frag = document.createDocumentFragment();
     snapshot.forEach((d) => {
         frag.appendChild(createMessageElement(d.data(), d.id));
         const ts = d.data().timestamp || 0;
@@ -254,12 +253,23 @@ const renderAllMessagesFromSnapshot = (snapshot) => {
 const listenToMyRole = () => {
     if (unsubs.myRole) unsubs.myRole();
 
-    const myRoleRef = doc(db, "cargos", user.name.toLowerCase());
+    const myRoleRef = doc(db, "cargos", (user.name || "").toLowerCase());
     unsubs.myRole = onSnapshot(myRoleRef, (docSnap) => {
         const isMod = docSnap.exists() && !!docSnap.data().isModerator;
-        if (user.isModerator !== isMod) {
+        const isAdm = docSnap.exists() && !!docSnap.data().isAdmin;
+
+        if (user.isModerator !== isMod || user.isAdmin !== isAdm) {
             user.isModerator = isMod;
-            // re-render reutiliza a mesma lógica
+            if (isAdm || (user.name || "").toLowerCase() === "admin") {
+                user.isAdmin = true;
+                document.body.classList.add("is-admin");
+                adminBar.style.display = "block";
+            } else {
+                user.isAdmin = false;
+                document.body.classList.remove("is-admin");
+                adminBar.style.display = "none";
+            }
+            
             const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
             getDocs(q).then(renderAllMessagesFromSnapshot).catch(console.error);
         }
@@ -274,7 +284,6 @@ const listenToMessages = () => {
     const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
 
     unsubs.messages = onSnapshot(q, (snapshot) => {
-        // primeira carga (histórico)
         if (snapshot.docChanges().length > 0 && ultimoTimestampCarregado === 0) {
             renderAllMessagesFromSnapshot(snapshot);
             return;
@@ -309,20 +318,34 @@ const listenToMessages = () => {
 const listenToOnlineUsers = () => {
     if (unsubs.users) unsubs.users();
     const q = query(collection(db, "usuarios_online"));
+    
     unsubs.users = onSnapshot(q, (snapshot) => {
         onlineList.innerHTML = "";
         let count = 0;
+        const agora = Date.now();
+
         snapshot.forEach((docSnap) => {
             const u = docSnap.data();
+            
+            // ✅ CORREÇÃO: Se o usuário não tem nome, ignora ele para não quebrar o código
+            if (!u.name) {
+                deleteDoc(docSnap.ref).catch(() => {}); // Deleta o registro corrompido
+                return;
+            }
+
+            // Limpeza de fantasmas
+            if (u.ultimaAtividade && (agora - u.ultimaAtividade > 30000)) {
+                deleteDoc(docSnap.ref).catch(() => {});
+                return; 
+            }
+
             count++;
             const li = document.createElement("li");
             const userInfo = document.createElement("div");
             userInfo.classList.add("user-info");
 
-            let badge = u.isModerator
-                ? ` <span class="moderator-badge" aria-label="Moderador">🛡️</span>`
-                : "";
-            userInfo.textContent = u.name;
+            let badge = u.isModerator ? ` <span class="moderator-badge" aria-label="Moderador">🛡️</span>` : "";
+            userInfo.textContent = formatarNomeExibicao(u.name);
             if (badge) userInfo.insertAdjacentHTML("beforeend", badge);
 
             li.appendChild(userInfo);
@@ -339,9 +362,9 @@ const listenToOnlineUsers = () => {
                     const acao = u.isModerator ? "remover o cargo de moderador de" : "tornar moderador";
                     if (!confirm(`Tem certeza que deseja ${acao} "${u.name}"?`)) return;
                     try {
-                        await setDoc(doc(db, "cargos", u.name.toLowerCase()), { isModerator: !u.isModerator });
+                        await setDoc(doc(db, "cargos", (u.name || "").toLowerCase()), { isModerator: !u.isModerator }, { merge: true });
                         await setDoc(doc(db, "usuarios_online", docSnap.id), { isModerator: !u.isModerator }, { merge: true });
-                    } catch (e) { console.error("Erro ao moderar:", e); }
+                    } catch (e) { console.error("Erro ao moderar:", e); alert("Erro ao moderar: " + e.message); }
                 });
                 li.appendChild(btnModerateUser);
 
@@ -352,9 +375,9 @@ const listenToOnlineUsers = () => {
                 btnDeleteUser.addEventListener("click", async () => {
                     if (!confirm(`Tem certeza que deseja BANIR "${u.name}"?`)) return;
                     try {
-                        await setDoc(doc(db, "banidos", u.name.toLowerCase()), { banido: true });
+                        await setDoc(doc(db, "banidos", (u.name || "").toLowerCase()), { banido: true });
                         await deleteDoc(doc(db, "usuarios_online", docSnap.id));
-                    } catch (e) { console.error("Erro ao banir:", e); }
+                    } catch (e) { console.error("Erro ao banir:", e); alert("Erro ao banir: " + e.message); }
                 });
                 li.appendChild(btnDeleteUser);
             }
@@ -366,7 +389,7 @@ const listenToOnlineUsers = () => {
 
 const listenToOwnBanStatus = () => {
     if (unsubs.banCheck) unsubs.banCheck();
-    const banCheckRef = doc(db, "banidos", user.name.toLowerCase());
+    const banCheckRef = doc(db, "banidos", (user.name || "").toLowerCase());
     unsubs.banCheck = onSnapshot(banCheckRef, (docSnap) => {
         if (docSnap.exists()) {
             alert("Você foi banido do chat pelo administrador!");
@@ -397,7 +420,7 @@ const listenToBans = () => {
             btn.addEventListener("click", async () => {
                 if (!confirm(`Remover o banimento de "${docSnap.id}"?`)) return;
                 try { await deleteDoc(doc(db, "banidos", docSnap.id)); }
-                catch (e) { console.error(e); }
+                catch (e) { console.error(e); alert("Erro ao desbanir: " + e.message); }
             });
 
             li.appendChild(span);
@@ -413,6 +436,7 @@ const sendSystemMessage = async (text) => {
 };
 
 // ================= AUTENTICAÇÃO E LOGIN =================
+
 toggleLink.addEventListener("click", (e) => {
     e.preventDefault();
     isLoginMode = !isLoginMode;
@@ -421,43 +445,38 @@ toggleLink.addEventListener("click", (e) => {
     toggleMsg.textContent = isLoginMode ? "Não tem conta?" : "Já tem conta?";
     toggleLink.textContent = isLoginMode ? "Cadastre-se" : "Faça Login";
 
-    emailInput.style.display = isLoginMode ? "none" : "block";
+    emailInput.style.display = "block"; 
     forgotPasswordContainer.style.display = isLoginMode ? "block" : "none";
 });
 
-// ✅ CORREÇÃO: login quebrado em função dedicada
-const handleLogin = async (name, password) => {
+const handleLogin = async (name, email, password) => {
     if (!name) return alert("Por favor, digite seu nome de usuário.");
+    if (!email) return alert("Por favor, digite seu e-mail.");
 
-    const banidoDoc = await getDoc(doc(db, "banidos", name.toLowerCase()));
-    if (banidoDoc.exists()) return alert("Este usuário foi banido do chat pelo administrador.");
-
-    const perfilDoc = await getDoc(doc(db, "perfis", name.toLowerCase()));
-    if (!perfilDoc.exists()) return alert("Usuário não encontrado! Verifique o nome ou cadastre-se.");
-    const emailParaLogin = perfilDoc.data().email;
-
-    const cred = await signInWithEmailAndPassword(auth, emailParaLogin, password);
+    const cred = await signInWithEmailAndPassword(auth, email, password);
     user.id = cred.user.uid;
-    user.name = name;
-    user.color = colorFromId(user.id); // ✅ cor determinística
+    user.name = name.toLowerCase(); 
+    user.color = colorFromId(user.id);
 
-    // Som: tenta autoplay; se falhar, o botão fica visível para o usuário ativar
+    await updateProfile(cred.user, { displayName: user.name });
+    await cred.user.reload();
+    await cred.user.getIdToken(true); 
+
     audioEntrou.volume = 0.01;
     audioEntrou.play().then(() => {
         somAtivado = true;
         atualizarBotaoSom();
-        playSound(audioEntrou); // ✅ usa helper
+        playSound(audioEntrou);
     }).catch(() => {
         audioEntrou.volume = 1.0;
         somAtivado = false;
         atualizarBotaoSom();
     });
 
-    // ✅ admin identificado via e-mail especial ou custom claim
-    // Aqui mantemos por nome, mas o ideal é custom claim:
-    // const token = await cred.user.getIdTokenResult();
-    // user.isAdmin = token.claims.admin === true;
-    if (name.toLowerCase() === "admin") {
+    const cargoDoc = await getDoc(doc(db, "cargos", user.name));
+    const isAdm = cargoDoc.exists() && cargoDoc.data().isAdmin;
+
+    if (user.name === "admin" || isAdm) {
         user.isAdmin = true;
         document.body.classList.add("is-admin");
         adminBar.style.display = "block";
@@ -472,26 +491,24 @@ const handleLogin = async (name, password) => {
     btnEditName.style.display = "block";
     btnEditEmail.style.display = "block";
 
-    // limpa entradas antigas duplicadas
     const snapUsuarios = await getDocs(query(collection(db, "usuarios_online")));
     const batchLimpeza = writeBatch(db);
     let limpou = false;
     snapUsuarios.forEach((d) => {
-        if (d.data().name.toLowerCase() === user.name.toLowerCase() && d.id !== user.id) {
+        if (d.data().name && d.data().name.toLowerCase() === user.name && d.id !== user.id) {
             batchLimpeza.delete(d.ref);
             limpou = true;
         }
     });
     if (limpou) await batchLimpeza.commit();
 
-    // checa cargo antes de renderizar
-    const cargoDoc = await getDoc(doc(db, "cargos", user.name.toLowerCase()));
     user.isModerator = !!(cargoDoc.exists() && cargoDoc.data().isModerator);
 
     await setDoc(doc(db, "usuarios_online", user.id), {
         name: user.name,
         color: user.color,
-        isModerator: user.isModerator
+        isModerator: user.isModerator,
+        ultimaAtividade: Date.now()
     }, { merge: true });
 
     listenToMessages();
@@ -511,10 +528,9 @@ const handleLogin = async (name, password) => {
 
     if (!user.isAdmin) listenToOwnBanStatus();
 
-    await sendSystemMessage(`👉 ${user.name} entrou no chat!`);
+    await sendSystemMessage(`👉 ${formatarNomeExibicao(user.name)} entrou no chat!`);
 };
 
-// ✅ CORREÇÃO: cadastro em função dedicada + bloqueio do nome "admin"
 const handleSignup = async (name, email, password) => {
     if (!name) return alert("Digite um nome de usuário.");
     if (!email) return alert("Por favor, digite um e-mail válido para se cadastrar.");
@@ -525,12 +541,8 @@ const handleSignup = async (name, email, password) => {
     const banidoDoc = await getDoc(doc(db, "banidos", name.toLowerCase()));
     if (banidoDoc.exists()) return alert("Este nome de usuário está banido e não pode ser cadastrado.");
 
-    const perfilExistente = await getDoc(doc(db, "perfis", name.toLowerCase()));
-    if (perfilExistente.exists()) return alert("Este nome já está em uso.");
-
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(cred.user, { displayName: name });
-    await setDoc(doc(db, "perfis", name.toLowerCase()), { email });
+    await updateProfile(cred.user, { displayName: name.toLowerCase() });
 
     alert("Cadastro realizado com sucesso! Faça login.");
     toggleLink.click();
@@ -538,17 +550,17 @@ const handleSignup = async (name, email, password) => {
 
 loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    submitBtn.disabled = true; // ✅ evita duplo-clique
+    submitBtn.disabled = true;
     const name = usernameInput.value.trim();
     const password = passwordInput.value;
     const email = emailInput.value.trim();
 
     try {
-        if (isLoginMode) await handleLogin(name, password);
+        if (isLoginMode) await handleLogin(name, email, password);
         else await handleSignup(name, email, password);
     } catch (error) {
         if (error.code === "auth/email-already-in-use") alert("Este e-mail já está em uso!");
-        else if (error.code === "auth/invalid-credential") alert("Nome ou senha incorretos!");
+        else if (error.code === "auth/invalid-credential") alert("E-mail ou senha incorretos!");
         else if (error.code === "auth/weak-password") alert("A senha precisa ter pelo menos 6 caracteres!");
         else alert("Erro: " + error.message);
     } finally {
@@ -588,25 +600,22 @@ forgotPasswordLink.addEventListener("click", async (e) => {
 btnEditName.addEventListener("click", async () => {
     const novoNome = prompt("Digite o seu novo nome de exibição:", user.name);
     if (!novoNome || !novoNome.trim() || novoNome.trim() === user.name) return;
-    const nomeFormatado = novoNome.trim();
+    const nomeFormatado = novoNome.trim().toLowerCase();
 
-    if (nomeFormatado.toLowerCase() === "admin") {
+    if (nomeFormatado === "admin") {
         return alert("Este nome é reservado.");
     }
 
     try {
-        const perfilExistente = await getDoc(doc(db, "perfis", nomeFormatado.toLowerCase()));
-        if (perfilExistente.exists()) return alert("Este nome já está em uso por outra pessoa.");
-
         user.name = nomeFormatado;
-        await updateProfile(auth.currentUser, { displayName: nomeFormatado });
+        await updateProfile(auth.currentUser, { displayName: user.name });
+        await auth.currentUser.reload();
+
         await setDoc(doc(db, "usuarios_online", user.id), { name: user.name, color: user.color }, { merge: true });
 
-        // ✅ CORREÇÃO: query filtrada em vez de baixar todas as mensagens
         const q = query(collection(db, "mensagens"), where("userId", "==", user.id));
         const snap = await getDocs(q);
 
-        // ✅ CORREÇÃO: batch em lotes de 500 (limite do Firestore)
         const MAX = 500;
         const docs = snap.docs;
         for (let i = 0; i < docs.length; i += MAX) {
@@ -636,7 +645,6 @@ btnEditEmail.addEventListener("click", async () => {
     }
 });
 
-// ✅ CORREÇÃO: logout quebrado em função, com try/catch
 const cleanupChatSession = async () => {
     cleanupAllListeners();
 
@@ -676,7 +684,8 @@ btnLogout.addEventListener("click", async () => {
             clearTimeout(timeoutPararDigitando);
             await pararDeDigitar(db, user.id).catch(() => {});
             await deleteDoc(doc(db, "usuarios_online", user.id)).catch(() => {});
-            await sendSystemMessage(`👈 ${user.name} saiu do chat.`);
+            
+            await sendSystemMessage(`👈 ${formatarNomeExibicao(user.name)} saiu do chat.`);
         }
     } catch (e) {
         console.error("Erro no logout:", e);
@@ -686,11 +695,10 @@ btnLogout.addEventListener("click", async () => {
 });
 
 const sendMessageToDb = async (content) => {
-    // ✅ CORREÇÃO: guarda contra estado inválido
     if (!user.id || !content) return;
 
     try {
-        const banCheck = await getDoc(doc(db, "banidos", user.name.toLowerCase()));
+        const banCheck = await getDoc(doc(db, "banidos", user.name));
         if (banCheck.exists()) {
             alert("Você está banido e não pode enviar mensagens!");
             btnLogout.click();
@@ -708,6 +716,7 @@ const sendMessageToDb = async (content) => {
         if (somAtivado) playSound(audioMensagem);
     } catch (e) {
         console.error("Erro ao enviar:", e);
+        alert("Erro ao enviar mensagem: " + e.message);
     }
 };
 
@@ -716,12 +725,15 @@ chatForm.addEventListener("submit", (event) => {
     sendMessageToDb(chatInput.value.trim());
     chatInput.value = "";
 
+    if (window.innerWidth <= 600) {
+        chatInput.blur();
+    }
+
     estaDigitando = false;
     clearTimeout(timeoutPararDigitando);
     pararDeDigitar(db, user.id).catch(() => {});
 });
 
-// ================= INDICADOR DE DIGITAÇÃO (INPUT) =================
 const enviarDigitandoDebounced = criarDebounce(() => {
     if (!user.id) return;
     marcarComoDigitando(db, user).catch(() => {});
@@ -730,7 +742,7 @@ const enviarDigitandoDebounced = criarDebounce(() => {
 chatInput.addEventListener("input", () => {
     if (!user.id) return;
     estaDigitando = true;
-    enviarDigitandoDebounced(); // ✅ CORREÇÃO: não chama 2x na primeira tecla
+    enviarDigitandoDebounced();
     clearTimeout(timeoutPararDigitando);
     timeoutPararDigitando = setTimeout(() => {
         estaDigitando = false;
@@ -753,7 +765,6 @@ btnClearAll.addEventListener("click", async () => {
     if (!confirm("Apagar TODAS as mensagens?")) return;
     try {
         const snap = await getDocs(query(collection(db, "mensagens")));
-        // ✅ CORREÇÃO: batch em lotes de 500
         const MAX = 500;
         const docs = snap.docs;
         for (let i = 0; i < docs.length; i += MAX) {
@@ -761,10 +772,9 @@ btnClearAll.addEventListener("click", async () => {
             docs.slice(i, i + MAX).forEach((d) => batch.delete(d.ref));
             await batch.commit();
         }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error(e); alert("Erro ao limpar: " + e.message); }
 });
 
-// ================= BOTÃO DE SOM =================
 btnSom.addEventListener("click", () => {
     if (somAtivado) {
         somAtivado = false;
@@ -781,14 +791,19 @@ btnSom.addEventListener("click", () => {
             atualizarBotaoSom();
             playSound(audioEntrou, 0.5);
         }).catch(() => {
-            alert("Não foi possível ativar o som. Verifique as permissões do navegador para este site.");
+            alert("Não foi possível ativar o som. Verifique as permissões do navegador.");
         });
     }
 });
 
-// ✅ CORREÇÃO: limpar entrada em usuarios_online ao fechar a aba (best-effort)
 window.addEventListener("beforeunload", () => {
     if (!user.id) return;
-    // não dá para usar await aqui, mas deleteDoc dispara a requisição
     deleteDoc(doc(db, "usuarios_online", user.id)).catch(() => {});
 });
+
+setInterval(() => {
+    if (!user.id) return;
+    setDoc(doc(db, "usuarios_online", user.id), { 
+        ultimaAtividade: Date.now() 
+    }, { merge: true }).catch(() => {});
+}, 15000);

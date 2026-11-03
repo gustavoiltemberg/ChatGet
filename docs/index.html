@@ -15,11 +15,13 @@
         <section class="login">
             <h2 id="form-title">Login</h2>
             <form class="login__form" id="auth-form">
-                <input type="text" class="login__input" id="username" placeholder="Seu nome de usuário" required />
+                <!-- Nome de exibição -->
+                <input type="text" class="login__input" id="username" placeholder="Seu nome de usuário (ex: joao)" required />
                 
-                <!-- E-mail escondido e sem "required" -->
-                <input type="email" class="login__input" id="email" placeholder="Seu e-mail" style="display: none;" />
+                <!-- E-mail (Agora sempre visível) -->
+                <input type="email" class="login__input" id="email" placeholder="Seu e-mail" required />
                 
+                <!-- Senha -->
                 <input type="password" class="login__input" id="password" placeholder="Sua senha" required />
                 
                 <button type="submit" class="login__button" id="submit-btn">Entrar</button>
@@ -48,7 +50,6 @@
                     <button id="btn-edit-name" class="btn-edit-name" style="display: none;">✏️ Editar Nome</button>
                     <button id="btn-edit-email" class="btn-edit-name" style="display: none;">📧 Alterar E-mail</button>
 
-                    <!-- Botão de som: sempre visível após login, alterna ligar/desligar -->
                     <button id="btn-som" class="btn-som" style="display: none;">🔊 Som Ligado</button>
                     <button id="btn-logout" class="btn-logout">Sair</button>
                 </div>
