@@ -327,13 +327,11 @@ const listenToOnlineUsers = () => {
         snapshot.forEach((docSnap) => {
             const u = docSnap.data();
             
-            // ✅ CORREÇÃO: Se o usuário não tem nome, ignora ele para não quebrar o código
             if (!u.name) {
-                deleteDoc(docSnap.ref).catch(() => {}); // Deleta o registro corrompido
+                deleteDoc(docSnap.ref).catch(() => {});
                 return;
             }
 
-            // Limpeza de fantasmas
             if (u.ultimaAtividade && (agora - u.ultimaAtividade > 30000)) {
                 deleteDoc(docSnap.ref).catch(() => {});
                 return; 
@@ -531,6 +529,7 @@ const handleLogin = async (name, email, password) => {
     await sendSystemMessage(`👉 ${formatarNomeExibicao(user.name)} entrou no chat!`);
 };
 
+// ✅ CORREÇÃO: Cadastro sem verificar banidos antes do login
 const handleSignup = async (name, email, password) => {
     if (!name) return alert("Digite um nome de usuário.");
     if (!email) return alert("Por favor, digite um e-mail válido para se cadastrar.");
@@ -538,14 +537,19 @@ const handleSignup = async (name, email, password) => {
         return alert("Este nome é reservado. Escolha outro.");
     }
 
-    const banidoDoc = await getDoc(doc(db, "banidos", name.toLowerCase()));
-    if (banidoDoc.exists()) return alert("Este nome de usuário está banido e não pode ser cadastrado.");
+    try {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(cred.user, { displayName: name.toLowerCase() });
+        
+        await signOut(auth);
 
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(cred.user, { displayName: name.toLowerCase() });
-
-    alert("Cadastro realizado com sucesso! Faça login.");
-    toggleLink.click();
+        alert("Cadastro realizado com sucesso! Faça login.");
+        toggleLink.click();
+    } catch (error) {
+        if (error.code === "auth/email-already-in-use") alert("Este e-mail já está em uso!");
+        else if (error.code === "auth/weak-password") alert("A senha precisa ter pelo menos 6 caracteres!");
+        else alert("Erro ao cadastrar: " + error.message);
+    }
 };
 
 loginForm.addEventListener("submit", async (event) => {
