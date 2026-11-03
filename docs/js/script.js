@@ -356,13 +356,21 @@ const listenToOnlineUsers = () => {
                 btnModerateUser.title = u.isModerator ? "Remover Moderador" : "Tornar Moderador";
                 btnModerateUser.setAttribute("aria-label", btnModerateUser.title);
 
+                // ✅ CORREÇÃO: Atualiza o cargo, mas ignora erro na lista de online para não mostrar alert
                 btnModerateUser.addEventListener("click", async () => {
                     const acao = u.isModerator ? "remover o cargo de moderador de" : "tornar moderador";
                     if (!confirm(`Tem certeza que deseja ${acao} "${u.name}"?`)) return;
                     try {
                         await setDoc(doc(db, "cargos", (u.name || "").toLowerCase()), { isModerator: !u.isModerator }, { merge: true });
-                        await setDoc(doc(db, "usuarios_online", docSnap.id), { isModerator: !u.isModerator }, { merge: true });
-                    } catch (e) { console.error("Erro ao moderar:", e); alert("Erro ao moderar: " + e.message); }
+                        try {
+                            await setDoc(doc(db, "usuarios_online", docSnap.id), { isModerator: !u.isModerator }, { merge: true });
+                        } catch (err) {
+                            console.log("Aviso: Cargo salvo, mas a lista online não pôde ser atualizada.");
+                        }
+                    } catch (e) { 
+                        console.error("Erro ao moderar:", e); 
+                        alert("Erro ao moderar: " + e.message); 
+                    }
                 });
                 li.appendChild(btnModerateUser);
 
@@ -529,7 +537,6 @@ const handleLogin = async (name, email, password) => {
     await sendSystemMessage(`👉 ${formatarNomeExibicao(user.name)} entrou no chat!`);
 };
 
-// ✅ CORREÇÃO: Cadastro sem verificar banidos antes do login
 const handleSignup = async (name, email, password) => {
     if (!name) return alert("Digite um nome de usuário.");
     if (!email) return alert("Por favor, digite um e-mail válido para se cadastrar.");
