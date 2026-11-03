@@ -623,8 +623,6 @@ body.is-admin .btn-moderate-user {
     body { background-attachment: fixed; background-size: cover; background-position: center; }
     .container { height: 100dvh; align-items: stretch; justify-content: stretch; }
     .login { margin: auto; max-width: 92%; padding: 22px 18px; }
-    
-    /* ✅ Adicionado padding-bottom no chat para forçar a rolagem até o fim */
     .chat { position: relative; height: 100dvh; padding-top: 0; padding-bottom: 100px; }
 
     /* Header fixo no topo */
@@ -676,16 +674,13 @@ body.is-admin .btn-moderate-user {
     .chat__sidebar ul { display: flex; gap: 12px; flex-wrap: nowrap; margin: 0; padding: 0; }
     .chat__sidebar li { margin: 0; flex-shrink: 0; font-size: 0.8rem; }
 
-    /* ✅ CORREÇÃO DO ESPAÇO VAZIO E DO TOPO */
+    /* Lista de mensagens */
     .chat__messages {
         position: fixed;
         top: 140px;    
-        bottom: 0;             /* Cola no fundo da tela */
+        bottom: 0;             
         left: 0; right: 0;
-        
-        /* 100px de padding no fundo garante que a última mensagem passe longe da sendbox */
         padding: 10px 12px 100px 12px; 
-        
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
         display: flex;
@@ -693,7 +688,7 @@ body.is-admin .btn-moderate-user {
         justify-content: flex-start;
     }
 
-    /* ✅ CORREÇÃO DA BOLHA E DOS GIFS NO CELULAR */
+    /* ✅ Ajuste da bolha da mensagem */
     .chat__messages > div {
         max-width: 85%;
         font-size: 0.88rem;
@@ -701,11 +696,20 @@ body.is-admin .btn-moderate-user {
         flex-direction: column;
         width: fit-content;
         margin-bottom: 12px;
+        overflow: visible; 
+    }
+
+    /* ✅ Ajuste do GIF/Imagem */
+    .message--content {
+        display: flex;
+        flex-direction: column;
     }
 
     .message--content img {
+        width: auto !important;
         max-width: 100%;
-        max-height: 180px;
+        height: auto !important;
+        max-height: 250px !important;  /* Aumentado para o emoticon inteiro caber */
         object-fit: contain;
         border-radius: 8px;
         margin-top: 5px;
@@ -715,7 +719,7 @@ body.is-admin .btn-moderate-user {
     .message--self { align-self: flex-end; }
     .message--other { align-self: flex-start; }
 
-    /* ✅ SEND BOX */
+    /* Send Box */
     .chat__form {
         position: fixed;
         bottom: 0; left: 0; width: 100%;
@@ -740,7 +744,6 @@ body.is-admin .btn-moderate-user {
     .login { padding: 18px 14px; }
     .chat__sidebar { max-height: 70px; }
     
-    /* Ajuste fino para telas bem pequenas */
     .chat__messages { top: 120px; padding-bottom: 90px; }
 
     /* Ajuste fino da admin bar */
