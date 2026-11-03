@@ -769,7 +769,11 @@ stickersBar.addEventListener("click", (e) => {
 btnGifKeyboard.addEventListener("click", () => {
     stickersBar.classList.toggle("show");
     btnGifKeyboard.classList.toggle("active");
-    if (stickersBar.classList.contains("show")) chatInput.focus();
+    
+    // Se o painel de stickers abrir, esconde o teclado do celular imediatamente
+    if (stickersBar.classList.contains("show")) {
+        chatInput.blur();
+    }
 });
 
 btnClearAll.addEventListener("click", async () => {
