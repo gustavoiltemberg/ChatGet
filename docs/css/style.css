@@ -623,7 +623,9 @@ body.is-admin .btn-moderate-user {
     body { background-attachment: fixed; background-size: cover; background-position: center; }
     .container { height: 100dvh; align-items: stretch; justify-content: stretch; }
     .login { margin: auto; max-width: 92%; padding: 22px 18px; }
-    .chat { position: relative; height: 100dvh; padding-top: 0; }
+    
+    /* ✅ Adicionado padding-bottom no chat para forçar a rolagem até o fim */
+    .chat { position: relative; height: 100dvh; padding-top: 0; padding-bottom: 100px; }
 
     /* Header fixo no topo */
     .chat__header {
@@ -678,9 +680,12 @@ body.is-admin .btn-moderate-user {
     .chat__messages {
         position: fixed;
         top: 140px;    
-        bottom: 65px;  
+        bottom: 0;             /* Cola no fundo da tela */
         left: 0; right: 0;
-        padding: 10px 12px 30px 12px; /* ✅ 30px no fundo para a última msg não ficar colada no form */
+        
+        /* 100px de padding no fundo garante que a última mensagem passe longe da sendbox */
+        padding: 10px 12px 100px 12px; 
+        
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
         display: flex;
@@ -710,13 +715,13 @@ body.is-admin .btn-moderate-user {
     .message--self { align-self: flex-end; }
     .message--other { align-self: flex-start; }
 
-    /* ✅ FORÇA O FORM A FICAR ACIMA DE TUDO E COM FUNDO SÓLIDO */
+    /* ✅ SEND BOX */
     .chat__form {
         position: fixed;
         bottom: 0; left: 0; width: 100%;
         padding: 10px 12px; gap: 6px;
         background-color: #191919;
-        z-index: 20; /* Fica acima das mensagens */
+        z-index: 20; 
         border-top: 1px solid #333;
     }
     
@@ -734,7 +739,9 @@ body.is-admin .btn-moderate-user {
     .chat__header button { font-size: 0.7rem; padding: 6px 8px; }
     .login { padding: 18px 14px; }
     .chat__sidebar { max-height: 70px; }
-    .chat__messages { top: 120px; bottom: 60px; }
+    
+    /* Ajuste fino para telas bem pequenas */
+    .chat__messages { top: 120px; padding-bottom: 90px; }
 
     /* Ajuste fino da admin bar */
     #admin-bar { gap: 5px; flex-wrap: nowrap; }
