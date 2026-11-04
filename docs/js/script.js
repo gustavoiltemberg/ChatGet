@@ -17,6 +17,8 @@ import {
     criarDebounce
 } from "./typing.js";
 
+import { anunciarEntrada, anunciarSaida } from "./presence.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyDZlENtMvC3u6HRr4T1n_TnnlbkxRfNid4",
   authDomain: "chat-get-ed551.firebaseapp.com",
@@ -82,7 +84,6 @@ let somAtivado = false;
 // Força o estado correto de visibilidade logo no carregamento da página
 loginSection.style.display = "block";
 chatSection.style.display = "none";
-
 
 // ✅ FUNÇÃO AUXILIAR: Formata o nome para exibição (primeira letra maiúscula)
 const formatarNomeExibicao = (nome) => {
@@ -238,19 +239,22 @@ const atualizarBotaoSom = () => {
     }
 };
 
-// ================= OUVINTE DE CARGO =================
+// ================= RENDERIZAÇÃO INICIAL =================
 const renderAllMessagesFromSnapshot = (snapshot) => {
     const frag = document.createDocumentFragment();
+    let maiorTs = ultimoTimestampCarregado;
     snapshot.forEach((d) => {
         frag.appendChild(createMessageElement(d.data(), d.id));
         const ts = d.data().timestamp || 0;
-        if (ts > ultimoTimestampCarregado) ultimoTimestampCarregado = ts;
+        if (ts > maiorTs) maiorTs = ts;
     });
     chatMessages.innerHTML = "";
     chatMessages.appendChild(frag);
+    ultimoTimestampCarregado = maiorTs;
     scrollScreen();
 };
 
+// ================= OUVINTE DE CARGO =================
 const listenToMyRole = () => {
     if (unsubs.myRole) unsubs.myRole();
 
@@ -259,21 +263,19 @@ const listenToMyRole = () => {
         const isMod = docSnap.exists() && !!docSnap.data().isModerator;
         const isAdm = docSnap.exists() && !!docSnap.data().isAdmin;
 
-        if (user.isModerator !== isMod || user.isAdmin !== isAdm) {
-            user.isModerator = isMod;
-            if (isAdm || (user.name || "").toLowerCase() === "admin") {
-                user.isAdmin = true;
-                document.body.classList.add("is-admin");
-                adminBar.style.display = "block";
-            } else {
-                user.isAdmin = false;
-                document.body.classList.remove("is-admin");
-                adminBar.style.display = "none";
-            }
-            
-            const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
-            getDocs(q).then(renderAllMessagesFromSnapshot).catch(console.error);
+        user.isModerator = isMod;
+
+        if (isAdm || (user.name || "").toLowerCase() === "admin") {
+            user.isAdmin = true;
+            document.body.classList.add("is-admin");
+            adminBar.style.display = "block";
+        } else {
+            user.isAdmin = false;
+            document.body.classList.remove("is-admin");
+            adminBar.style.display = "none";
         }
+
+        // ❌ NÃO re-renderiza mensagens aqui. O onSnapshot de mensagens é a fonte da verdade.
     });
 };
 
@@ -282,11 +284,21 @@ const listenToMessages = () => {
     if (unsubs.messages) unsubs.messages();
     ultimoTimestampCarregado = 0;
 
-    const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(100));
+    const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(500));
+
+    let primeiroSnapshot = true;
+    let resolvePrimeiroSnapshot;
+    const primeiroSnapshotPromise = new Promise((resolve) => {
+        resolvePrimeiroSnapshot = resolve;
+    });
 
     unsubs.messages = onSnapshot(q, (snapshot) => {
-        if (snapshot.docChanges().length > 0 && ultimoTimestampCarregado === 0) {
-            renderAllMessagesFromSnapshot(snapshot);
+        if (primeiroSnapshot) {
+            primeiroSnapshot = false;
+            if (snapshot.size > 0) {
+                renderAllMessagesFromSnapshot(snapshot);
+            }
+            resolvePrimeiroSnapshot(); // ✅ sinaliza que o 1º snapshot chegou
             return;
         }
 
@@ -308,6 +320,8 @@ const listenToMessages = () => {
             }
         });
     });
+
+    return primeiroSnapshotPromise; // ✅ retorna a Promise
 };
 
 // ================= LISTA DE ONLINE E BANIDOS =================
@@ -352,7 +366,6 @@ const listenToOnlineUsers = () => {
                 btnModerateUser.title = u.isModerator ? "Remover Moderador" : "Tornar Moderador";
                 btnModerateUser.setAttribute("aria-label", btnModerateUser.title);
 
-                // ✅ CORREÇÃO: Atualiza o cargo, mas ignora erro na lista de online para não mostrar alert
                 btnModerateUser.addEventListener("click", async () => {
                     const acao = u.isModerator ? "remover o cargo de moderador de" : "tornar moderador";
                     if (!confirm(`Tem certeza que deseja ${acao} "${u.name}"?`)) return;
@@ -432,11 +445,6 @@ const listenToBans = () => {
     });
 };
 
-const sendSystemMessage = async (text) => {
-    try { await addDoc(collection(db, "mensagens"), { isSystem: true, content: text, timestamp: Date.now() }); }
-    catch (e) { console.error(e); }
-};
-
 // ================= AUTENTICAÇÃO E LOGIN =================
 
 toggleLink.addEventListener("click", (e) => {
@@ -513,7 +521,8 @@ const handleLogin = async (name, email, password) => {
         ultimaAtividade: Date.now()
     }, { merge: true });
 
-    listenToMessages();
+    // ✅ MELHORIA: listeners primeiro, e captura a Promise do primeiro snapshot
+    const primeiroSnapshotPromise = listenToMessages();
     listenToOnlineUsers();
     listenToMyRole();
 
@@ -529,6 +538,15 @@ const handleLogin = async (name, email, password) => {
     });
 
     if (!user.isAdmin) listenToOwnBanStatus();
+
+    // ✅ Espera o 1º snapshot do onSnapshot chegar ANTES de anunciar entrada
+    await primeiroSnapshotPromise;
+
+    try {
+        await anunciarEntrada(db, user.name);
+    } catch (e) {
+        console.error("Falha ao anunciar entrada:", e);
+    }
 };
 
 const handleSignup = async (name, email, password) => {
@@ -687,6 +705,8 @@ btnLogout.addEventListener("click", async () => {
             estaDigitando = false;
             clearTimeout(timeoutPararDigitando);
             await pararDeDigitar(db, user.id).catch(() => {});
+            // ✅ Anuncia saída ANTES de limpar o listener
+            try { await anunciarSaida(db, user.name); } catch (e) { console.error(e); }
             await deleteDoc(doc(db, "usuarios_online", user.id)).catch(() => {});
         }
     } catch (e) {
