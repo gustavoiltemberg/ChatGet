@@ -517,7 +517,7 @@ const handleLogin = async (name, email, password) => {
     const uid = cred.user.uid;
 
     // 2. PROTEÇÃO DO ADMIN
-    const UID_ADMIN_VERDADEIRO = "4YQLcKh4z4bWQjCRscXNCi2DDl32";
+    const UID_ADMIN_VERDADEIRO = "J7YAEyln6ENA8v5IqYjkshznFyj2";
     if (name.toLowerCase() === "admin" && uid !== UID_ADMIN_VERDADEIRO) {
         await signOut(auth);
         return alert("Acesso negado. Você não é o administrador.");
