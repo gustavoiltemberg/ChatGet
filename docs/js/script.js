@@ -67,6 +67,8 @@ const submitBtn = document.querySelector("#submit-btn");
 const toggleMsg = document.querySelector("#toggle-msg");
 const toggleLink = document.querySelector("#toggle-auth");
 
+
+
 // ================= INDICADOR DE DIGITAÇÃO (UI) =================
 const typingIndicator = document.createElement("div");
 typingIndicator.className = "typing-indicator";
@@ -75,7 +77,12 @@ chatForm.parentNode.insertBefore(typingIndicator, chatForm);
 
 // ================= ÁUDIOS =================
 const audioMensagem = new Audio("./sounds/mensagem.mp3");
+const audioEntrou = new Audio("./sounds/entrou.mp3"); 
+const audioSaiu = new Audio("./sounds/saiu.mp3");     
+
 audioMensagem.volume = 1.0;
+audioEntrou.volume = 1.0;
+audioSaiu.volume = 1.0;
 
 const SILENT_AUDIO = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
 
@@ -556,7 +563,7 @@ const handleLogin = async (name, email, password) => {
     await primeiroSnapshotPromise;
 
     try {
-        await anunciarEntrada(db, user.name);
+        await anunciarEntrada(db, user.name, audioEntrou, somAtivado);
     } catch (e) {
         console.error("Falha ao anunciar entrada:", e);
     }
@@ -719,7 +726,7 @@ btnLogout.addEventListener("click", async () => {
             clearTimeout(timeoutPararDigitando);
             await pararDeDigitar(db, user.id).catch(() => {});
             // ✅ Anuncia saída ANTES de limpar o listener
-            try { await anunciarSaida(db, user.name); } catch (e) { console.error(e); }
+            try { await anunciarSaida(db, user.name, audioSaiu, somAtivado); } catch (e) { console.error(e); }
             await deleteDoc(doc(db, "usuarios_online", user.id)).catch(() => {});
         }
     } catch (e) {
@@ -819,6 +826,10 @@ btnSom.addEventListener("click", () => {
         somAtivado = false;
         audioMensagem.pause();
         audioMensagem.currentTime = 0;
+        audioEntrou.pause();
+        audioEntrou.currentTime = 0;
+        audioSaiu.pause();
+        audioSaiu.currentTime = 0;
         atualizarBotaoSom();
     } else {
         const silent = new Audio(SILENT_AUDIO);

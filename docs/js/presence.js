@@ -11,7 +11,7 @@ const enviarMensagemSistema = async (db, texto) => {
         await addDoc(collection(db, "mensagens"), {
             isSystem: true,
             content: texto,
-            timestamp: Date.now() // ✅ já existe — usado para ordenar e exibir
+            timestamp: Date.now()
         });
     } catch (e) {
         console.error("Erro ao enviar mensagem de sistema:", e);
@@ -19,10 +19,19 @@ const enviarMensagemSistema = async (db, texto) => {
     }
 };
 
-export const anunciarEntrada = (db, nome) => {
+// ✅ Agora recebe o áudio e o status do som como parâmetros
+export const anunciarEntrada = (db, nome, audio, somAtivado) => {
+    if (somAtivado && audio) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+    }
     return enviarMensagemSistema(db, `🟢 ${formatarNome(nome)} entrou`);
 };
 
-export const anunciarSaida = (db, nome) => {
+export const anunciarSaida = (db, nome, audio, somAtivado) => {
+    if (somAtivado && audio) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+    }
     return enviarMensagemSistema(db, `🔴 ${formatarNome(nome)} saiu`);
 };
