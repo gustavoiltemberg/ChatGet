@@ -83,6 +83,11 @@ const SILENT_AUDIO = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwA
 
 let somAtivado = false;
 
+// Força o estado correto de visibilidade logo no carregamento da página
+loginSection.style.display = "block";
+chatSection.style.display = "none";
+
+
 // ✅ FUNÇÃO AUXILIAR: Formata o nome para exibição (primeira letra maiúscula)
 const formatarNomeExibicao = (nome) => {
     if (!nome) return "Anônimo";
