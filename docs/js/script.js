@@ -512,28 +512,52 @@ const handleLogin = async (name, email, password) => {
     if (!name) return alert("Por favor, digite seu nome de usuário.");
     if (!email) return alert("Por favor, digite seu e-mail.");
 
+    // 1. Autentica com o Firebase
     const cred = await signInWithEmailAndPassword(auth, email, password);
+    const uid = cred.user.uid;
 
-
+    // 2. PROTEÇÃO DO ADMIN
     const UID_ADMIN_VERDADEIRO = "4YQLcKh4z4bWQjCRscXNCi2DDl32";
-    
-    if (name.toLowerCase() === "admin" && cred.user.uid !== UID_ADMIN_VERDADEIRO) {
+    if (name.toLowerCase() === "admin" && uid !== UID_ADMIN_VERDADEIRO) {
         await signOut(auth);
         return alert("Acesso negado. Você não é o administrador.");
     }
 
+    // 3. VERIFICAÇÃO DE IDENTIDADE (O nome digitado bate com a conta?)
+    const userRef = doc(db, "usuarios_online", uid);
+    const userSnap = await getDoc(userRef);
+    let nomeVerdadeiro = name.toLowerCase();
 
-    user.id = cred.user.uid;
-    user.name = name.toLowerCase(); 
+    if (userSnap.exists() && userSnap.data().name) {
+        // Se já existe um perfil no banco para este UID, pega o nome verdadeiro
+        nomeVerdadeiro = userSnap.data().name;
+        
+        // Se o nome que ele digitou for DIFERENTE do nome dono da conta, bloqueia!
+        if (name.toLowerCase() !== nomeVerdadeiro) {
+            await signOut(auth);
+            return alert(`Acesso negado. Esta conta pertence a "${nomeVerdadeiro}".`);
+        }
+    } else {
+        // Se for o primeiro login (não tem perfil), verifica se alguém já usa esse nome
+        const snapUsuarios = await getDocs(query(collection(db, "usuarios_online")));
+        const nomeEmUso = snapUsuarios.docs.some(d => d.data().name && d.data().name.toLowerCase() === name.toLowerCase() && d.id !== uid);
+        if (nomeEmUso) {
+            await signOut(auth);
+            return alert("Este nome de usuário já está em uso por outra conta.");
+        }
+    }
+
+    // 4. Define o usuário com o nome VERDADEIRO
+    user.id = uid;
+    user.name = nomeVerdadeiro; 
     user.color = colorFromId(user.id);
 
+    // Atualiza o perfil no Firebase Auth para manter sincronizado
     await updateProfile(cred.user, { displayName: user.name });
     await cred.user.reload();
     await cred.user.getIdToken(true); 
 
-    // ✅ Desbloqueia os áudios aqui!
     desbloquearAudios();
-
     somAtivado = true;
     atualizarBotaoSom();
 
@@ -555,19 +579,9 @@ const handleLogin = async (name, email, password) => {
     btnEditName.style.display = "block";
     btnEditEmail.style.display = "block";
 
-    const snapUsuarios = await getDocs(query(collection(db, "usuarios_online")));
-    const batchLimpeza = writeBatch(db);
-    let limpou = false;
-    snapUsuarios.forEach((d) => {
-        if (d.data().name && d.data().name.toLowerCase() === user.name && d.id !== user.id) {
-            batchLimpeza.delete(d.ref);
-            limpou = true;
-        }
-    });
-    if (limpou) await batchLimpeza.commit();
-
     user.isModerator = !!(cargoDoc.exists() && cargoDoc.data().isModerator);
 
+    // Salva/Atualiza os dados no banco usando o UID como chave
     await setDoc(doc(db, "usuarios_online", user.id), {
         name: user.name,
         color: user.color,
@@ -575,7 +589,7 @@ const handleLogin = async (name, email, password) => {
         ultimaAtividade: Date.now()
     }, { merge: true });
 
-    // ✅ Listeners primeiro, e captura a Promise do primeiro snapshot
+    // Listeners
     const primeiroSnapshotPromise = listenToMessages();
     listenToOnlineUsers();
     listenToMyRole();
@@ -593,7 +607,6 @@ const handleLogin = async (name, email, password) => {
 
     if (!user.isAdmin) listenToOwnBanStatus();
 
-    // ✅ Espera o 1º snapshot do onSnapshot chegar ANTES de anunciar entrada
     await primeiroSnapshotPromise;
 
     try {
