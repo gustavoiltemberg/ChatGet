@@ -6,11 +6,12 @@ const formatarNome = (nome) => {
     return nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
 };
 
-const enviarMensagemSistema = async (db, texto) => {
+const enviarMensagemSistema = async (db, texto, tipo) => {
     try {
         await addDoc(collection(db, "mensagens"), {
             isSystem: true,
             content: texto,
+            tipo: tipo, // ✅ Adicionado: "entrou" ou "saiu"
             timestamp: Date.now()
         });
     } catch (e) {
@@ -20,9 +21,9 @@ const enviarMensagemSistema = async (db, texto) => {
 };
 
 export const anunciarEntrada = (db, nome) => {
-    return enviarMensagemSistema(db, `🟢 ${formatarNome(nome)} entrou`);
+    return enviarMensagemSistema(db, `🟢 ${formatarNome(nome)} entrou`, "entrou");
 };
 
 export const anunciarSaida = (db, nome) => {
-    return enviarMensagemSistema(db, `🔴 ${formatarNome(nome)} saiu`);
+    return enviarMensagemSistema(db, `🔴 ${formatarNome(nome)} saiu`, "saiu");
 };

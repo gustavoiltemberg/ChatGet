@@ -333,8 +333,27 @@ const listenToMessages = () => {
                 const isNewMessage = (msg.timestamp || 0) > ultimoTimestampCarregado;
                 if (isNewMessage) ultimoTimestampCarregado = msg.timestamp;
 
-                if (somAtivado && isNewMessage && msg.userId !== user.id && !msg.isSystem) {
-                    playSound(audioMensagem);
+                // ✅ TOCA O SOM PARA TODOS OS USUÁRIOS CONECTADOS
+                if (somAtivado && isNewMessage) {
+                    if (msg.isSystem) {
+                        // Se for mensagem de entrada, todos ouvem
+                        if (msg.tipo === "entrou") {
+                            playSound(audioEntrou);
+                        } 
+                        // Se for mensagem de saída, todos ouvem, EXCETO quem está saindo
+                        else if (msg.tipo === "saiu") {
+                            // Extrai o nome de quem saiu da mensagem (remove o emoji e o texto "saiu")
+                            const nomeDeQuemSaiu = msg.content.replace("🔴 ", "").replace(" saiu", "").trim();
+                            const meuNomeFormatado = formatarNomeExibicao(user.name);
+                            
+                            if (nomeDeQuemSaiu !== meuNomeFormatado) {
+                                playSound(audioSaiu);
+                            }
+                        }
+                    } else if (msg.userId !== user.id) {
+                        // Som normal para mensagens de outros usuários
+                        playSound(audioMensagem);
+                    }
                 }
                 scrollScreen();
             } else if (change.type === "removed") {
@@ -492,20 +511,8 @@ const handleLogin = async (name, email, password) => {
     await cred.user.reload();
     await cred.user.getIdToken(true); 
 
-    // =========================================================
-    // ✅ TOCA O SOM AQUI (O mais rápido possível após o clique)
-    // =========================================================
-    somAtivado = true; // Força o som a ligar no login
+    somAtivado = true;
     atualizarBotaoSom();
-    audioEntrou.currentTime = 0;
-    audioEntrou.play().catch(e => console.log("Áudio bloqueado:", e));
-
-    // (O áudio silencioso não é mais necessário para desbloquear, 
-    // mas mantemos caso você queira usar outros áudios no futuro)
-    const silent = new Audio(SILENT_AUDIO);
-    silent.volume = 0.01;
-    silent.play().catch(() => {});
-    // =========================================================
 
     const cargoDoc = await getDoc(doc(db, "cargos", user.name));
     const isAdm = cargoDoc.exists() && cargoDoc.data().isAdmin;
@@ -730,19 +737,19 @@ btnLogout.addEventListener("click", async () => {
             clearTimeout(timeoutPararDigitando);
             await pararDeDigitar(db, user.id).catch(() => {});
 
-            if (somAtivado) {
-                audioSaiu.currentTime = 0;
-                audioSaiu.play().catch(() => {});
-            }
-
             // ✅ Anuncia saída ANTES de limpar o listener
-            try { await anunciarSaida(db, user.name, audioSaiu, somAtivado); } catch (e) { console.error(e); }
+            try { await anunciarSaida(db, user.name); } catch (e) { console.error(e); }
+            
             await deleteDoc(doc(db, "usuarios_online", user.id)).catch(() => {});
         }
     } catch (e) {
         console.error("Erro no logout:", e);
     } finally {
-        await cleanupChatSession();
+        // ✅ Dá 1 segundo antes de desligar os listeners.
+        // Isso dá tempo do Firebase avisar todo mundo (inclusive o próprio usuário A)
+        setTimeout(() => {
+            cleanupChatSession();
+        }, 1000);
     }
 });
 
