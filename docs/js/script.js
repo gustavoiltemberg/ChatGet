@@ -2,8 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
-    sendPasswordResetEmail, verifyBeforeUpdateEmail, updateProfile,
-    fetchSignInMethodsForEmail
+    sendPasswordResetEmail, verifyBeforeUpdateEmail, updateProfile
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import {
     getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc,
@@ -67,6 +66,7 @@ const formTitle = document.querySelector("#form-title");
 const submitBtn = document.querySelector("#submit-btn");
 const toggleMsg = document.querySelector("#toggle-msg");
 const toggleLink = document.querySelector("#toggle-auth");
+
 
 
 // ================= INDICADOR DE DIGITAÇÃO (UI) =================
@@ -182,7 +182,7 @@ const buildContentNode = (content) => {
 };
 
 const createMessageElement = (msg, docId) => {
-    if (msg.isSystem) {
+        if (msg.isSystem) {
         const div = document.createElement("div");
         div.classList.add("message--system");
 
@@ -307,6 +307,8 @@ const listenToMyRole = () => {
             document.body.classList.remove("is-admin");
             adminBar.style.display = "none";
         }
+
+        // ❌ NÃO re-renderiza mensagens aqui. O onSnapshot de mensagens é a fonte da verdade.
     });
 };
 
@@ -329,7 +331,7 @@ const listenToMessages = () => {
             if (snapshot.size > 0) {
                 renderAllMessagesFromSnapshot(snapshot);
             }
-            resolvePrimeiroSnapshot();
+            resolvePrimeiroSnapshot(); // ✅ sinaliza que o 1º snapshot chegou
             return;
         }
 
@@ -341,11 +343,16 @@ const listenToMessages = () => {
                 const isNewMessage = (msg.timestamp || 0) > ultimoTimestampCarregado;
                 if (isNewMessage) ultimoTimestampCarregado = msg.timestamp;
 
+                // ✅ TOCA O SOM PARA TODOS OS USUÁRIOS CONECTADOS
                 if (somAtivado && isNewMessage) {
                     if (msg.isSystem) {
+                        // Se for mensagem de entrada, todos ouvem
                         if (msg.tipo === "entrou") {
                             playSound(audioEntrou);
-                        } else if (msg.tipo === "saiu") {
+                        } 
+                        // Se for mensagem de saída, todos ouvem, EXCETO quem está saindo
+                        else if (msg.tipo === "saiu") {
+                            // Extrai o nome de quem saiu da mensagem (remove o emoji e o texto "saiu")
                             const nomeDeQuemSaiu = msg.content.replace("🔴 ", "").replace(" saiu", "").trim();
                             const meuNomeFormatado = formatarNomeExibicao(user.name);
                             
@@ -354,6 +361,7 @@ const listenToMessages = () => {
                             }
                         }
                     } else if (msg.userId !== user.id) {
+                        // Som normal para mensagens de outros usuários
                         playSound(audioMensagem);
                     }
                 }
@@ -365,7 +373,7 @@ const listenToMessages = () => {
         });
     });
 
-    return primeiroSnapshotPromise;
+    return primeiroSnapshotPromise; // ✅ retorna a Promise
 };
 
 // ================= LISTA DE ONLINE E BANIDOS =================
@@ -377,12 +385,15 @@ const listenToOnlineUsers = () => {
         onlineList.innerHTML = "";
         let count = 0;
         const agora = Date.now();
-        const TIMEOUT_MS = 60000;
+        const TIMEOUT_MS = 60000; // ✅ 60s de tolerância
 
         snapshot.forEach((docSnap) => {
             const u = docSnap.data();
 
+            // ✅ OPCIONAL: apenas ignora na renderização, NÃO deleta
             if (!u.name) return;
+
+            // ✅ OPCIONAL: apenas ignora na renderização, NÃO deleta
             if (u.ultimaAtividade && (agora - u.ultimaAtividade > TIMEOUT_MS)) return;
 
             count++;
@@ -613,14 +624,13 @@ const handleSignup = async (name, email, password) => {
     }
 
     try {
-        // 1. Cria a conta no Firebase Auth
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(cred.user, { displayName: name.toLowerCase() });
         
-        // 2. (MUDANÇA) Loga automaticamente após o cadastro
-        alert("Cadastro realizado com sucesso! Você será logado automaticamente.");
-        await handleLogin(name, email, password);
-        
+        await signOut(auth);
+
+        alert("Cadastro realizado com sucesso! Faça login.");
+        toggleLink.click();
     } catch (error) {
         if (error.code === "auth/email-already-in-use") alert("Este e-mail já está em uso!");
         else if (error.code === "auth/weak-password") alert("A senha precisa ter pelo menos 6 caracteres!");
@@ -710,52 +720,17 @@ btnEditName.addEventListener("click", async () => {
     }
 });
 
-// ✅ ALTERAÇÃO DE E-MAIL (CORRIGIDA)
 btnEditEmail.addEventListener("click", async () => {
-    if (!auth.currentUser) return;
-
-    const emailAtual = auth.currentUser.email || "";
-    const novoEmail = prompt("Digite o NOVO e-mail para sua conta:", emailAtual);
-    if (novoEmail === null) return; // usuário cancelou
-
-    const emailNormalizado = novoEmail.trim().toLowerCase();
-
-    // 1) Validação básica de formato
-    if (!emailNormalizado || !emailNormalizado.includes("@")) {
-        return alert("Por favor, digite um e-mail válido.");
-    }
-
-    // 2) Bloqueia se for igual ao e-mail atual
-    if (emailNormalizado === emailAtual.toLowerCase()) {
-        return alert("Este já é o seu e-mail atual.");
-    }
-
+    const novoEmail = prompt("Digite o NOVO e-mail para sua conta:", auth.currentUser?.email || "");
+    if (!novoEmail || !novoEmail.includes("@")) return;
     try {
-        // 3) Verifica se o novo e-mail já está em uso por outra conta
-        const metodos = await fetchSignInMethodsForEmail(auth, emailNormalizado);
-        if (metodos.length > 0) {
-            return alert("Este e-mail já está em uso por outra conta. Escolha outro.");
-        }
-
-        // 4) Envia o link de confirmação para o NOVO e-mail.
-        //    A troca só se efetiva depois que o usuário clicar no link.
-        await verifyBeforeUpdateEmail(auth.currentUser, emailNormalizado);
-        alert(
-            "Um link de confirmação foi enviado para o novo e-mail.\n\n" +
-            "A alteração só será concluída depois que você clicar no link recebido."
-        );
+        await verifyBeforeUpdateEmail(auth.currentUser, novoEmail);
+        alert("Um link de confirmação foi enviado para o novo e-mail. Clique nele para concluir a alteração.");
     } catch (error) {
-        console.error("Erro ao alterar e-mail:", error);
         if (error.code === "auth/requires-recent-login") {
             alert("Por segurança, faça login novamente antes de alterar o e-mail.");
-        } else if (error.code === "auth/email-already-in-use") {
-            alert("Este e-mail já está em uso por outra conta.");
-        } else if (error.code === "auth/invalid-email") {
-            alert("O e-mail informado é inválido.");
-        } else if (error.code === "auth/operation-not-allowed") {
-            alert("A alteração de e-mail está desabilitada nas configurações do Firebase.");
         } else {
-            alert("Erro ao alterar e-mail: " + error.message);
+            alert("Erro: " + error.message);
         }
     }
 });
@@ -807,6 +782,7 @@ btnLogout.addEventListener("click", async () => {
         console.error("Erro no logout:", e);
     } finally {
         // ✅ Dá 1 segundo antes de desligar os listeners.
+        // Isso dá tempo do Firebase avisar todo mundo (inclusive o próprio usuário A)
         setTimeout(() => {
             cleanupChatSession();
         }, 1000);
