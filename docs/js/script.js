@@ -333,19 +333,16 @@ const listenToOnlineUsers = () => {
         onlineList.innerHTML = "";
         let count = 0;
         const agora = Date.now();
+        const TIMEOUT_MS = 60000; // ✅ 60s de tolerância
 
         snapshot.forEach((docSnap) => {
             const u = docSnap.data();
-            
-            if (!u.name) {
-                deleteDoc(docSnap.ref).catch(() => {});
-                return;
-            }
 
-            if (u.ultimaAtividade && (agora - u.ultimaAtividade > 30000)) {
-                deleteDoc(docSnap.ref).catch(() => {});
-                return; 
-            }
+            // ✅ OPCIONAL: apenas ignora na renderização, NÃO deleta
+            if (!u.name) return;
+
+            // ✅ OPCIONAL: apenas ignora na renderização, NÃO deleta
+            if (u.ultimaAtividade && (agora - u.ultimaAtividade > TIMEOUT_MS)) return;
 
             count++;
             const li = document.createElement("li");
@@ -521,7 +518,7 @@ const handleLogin = async (name, email, password) => {
         ultimaAtividade: Date.now()
     }, { merge: true });
 
-    // ✅ MELHORIA: listeners primeiro, e captura a Promise do primeiro snapshot
+    // ✅ Listeners primeiro, e captura a Promise do primeiro snapshot
     const primeiroSnapshotPromise = listenToMessages();
     listenToOnlineUsers();
     listenToMyRole();
@@ -825,9 +822,15 @@ window.addEventListener("beforeunload", () => {
     deleteDoc(doc(db, "usuarios_online", user.id)).catch(() => {});
 });
 
+// ✅ Reenvia TODOS os dados, não só ultimaAtividade
+// Assim, se o documento for deletado (por expiração ou outro cliente),
+// ele é recriado completo na próxima batida — o nome não some mais.
 setInterval(() => {
     if (!user.id) return;
     setDoc(doc(db, "usuarios_online", user.id), { 
+        name: user.name,
+        color: user.color,
+        isModerator: user.isModerator,
         ultimaAtividade: Date.now() 
     }, { merge: true }).catch(() => {});
 }, 15000);
