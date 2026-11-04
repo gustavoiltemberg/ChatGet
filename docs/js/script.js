@@ -165,10 +165,26 @@ const buildContentNode = (content) => {
 };
 
 const createMessageElement = (msg, docId) => {
-    if (msg.isSystem) {
+        if (msg.isSystem) {
         const div = document.createElement("div");
         div.classList.add("message--system");
-        div.textContent = msg.content;
+
+        // ✅ Texto da mensagem de sistema
+        const texto = document.createElement("span");
+        texto.textContent = msg.content;
+        div.appendChild(texto);
+
+        // ✅ Data/hora ao lado (se existir timestamp)
+        if (msg.timestamp) {
+            const dataHora = document.createElement("span");
+            dataHora.className = "message--system-time";
+            const d = new Date(msg.timestamp);
+            const data = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+            const hora = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+            dataHora.textContent = ` — ${data} às ${hora}`;
+            div.appendChild(dataHora);
+        }
+
         div.dataset.id = docId;
         return div;
     }
