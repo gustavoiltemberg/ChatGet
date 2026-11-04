@@ -72,11 +72,7 @@ typingIndicator.style.display = "none";
 chatForm.parentNode.insertBefore(typingIndicator, chatForm);
 
 // ================= ÁUDIOS =================
-const audioEntrou = new Audio("./sounds/entrou.mp3");
-const audioSaiu = new Audio("./sounds/saiu.mp3");
 const audioMensagem = new Audio("./sounds/mensagem.mp3");
-audioEntrou.volume = 1.0;
-audioSaiu.volume = 1.0;
 audioMensagem.volume = 1.0;
 
 const SILENT_AUDIO = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
@@ -301,15 +297,11 @@ const listenToMessages = () => {
 
                 const isNewMessage = (msg.timestamp || 0) > ultimoTimestampCarregado;
                 if (isNewMessage) ultimoTimestampCarregado = msg.timestamp;
-
-                if (somAtivado && isNewMessage && msg.userId !== user.id) {
-                    if (msg.isSystem) {
-                        if (msg.content.includes("👉")) playSound(audioEntrou);
-                        else if (msg.content.includes("👈")) playSound(audioSaiu);
-                    } else {
-                        playSound(audioMensagem);
+                    if (somAtivado && isNewMessage && msg.userId !== user.id) {
+                        if (!msg.isSystem) {
+                            playSound(audioMensagem);
+                        }
                     }
-                }
                 scrollScreen();
             } else if (change.type === "removed") {
                 const el = chatMessages.querySelector(`[data-id="${change.doc.id}"]`);
@@ -473,17 +465,6 @@ const handleLogin = async (name, email, password) => {
     await cred.user.reload();
     await cred.user.getIdToken(true); 
 
-    audioEntrou.volume = 0.01;
-    audioEntrou.play().then(() => {
-        somAtivado = true;
-        atualizarBotaoSom();
-        playSound(audioEntrou);
-    }).catch(() => {
-        audioEntrou.volume = 1.0;
-        somAtivado = false;
-        atualizarBotaoSom();
-    });
-
     const cargoDoc = await getDoc(doc(db, "cargos", user.name));
     const isAdm = cargoDoc.exists() && cargoDoc.data().isAdmin;
 
@@ -538,8 +519,6 @@ const handleLogin = async (name, email, password) => {
     });
 
     if (!user.isAdmin) listenToOwnBanStatus();
-
-    await sendSystemMessage(`👉 ${formatarNomeExibicao(user.name)} entrou no chat!`);
 };
 
 const handleSignup = async (name, email, password) => {
@@ -695,13 +674,11 @@ const cleanupChatSession = async () => {
 btnLogout.addEventListener("click", async () => {
     try {
         if (user.id) {
-            if (somAtivado) playSound(audioSaiu);
             estaDigitando = false;
             clearTimeout(timeoutPararDigitando);
             await pararDeDigitar(db, user.id).catch(() => {});
             await deleteDoc(doc(db, "usuarios_online", user.id)).catch(() => {});
             
-            await sendSystemMessage(`👈 ${formatarNomeExibicao(user.name)} saiu do chat.`);
         }
     } catch (e) {
         console.error("Erro no logout:", e);
@@ -798,7 +775,8 @@ btnClearAll.addEventListener("click", async () => {
 btnSom.addEventListener("click", () => {
     if (somAtivado) {
         somAtivado = false;
-        [audioEntrou, audioSaiu, audioMensagem].forEach((a) => {
+        // Pausa apenas o áudio de mensagem que restou
+        [audioMensagem].forEach((a) => {
             a.pause();
             a.currentTime = 0;
         });
@@ -809,7 +787,8 @@ btnSom.addEventListener("click", () => {
         silent.play().then(() => {
             somAtivado = true;
             atualizarBotaoSom();
-            playSound(audioEntrou, 0.5);
+            // Toca o áudio de mensagem rapidamente com volume baixo apenas para testar/desbloquear o som no navegador
+            playSound(audioMensagem, 0.2);
         }).catch(() => {
             alert("Não foi possível ativar o som. Verifique as permissões do navegador.");
         });
