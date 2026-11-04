@@ -2,8 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
-    sendPasswordResetEmail, verifyBeforeUpdateEmail, updateProfile,
-    sendEmailVerification
+    sendPasswordResetEmail, verifyBeforeUpdateEmail, updateProfile
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import {
     getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc,
@@ -32,9 +31,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-
-// ✅ UID do administrador verdadeiro (isenção de verificação de e-mail)
-const UID_ADMIN_VERDADEIRO = "4YQLcKh4z4bWQjCRscXNCi2DDl32";
 
 // ================= ELEMENTOS DO DOM =================
 const loginSection = document.querySelector(".login");
@@ -71,44 +67,7 @@ const submitBtn = document.querySelector("#submit-btn");
 const toggleMsg = document.querySelector("#toggle-msg");
 const toggleLink = document.querySelector("#toggle-auth");
 
-// ✅ Botão "Reenviar verificação" (criado dinamicamente na tela de login)
-const btnReenviarVerificacao = document.createElement("button");
-btnReenviarVerificacao.type = "button";
-btnReenviarVerificacao.textContent = "📧 Reenviar e-mail de verificação";
-btnReenviarVerificacao.style.display = "none";
-btnReenviarVerificacao.style.width = "100%";
-btnReenviarVerificacao.style.marginTop = "10px";
-btnReenviarVerificacao.style.padding = "12px";
-btnReenviarVerificacao.style.borderRadius = "5px";
-btnReenviarVerificacao.style.border = "1px solid #444";
-btnReenviarVerificacao.style.background = "#333";
-btnReenviarVerificacao.style.color = "#f2f2f2";
-btnReenviarVerificacao.style.fontWeight = "600";
-btnReenviarVerificacao.style.cursor = "pointer";
-btnReenviarVerificacao.style.fontSize = "0.8rem";
-loginForm.appendChild(btnReenviarVerificacao);
 
-// Guarda o e-mail/senha da última tentativa bloqueada para permitir reenvio
-let credenciaisPendentes = null; // { email, password }
-
-btnReenviarVerificacao.addEventListener("click", async () => {
-    if (!credenciaisPendentes) {
-        return alert("Faça uma tentativa de login primeiro para podermos reenviar o e-mail.");
-    }
-    btnReenviarVerificacao.disabled = true;
-    try {
-        const cred = await signInWithEmailAndPassword(
-            auth, credenciaisPendentes.email, credenciaisPendentes.password
-        );
-        await sendEmailVerification(cred.user);
-        await signOut(auth);
-        alert("E-mail de verificação reenviado! Verifique sua caixa de entrada (e o spam).");
-    } catch (e) {
-        alert("Erro ao reenviar verificação: " + e.message);
-    } finally {
-        btnReenviarVerificacao.disabled = false;
-    }
-});
 
 // ================= INDICADOR DE DIGITAÇÃO (UI) =================
 const typingIndicator = document.createElement("div");
@@ -134,6 +93,8 @@ const desbloquearAudios = () => {
         }).catch(() => {}); // Ignora se falhar
     });
 };
+
+const SILENT_AUDIO = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
 
 let somAtivado = false;
 
@@ -545,93 +506,48 @@ toggleLink.addEventListener("click", (e) => {
 
     emailInput.style.display = "block"; 
     forgotPasswordContainer.style.display = isLoginMode ? "block" : "none";
-
-    // Esconde o botão de reenvio ao trocar de modo
-    if (!isLoginMode) {
-        btnReenviarVerificacao.style.display = "none";
-        credenciaisPendentes = null;
-    }
 });
 
-// ✅ HELPER: Verifica se um nome já está registrado na coleção "perfis"
-const nomeJaEmUso = async (nomeNormalizado) => {
-    const snap = await getDocs(
-        query(collection(db, "perfis"), where("nome", "==", nomeNormalizado))
-    );
-    return !snap.empty;
-};
-
 const handleLogin = async (name, email, password) => {
-    if (!email) return alert("Por favor, digite seu e-mail.");
     if (!name) return alert("Por favor, digite seu nome de usuário.");
+    if (!email) return alert("Por favor, digite seu e-mail.");
 
     // 1. Autentica com o Firebase
     const cred = await signInWithEmailAndPassword(auth, email, password);
     const uid = cred.user.uid;
 
     // 2. PROTEÇÃO DO ADMIN
-    if (name.trim().toLowerCase() === "admin" && uid !== UID_ADMIN_VERDADEIRO) {
+    const UID_ADMIN_VERDADEIRO = "4YQLcKh4z4bWQjCRscXNCi2DDl32";
+    if (name.toLowerCase() === "admin" && uid !== UID_ADMIN_VERDADEIRO) {
         await signOut(auth);
         return alert("Acesso negado. Você não é o administrador.");
     }
 
-    // ✅ 3. VERIFICAÇÃO DE E-MAIL (com isenção do admin)
-    if (uid !== UID_ADMIN_VERDADEIRO && !cred.user.emailVerified) {
-        try {
-            await sendEmailVerification(cred.user);
-        } catch (e) {
-            console.warn("Falha ao reenviar verificação:", e);
-        }
-        await signOut(auth);
+    // 3. VERIFICAÇÃO DE IDENTIDADE (O nome digitado bate com a conta?)
+    const userRef = doc(db, "usuarios_online", uid);
+    const userSnap = await getDoc(userRef);
+    let nomeVerdadeiro = name.toLowerCase();
 
-        // Guarda credenciais para permitir reenvio manual
-        credenciaisPendentes = { email, password };
-        btnReenviarVerificacao.style.display = "block";
-
-        return alert(
-            "Seu e-mail ainda não foi confirmado.\n\n" +
-            "Enviamos (ou reenviamos) um link de verificação para " + email + ".\n" +
-            "Clique no link da sua caixa de entrada (verifique o spam) e tente novamente.\n\n" +
-            "Se não recebeu, use o botão \"Reenviar e-mail de verificação\" abaixo do formulário."
-        );
-    }
-
-    // 4. ✅ BUSCA O NOME REAL DO BANCO — o nome digitado PRECISA bater
-    const perfilRef = doc(db, "perfis", uid);
-    const perfilSnap = await getDoc(perfilRef);
-
-    let nomeVerdadeiro;
-
-    if (perfilSnap.exists()) {
-        nomeVerdadeiro = perfilSnap.data().nome;
-
-        // O nome digitado precisa ser exatamente o nome dono da conta
-        if (name.trim().toLowerCase() !== nomeVerdadeiro) {
+    if (userSnap.exists() && userSnap.data().name) {
+        // Se já existe um perfil no banco para este UID, pega o nome verdadeiro
+        nomeVerdadeiro = userSnap.data().name;
+        
+        // Se o nome que ele digitou for DIFERENTE do nome dono da conta, bloqueia!
+        if (name.toLowerCase() !== nomeVerdadeiro) {
             await signOut(auth);
-            return alert(
-                `Acesso negado. O nome "${name.trim()}" não corresponde a esta conta.\n` +
-                `O nome correto desta conta é "${nomeVerdadeiro}".`
-            );
+            return alert(`Acesso negado. Esta conta pertence a "${nomeVerdadeiro}".`);
         }
     } else {
-        // ⚠️ Conta antiga (criada antes desta atualização) sem perfil.
-        // Cria o perfil agora com o nome digitado, se o nome não estiver em uso.
-        const nomeNormalizado = name.trim().toLowerCase();
-        if (await nomeJaEmUso(nomeNormalizado)) {
+        // Se for o primeiro login (não tem perfil), verifica se alguém já usa esse nome
+        const snapUsuarios = await getDocs(query(collection(db, "usuarios_online")));
+        const nomeEmUso = snapUsuarios.docs.some(d => d.data().name && d.data().name.toLowerCase() === name.toLowerCase() && d.id !== uid);
+        if (nomeEmUso) {
             await signOut(auth);
             return alert("Este nome de usuário já está em uso por outra conta.");
         }
-
-        await setDoc(doc(db, "perfis", uid), {
-            nome: nomeNormalizado,
-            email: cred.user.email,
-            criadoEm: Date.now(),
-            migrado: true
-        });
-        nomeVerdadeiro = nomeNormalizado;
     }
 
-    // 5. Define o usuário com o nome VERDADEIRO (do banco)
+    // 4. Define o usuário com o nome VERDADEIRO
     user.id = uid;
     user.name = nomeVerdadeiro; 
     user.color = colorFromId(user.id);
@@ -644,10 +560,6 @@ const handleLogin = async (name, email, password) => {
     desbloquearAudios();
     somAtivado = true;
     atualizarBotaoSom();
-
-    // Esconde o botão de reenvio e limpa credenciais pendentes
-    btnReenviarVerificacao.style.display = "none";
-    credenciaisPendentes = null;
 
     const cargoDoc = await getDoc(doc(db, "cargos", user.name));
     const isAdm = cargoDoc.exists() && cargoDoc.data().isAdmin;
@@ -707,56 +619,17 @@ const handleLogin = async (name, email, password) => {
 const handleSignup = async (name, email, password) => {
     if (!name) return alert("Digite um nome de usuário.");
     if (!email) return alert("Por favor, digite um e-mail válido para se cadastrar.");
-    if (name.trim().toLowerCase() === "admin") {
+    if (name.toLowerCase() === "admin") {
         return alert("Este nome é reservado. Escolha outro.");
     }
 
-    const nomeNormalizado = name.trim().toLowerCase();
-
     try {
-        // ✅ 1. Verifica se o nome já está em uso ANTES de criar a conta
-        if (await nomeJaEmUso(nomeNormalizado)) {
-            return alert("Este nome de usuário já está em uso. Escolha outro.");
-        }
-
-        // ✅ 2. Cria a conta
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        const uid = cred.user.uid;
-
-        // ✅ 3. Cria o perfil PERMANENTE vinculando uid -> nome
-        await setDoc(doc(db, "perfis", uid), {
-            nome: nomeNormalizado,
-            email: email,
-            criadoEm: Date.now()
-        });
-
-        await updateProfile(cred.user, { displayName: nomeNormalizado });
-
-        // ✅ 4. Envia e-mail de verificação
-        let emailEnviado = true;
-        try {
-            await sendEmailVerification(cred.user);
-        } catch (e) {
-            console.warn("Falha ao enviar verificação:", e);
-            emailEnviado = false;
-        }
-
+        await updateProfile(cred.user, { displayName: name.toLowerCase() });
+        
         await signOut(auth);
 
-        if (emailEnviado) {
-            alert(
-                "Cadastro realizado com sucesso!\n\n" +
-                "Enviamos um link de confirmação para " + email + ".\n" +
-                "Você precisa clicar no link ANTES de fazer login.\n\n" +
-                "Verifique também a pasta de spam."
-            );
-        } else {
-            alert(
-                "Cadastro realizado, mas não conseguimos enviar o e-mail de verificação agora.\n" +
-                "Tente fazer login — o sistema reenviará automaticamente."
-            );
-        }
-
+        alert("Cadastro realizado com sucesso! Faça login.");
         toggleLink.click();
     } catch (error) {
         if (error.code === "auth/email-already-in-use") alert("Este e-mail já está em uso!");
@@ -814,14 +687,9 @@ forgotPasswordLink.addEventListener("click", async (e) => {
     }
 });
 
-// ✅ Editar Nome: apenas administradores podem renomear contas
 btnEditName.addEventListener("click", async () => {
-    if (!user.isAdmin) {
-        return alert("Apenas administradores podem alterar nomes de usuário.\nSeu nome é sua identidade permanente.");
-    }
-
-    const novoNome = prompt("Digite o novo nome de exibição:", user.name);
-    if (!novoNome || !novoNome.trim() || novoNome.trim().toLowerCase() === user.name) return;
+    const novoNome = prompt("Digite o seu novo nome de exibição:", user.name);
+    if (!novoNome || !novoNome.trim() || novoNome.trim() === user.name) return;
     const nomeFormatado = novoNome.trim().toLowerCase();
 
     if (nomeFormatado === "admin") {
@@ -829,17 +697,6 @@ btnEditName.addEventListener("click", async () => {
     }
 
     try {
-        // Verifica se o novo nome já está em uso por outra conta
-        const perfisSnap = await getDocs(
-            query(collection(db, "perfis"), where("nome", "==", nomeFormatado))
-        );
-        if (!perfisSnap.empty) {
-            return alert("Este nome já está em uso por outra conta.");
-        }
-
-        // Atualiza o perfil permanente (regra permite pois user.isAdmin == true)
-        await setDoc(doc(db, "perfis", user.id), { nome: nomeFormatado }, { merge: true });
-
         user.name = nomeFormatado;
         await updateProfile(auth.currentUser, { displayName: user.name });
         await auth.currentUser.reload();
