@@ -19,19 +19,10 @@ const enviarMensagemSistema = async (db, texto) => {
     }
 };
 
-// ✅ Agora recebe o áudio e o status do som como parâmetros
-export const anunciarEntrada = (db, nome, audio, somAtivado) => {
-    if (somAtivado && audio) {
-        audio.currentTime = 0;
-        audio.play().catch(() => {});
-    }
+export const anunciarEntrada = (db, nome) => {
     return enviarMensagemSistema(db, `🟢 ${formatarNome(nome)} entrou`);
 };
 
-export const anunciarSaida = (db, nome, audio, somAtivado) => {
-    if (somAtivado && audio) {
-        audio.currentTime = 0;
-        audio.play().catch(() => {});
-    }
+export const anunciarSaida = (db, nome) => {
     return enviarMensagemSistema(db, `🔴 ${formatarNome(nome)} saiu`);
 };

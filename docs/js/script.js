@@ -492,16 +492,20 @@ const handleLogin = async (name, email, password) => {
     await cred.user.reload();
     await cred.user.getIdToken(true); 
 
-    // Ativa o som usando áudio silencioso (desbloqueia áudio no navegador)
+    // =========================================================
+    // ✅ TOCA O SOM AQUI (O mais rápido possível após o clique)
+    // =========================================================
+    somAtivado = true; // Força o som a ligar no login
+    atualizarBotaoSom();
+    audioEntrou.currentTime = 0;
+    audioEntrou.play().catch(e => console.log("Áudio bloqueado:", e));
+
+    // (O áudio silencioso não é mais necessário para desbloquear, 
+    // mas mantemos caso você queira usar outros áudios no futuro)
     const silent = new Audio(SILENT_AUDIO);
     silent.volume = 0.01;
-    silent.play().then(() => {
-        somAtivado = true;
-        atualizarBotaoSom();
-    }).catch(() => {
-        somAtivado = false;
-        atualizarBotaoSom();
-    });
+    silent.play().catch(() => {});
+    // =========================================================
 
     const cargoDoc = await getDoc(doc(db, "cargos", user.name));
     const isAdm = cargoDoc.exists() && cargoDoc.data().isAdmin;
@@ -563,7 +567,7 @@ const handleLogin = async (name, email, password) => {
     await primeiroSnapshotPromise;
 
     try {
-        await anunciarEntrada(db, user.name, audioEntrou, somAtivado);
+        await anunciarEntrada(db, user.name);
     } catch (e) {
         console.error("Falha ao anunciar entrada:", e);
     }
@@ -725,6 +729,12 @@ btnLogout.addEventListener("click", async () => {
             estaDigitando = false;
             clearTimeout(timeoutPararDigitando);
             await pararDeDigitar(db, user.id).catch(() => {});
+
+            if (somAtivado) {
+                audioSaiu.currentTime = 0;
+                audioSaiu.play().catch(() => {});
+            }
+
             // ✅ Anuncia saída ANTES de limpar o listener
             try { await anunciarSaida(db, user.name, audioSaiu, somAtivado); } catch (e) { console.error(e); }
             await deleteDoc(doc(db, "usuarios_online", user.id)).catch(() => {});
