@@ -5,7 +5,7 @@ import {
     sendPasswordResetEmail, verifyBeforeUpdateEmail, updateProfile
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import {
-    initializeFirestore, memoryLocalCache, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc,
+    getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc,
     getDocs, getDoc, writeBatch, setDoc, limit, where
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -30,7 +30,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = initializeFirestore(app, { localCache: memoryLocalCache() });
+const db = getFirestore(app);
 
 // ================= ELEMENTOS DO DOM =================
 const loginSection = document.querySelector(".login");
