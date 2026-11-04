@@ -513,6 +513,16 @@ const handleLogin = async (name, email, password) => {
     if (!email) return alert("Por favor, digite seu e-mail.");
 
     const cred = await signInWithEmailAndPassword(auth, email, password);
+
+
+    const UID_ADMIN_VERDADEIRO = "4YQLcKh4z4bWQjCRscXNCi2DDl32";
+    
+    if (name.toLowerCase() === "admin" && cred.user.uid !== UID_ADMIN_VERDADEIRO) {
+        await signOut(auth);
+        return alert("Acesso negado. Você não é o administrador.");
+    }
+
+
     user.id = cred.user.uid;
     user.name = name.toLowerCase(); 
     user.color = colorFromId(user.id);
