@@ -297,11 +297,10 @@ const listenToMessages = () => {
 
                 const isNewMessage = (msg.timestamp || 0) > ultimoTimestampCarregado;
                 if (isNewMessage) ultimoTimestampCarregado = msg.timestamp;
-                    if (somAtivado && isNewMessage && msg.userId !== user.id) {
-                        if (!msg.isSystem) {
-                            playSound(audioMensagem);
-                        }
-                    }
+
+                if (somAtivado && isNewMessage && msg.userId !== user.id && !msg.isSystem) {
+                    playSound(audioMensagem);
+                }
                 scrollScreen();
             } else if (change.type === "removed") {
                 const el = chatMessages.querySelector(`[data-id="${change.doc.id}"]`);
@@ -464,6 +463,17 @@ const handleLogin = async (name, email, password) => {
     await updateProfile(cred.user, { displayName: user.name });
     await cred.user.reload();
     await cred.user.getIdToken(true); 
+
+    // Ativa o som usando áudio silencioso (desbloqueia áudio no navegador)
+    const silent = new Audio(SILENT_AUDIO);
+    silent.volume = 0.01;
+    silent.play().then(() => {
+        somAtivado = true;
+        atualizarBotaoSom();
+    }).catch(() => {
+        somAtivado = false;
+        atualizarBotaoSom();
+    });
 
     const cargoDoc = await getDoc(doc(db, "cargos", user.name));
     const isAdm = cargoDoc.exists() && cargoDoc.data().isAdmin;
@@ -678,7 +688,6 @@ btnLogout.addEventListener("click", async () => {
             clearTimeout(timeoutPararDigitando);
             await pararDeDigitar(db, user.id).catch(() => {});
             await deleteDoc(doc(db, "usuarios_online", user.id)).catch(() => {});
-            
         }
     } catch (e) {
         console.error("Erro no logout:", e);
@@ -775,11 +784,8 @@ btnClearAll.addEventListener("click", async () => {
 btnSom.addEventListener("click", () => {
     if (somAtivado) {
         somAtivado = false;
-        // Pausa apenas o áudio de mensagem que restou
-        [audioMensagem].forEach((a) => {
-            a.pause();
-            a.currentTime = 0;
-        });
+        audioMensagem.pause();
+        audioMensagem.currentTime = 0;
         atualizarBotaoSom();
     } else {
         const silent = new Audio(SILENT_AUDIO);
@@ -787,8 +793,7 @@ btnSom.addEventListener("click", () => {
         silent.play().then(() => {
             somAtivado = true;
             atualizarBotaoSom();
-            // Toca o áudio de mensagem rapidamente com volume baixo apenas para testar/desbloquear o som no navegador
-            playSound(audioMensagem, 0.2);
+            playSound(audioMensagem, 0.5);
         }).catch(() => {
             alert("Não foi possível ativar o som. Verifique as permissões do navegador.");
         });
