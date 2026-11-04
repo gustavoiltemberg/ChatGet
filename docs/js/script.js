@@ -84,6 +84,16 @@ audioMensagem.volume = 1.0;
 audioEntrou.volume = 1.0;
 audioSaiu.volume = 1.0;
 
+// ✅ FUNÇÃO PARA DESBLOQUEAR OS ÁUDIOS NO NAVEGADOR
+const desbloquearAudios = () => {
+    [audioMensagem, audioEntrou, audioSaiu].forEach(audio => {
+        audio.play().then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+        }).catch(() => {}); // Ignora se falhar
+    });
+};
+
 const SILENT_AUDIO = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
 
 let somAtivado = false;
@@ -511,6 +521,9 @@ const handleLogin = async (name, email, password) => {
     await cred.user.reload();
     await cred.user.getIdToken(true); 
 
+    // ✅ Desbloqueia os áudios aqui!
+    desbloquearAudios();
+
     somAtivado = true;
     atualizarBotaoSom();
 
@@ -840,6 +853,7 @@ btnClearAll.addEventListener("click", async () => {
 
 btnSom.addEventListener("click", () => {
     if (somAtivado) {
+        // Desliga o som e pausa tudo
         somAtivado = false;
         audioMensagem.pause();
         audioMensagem.currentTime = 0;
@@ -849,15 +863,12 @@ btnSom.addEventListener("click", () => {
         audioSaiu.currentTime = 0;
         atualizarBotaoSom();
     } else {
-        const silent = new Audio(SILENT_AUDIO);
-        silent.volume = 0.01;
-        silent.play().then(() => {
-            somAtivado = true;
-            atualizarBotaoSom();
-            playSound(audioMensagem, 0.5);
-        }).catch(() => {
-            alert("Não foi possível ativar o som. Verifique as permissões do navegador.");
-        });
+        // ✅ Desbloqueia os áudios no navegador
+        desbloquearAudios();
+        
+        somAtivado = true;
+        atualizarBotaoSom();
+        playSound(audioMensagem, 0.5); // Toca um som de teste para confirmar
     }
 });
 
