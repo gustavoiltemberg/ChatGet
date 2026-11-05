@@ -207,3 +207,17 @@ body.light-theme .sticker-btn:hover {
         background-position: center !important;
     }
 }
+
+/* Altera o botão [Apagar] APENAS nas bolhas do lado direito (suas mensagens) no Tema Claro */
+body.light-theme .message--self .delete-btn {
+    color: #ffffff !important; /* Branco para dar o contraste ideal no fundo cadetblue */
+    font-weight: 600 !important; /* Deixa o texto mais nítido */
+    opacity: 0.95 !important;
+}
+
+/* Efeito ao passar o mouse apenas no botão do lado direito do tema claro */
+body.light-theme .message--self .delete-btn:hover {
+    color: #d1f0f2 !important; /* Azul bem clarinho no foco */
+    text-decoration: underline !important;
+}
+

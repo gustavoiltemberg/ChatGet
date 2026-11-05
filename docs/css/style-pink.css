@@ -1,0 +1,194 @@
+/* Ativado quando a classe .pink-theme estiver no <body> */
+body.pink-theme {
+    /* Altere "background-light.png" pelo nome real do seu arquivo de imagem claro */
+    background: url("../images/background-pink.png") !important; 
+    color: #4a0e17 !important;
+}
+
+/* Opcional: Se você tiver uma imagem de fundo rosa, use a linha abaixo em vez do degradê:
+body.pink-theme { background-image: url("../images/background-pink.png") !important; }
+*/
+
+body.pink-theme .login {
+    background-color: #ffffff !important;
+    border: 2px solid #ff85a2;
+    box-shadow: 0 8px 24px rgba(255, 133, 162, 0.2);
+}
+
+body.pink-theme .login > h2 {
+    color: #ff477e !important;
+    text-shadow: 1px 1px 0px rgba(255, 182, 193, 0.5);
+}
+
+body.pink-theme .login__input {
+    background-color: #fff0f3 !important;
+    color: #4a0e17 !important;
+    border: 1px solid #ffb3c6 !important;
+}
+
+body.pink-theme .login__input:focus {
+    outline: 2px solid #ff477e !important;
+}
+
+body.pink-theme .login__button {
+    background-color: #ff477e !important;
+    color: #ffffff !important;
+}
+
+body.pink-theme .login__button:hover {
+    background-color: #ff7096 !important;
+}
+
+body.pink-theme .login__toggle a {
+    color: #ff477e !important;
+}
+
+/* Elementos superiores e inferiores do Chat */
+body.pink-theme .chat__header,
+body.pink-theme .chat__form,
+body.pink-theme .chat__stickers {
+    background-color: #ffffff !important;
+    border-color: #ffccd5 !important;
+}
+
+body.pink-theme .chat__sidebar {
+    background-color: #fff0f3 !important;
+    border-color: #ffccd5 !important;
+}
+
+body.pink-theme .chat__input {
+    background-color: #fff5f7 !important;
+    color: #4a0e17 !important;
+    border: 1px solid #ffccd5 !important;
+}
+
+body.pink-theme .chat__messages {
+    background-color: transparent !important;
+}
+
+/* Ajustes das Bolhas de Mensagens */
+body.pink-theme .message--other {
+    background-color: #ffffff !important;
+    color: #4a0e17 !important;
+    border: 1px solid #ffccd5;
+    box-shadow: 0 2px 4px rgba(255, 204, 213, 0.3);
+}
+
+body.pink-theme .message--self {
+    background-color: #ff477e !important;
+    color: #ffffff !important;
+}
+
+body.pink-theme .message--self .message--sender {
+    color: #ffe5ec !important;
+}
+
+body.pink-theme .message--other .message--sender {
+    color: #ff477e !important;
+}
+
+body.pink-theme .user--online .user-info {
+    color: #4a0e17 !important;
+}
+
+body.pink-theme .typing-indicator {
+    background-color: #ffffff !important;
+    color: #ff7096 !important;
+    box-shadow: 0 2px 6px rgba(255, 112, 150, 0.2);
+}
+
+body.pink-theme .modal-content {
+    background-color: #ffffff !important;
+    color: #4a0e17 !important;
+    border: 2px solid #ff477e;
+}
+
+body.pink-theme #bans-list li {
+    background-color: #fff0f3 !important;
+    border-color: #ffccd5 !important;
+}
+
+/* Botões de Ação do Chat (Enviar, GIF e Emoticons) */
+body.pink-theme .chat__button {
+    color: #ff477e !important;
+}
+
+body.pink-theme .chat__button:hover {
+    color: #ff7096 !important;
+}
+
+body.pink-theme .chat__button-gif {
+    color: #ff7096 !important;
+}
+
+body.pink-theme .chat__button-gif.active,
+body.pink-theme .chat__button-gif:hover {
+    color: #ff477e !important;
+}
+
+body.pink-theme .sticker-btn {
+    background-color: #fff0f3 !important;
+}
+
+body.pink-theme .sticker-btn:hover {
+    background-color: #ffccd5 !important;
+}
+
+/* Configuração do Botão Redondo de Tema no Canto Superior Esquerdo */
+.pink-toggle-btn {
+    position: absolute !important;
+    top: 15px !important;
+    left: 15px !important; /* Lado oposto ao botão claro/escuro */
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 50% !important;
+    background-color: #ffb3c6 !important;
+    font-size: 1.1rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    transition: background 0.3s, transform 0.2s !important;
+    border: none !important;
+}
+
+.pink-toggle-btn:hover {
+    transform: scale(1.05);
+}
+
+body.pink-theme .pink-toggle-btn {
+    background-color: #4a0e17 !important;
+}
+
+/* Quando o tema rosa estiver ativo, o botão redondo ganha um fundo especial */
+body.pink-theme .theme-toggle-btn {
+    background-color: #ffb3c6 !important;
+    color: #4a0e17 !important;
+}
+
+/* Garante que o celular também use a sua nova imagem de fundo rosa na proporção correta */
+@media (max-width: 600px) {
+    body.pink-theme {
+        background-image: url("../images/background-pink.png") !important;
+        background-attachment: fixed !important;
+        background-size: cover !important;
+        background-position: center !important;
+    }
+}
+
+/* Altera o botão [Apagar] APENAS nas bolhas do lado direito (suas mensagens) no Tema Rosa */
+body.pink-theme .message--self .delete-btn {
+    color: #ffffff !important; /* Branco para dar o contraste ideal no fundo rosa */
+    font-weight: 600 !important; /* Deixa o texto mais legível */
+    opacity: 0.95 !important;
+}
+
+/* Efeito ao passar o mouse apenas no botão do lado direito */
+body.pink-theme .message--self .delete-btn:hover {
+    color: #ffe5ec !important; /* Rosa bem clarinho no foco */
+    text-decoration: underline !important;
+}
+
