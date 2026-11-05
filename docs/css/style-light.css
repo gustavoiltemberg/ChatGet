@@ -1,0 +1,199 @@
+/* Ativado quando a classe .light-theme estiver no <body> */
+/* Substitua o início do seu style-light.css por este bloco: */
+body.light-theme {
+    /* Altere "background-light.png" pelo nome real do seu arquivo de imagem claro */
+    background: url("../images/background-light.png") !important; 
+    color: #1c1e21 !important;
+}
+
+
+body.light-theme .login {
+    background-color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .login > h2 {
+    color: #1c1e21 !important;
+}
+
+body.light-theme .login__input {
+    background-color: #f5f6f7 !important;
+    color: #1c1e21 !important;
+    border: 1px solid #ccd0d5 !important;
+}
+
+body.light-theme .login__input:focus {
+    outline: 2px solid cadetblue !important;
+}
+
+body.light-theme .login__button {
+    background-color: cadetblue !important;
+    color: #ffffff !important;
+}
+
+body.light-theme .login__button:hover {
+    background-color: #467e80 !important;
+}
+
+/* Elementos do Chat */
+body.light-theme .chat__header,
+body.light-theme .chat__form,
+body.light-theme .chat__stickers {
+    background-color: #ffffff !important;
+    border-color: #e5e5e5 !important;
+}
+
+body.light-theme .chat__sidebar {
+    background-color: #f7f8fa !important;
+    border-color: #e5e5e5 !important;
+}
+
+body.light-theme .chat__input {
+    background-color: #f0f2f5 !important;
+    color: #1c1e21 !important;
+    border: 1px solid #e5e5e5 !important;
+}
+
+/* Mude para transparent para a imagem do body aparecer por trás das mensagens */
+body.light-theme .chat__messages {
+    background-color: transparent !important;
+}
+
+/* Ajustes das Bolhas de Mensagens */
+body.light-theme .message--other {
+    background-color: #ffffff !important;
+    color: #1c1e21 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .message--self {
+    background-color: cadetblue !important;
+    color: #ffffff !important;
+}
+
+body.light-theme .message--self .message--sender {
+    color: #d1f0f2 !important;
+}
+
+body.light-theme .user--online .user-info {
+    color: #1c1e21 !important;
+}
+
+body.light-theme .typing-indicator {
+    background-color: #ffffff !important;
+    color: #65676b !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+body.light-theme .modal-content {
+    background-color: #ffffff !important;
+    color: #1c1e21 !important;
+}
+
+body.light-theme #bans-list li {
+    background-color: #f0f2f5 !important;
+    border-color: #e5e5e5 !important;
+}
+
+/* Botão Alternador de Tema na Tela de Login */
+.theme-toggle-btn {
+    width: 100%;
+    border: none;
+    padding: 15px;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    background-color: #333333;
+    color: #ffffff;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: background 0.3s;
+}
+
+body.light-theme .theme-toggle-btn {
+    background-color: #e4e6eb !important;
+    color: #1c1e21 !important;
+}
+
+/* Ajuste de responsividade para o botão de tema em celulares */
+@media (max-width: 600px) {
+    .theme-toggle-btn {
+        padding: 12px !important;
+        font-size: 0.95rem !important;
+        margin-top: 12px !important;
+    }
+}
+
+/* Centraliza perfeitamente o texto "Entrar" verticalmente no tema claro */
+body.light-theme .login__button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important; /* Remove espaçamentos de linha fantasmas */
+}
+
+/* Torna a caixa de login a referência para o posicionamento do botão */
+.login {
+    position: relative !important;
+}
+
+/* Transforma o botão em um ícone redondo flutuante no canto superior direito */
+.theme-toggle-btn {
+    position: absolute !important;
+    top: 15px !important;
+    right: 15px !important;
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 50% !important; /* Deixa redondo */
+    background-color: #2a2a2a !important;
+    font-size: 1.1rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    transition: background 0.3s, transform 0.2s !important;
+    border: none !important;
+}
+
+.theme-toggle-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Visual do botão circular quando o Modo Claro estiver ativo */
+body.light-theme .theme-toggle-btn {
+    background-color: #e4e6eb !important;
+}
+
+/* Altera a cor do ícone do botão Enviar no tema claro */
+body.light-theme .chat__button {
+    color: #515355 !important; 
+}
+
+/* Opcional: Altera a cor quando o usuário passa o mouse por cima */
+body.light-theme .chat__button:hover {
+    color: cadetblue !important; 
+}
+
+/* Altera a cor padrão do ícone do botão GIF no tema claro */
+body.light-theme .chat__button-gif {
+    color: #515355 !important; /* Cor escura discreta para combinar com os textos */
+}
+
+/* Altera a cor quando o painel de GIFs estiver aberto (.active) ou ao passar o mouse */
+body.light-theme .chat__button-gif.active,
+body.light-theme .chat__button-gif:hover {
+    color: cadetblue !important; /* Destaca em cadetblue para indicar que está ativo/focado */
+}
+
+/* Altera o fundo dos botões de emoticon para cinza no tema claro */
+body.light-theme .sticker-btn {
+    background-color: #e4e6eb !important; /* Um tom de cinza claro e sutil */
+}
+
+/* Opcional: Altera a cor quando você passa o mouse por cima do emoticon */
+body.light-theme .sticker-btn:hover {
+    background-color: #ccd0d5 !important; /* Um cinza um pouquinho mais escuro no foco */
+}

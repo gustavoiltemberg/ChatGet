@@ -5,16 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0" />
     <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/style-light.css">
     <title>Chat | Iltemberg</title>
     <link rel="icon" type="image/png" href="./images/favicon.png">
 </head>
 <body>
-    
+
     <section class="container">
 
         <!-- ================= TELA DE LOGIN / CADASTRO ================= -->
         <section class="login">
             <h2 id="form-title">Login</h2>
+
+<!-- Deixe o botão exatamente assim dentro da div da classe "login" -->
+<button type="button" id="manual-theme-toggle" class="theme-toggle-btn" aria-label="Mudar tema">🌙</button>
+
+
             <form class="login__form" id="auth-form">
                 <!-- Nome de exibição -->
                 <input type="text" class="login__input" id="username" placeholder="Seu nome de usuário (ex: joao)" required />
@@ -36,6 +42,7 @@
                 <span id="toggle-msg">Não tem conta?</span> 
                 <a href="#" id="toggle-auth">Cadastre-se</a>
             </p>
+
         </section>
 
         <!-- ================= TELA DO CHAT ================= -->
@@ -94,5 +101,6 @@
     </div>
 
     <script type="module" src="./js/script.js"></script>
+    <script src="./js/script-light.js"></script>
 </body>
 </html>

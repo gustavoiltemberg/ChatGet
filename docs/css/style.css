@@ -803,3 +803,27 @@ body.is-admin .btn-moderate-user {
     height: 24px !important; 
     margin-right: 4px !important;
 }
+
+/* ================= CUSTOMIZAÇÃO DOS BOTÕES NO MODO ESCURO ================= */
+
+/* Altera a cor padrão do botão Enviar no tema escuro */
+.chat__button {
+    color: #ffffff !important; /* Cor branca padrão para dar contraste */
+    transition: color 0.3s;
+}
+
+/* Altera a cor do botão Enviar ao passar o mouse */
+.chat__button:hover {
+    color: cadetblue !important; /* Destaca em cadetblue no foco */
+}
+
+/* Altera a cor padrão do botão GIF no tema escuro */
+.chat__button-gif {
+    color: #ffffff !important; /* Cor branca padrão */
+}
+
+/* Altera a cor do botão GIF ao passar o mouse ou quando o painel estiver aberto */
+.chat__button-gif:hover,
+.chat__button-gif.active {
+    color: cadetblue !important; /* Destaca em cadetblue quando ativo */
+}
