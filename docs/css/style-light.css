@@ -197,3 +197,13 @@ body.light-theme .sticker-btn {
 body.light-theme .sticker-btn:hover {
     background-color: #ccd0d5 !important; /* Um cinza um pouquinho mais escuro no foco */
 }
+
+/* Garante a mesma proporção e comportamento no celular para o tema claro */
+@media (max-width: 600px) {
+    body.light-theme {
+        background-image: url("../images/background-light.png") !important;
+        background-attachment: fixed !important;
+        background-size: cover !important;
+        background-position: center !important;
+    }
+}
