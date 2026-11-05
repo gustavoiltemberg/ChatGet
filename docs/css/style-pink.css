@@ -163,11 +163,12 @@ body.pink-theme .pink-toggle-btn {
     background-color: #4a0e17 !important;
 }
 
-/* Quando o tema rosa estiver ativo, o botão redondo ganha um fundo especial */
+/* Quando o tema rosa estiver ativo, o botão redondo ganha um fundo rosa bem mais claro */
 body.pink-theme .theme-toggle-btn {
-    background-color: #ffb3c6 !important;
-    color: #4a0e17 !important;
+    background-color: #ffe5ec !important; /* Rosa bem claro/pastel */
+    color: #ff477e !important;            /* Mantém a florzinha em rosa escuro para dar contraste */
 }
+
 
 /* Garante que o celular também use a sua nova imagem de fundo rosa na proporção correta */
 @media (max-width: 600px) {
@@ -191,5 +192,4 @@ body.pink-theme .message--self .delete-btn:hover {
     color: #ffe5ec !important; /* Rosa bem clarinho no foco */
     text-decoration: underline !important;
 }
-
 
