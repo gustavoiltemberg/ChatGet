@@ -19,6 +19,10 @@ import {
 
 import { anunciarEntrada, anunciarSaida } from "./presence.js";
 
+import { obterUrlAvatar } from "./avatar.js";
+
+
+
 const firebaseConfig = {
   apiKey: "AIzaSyDZlENtMvC3u6HRr4T1n_TnnlbkxRfNid4",
   authDomain: "chat-get-ed551.firebaseapp.com",
@@ -214,6 +218,30 @@ const createMessageElement = (msg, docId) => {
     if (user.isAdmin) podeApagar = true;
     else if (user.isModerator && !isAdminMessage) podeApagar = true;
 
+    // Criar o container da linha do remetente (Avatar + Nome)
+    const headerMensagem = document.createElement("div");
+    headerMensagem.className = "message--header";
+
+    // ✅ ADICIONADO: Criar a imagem do avatar
+    const imgAvatar = document.createElement("img");
+    imgAvatar.className = "message--avatar";
+    imgAvatar.src = obterUrlAvatar(msg.userName);
+    imgAvatar.alt = "Avatar";
+    imgAvatar.loading = "lazy";
+
+    // ✅ NOVO: Se for o admin, força o fundo amarelo e ajusta a imagem
+    // ✅ NOVO: Se for o admin, aplica a classe de tamanho maior
+    if (msg.userName && msg.userName.toLowerCase() === "admin") {
+        imgAvatar.classList.add("is-admin");
+
+        // (Opcional) Se quiser manter o fundo amarelo que você pediu antes:
+        imgAvatar.style.backgroundColor = "#f1c40f"; // Amarelo (mesmo tom do seu badge de moderador)
+        imgAvatar.style.padding = "2px"; // Dá um pequeno respiro para a imagem não colar na borda
+        imgAvatar.style.objectFit = "contain"; // Garante que a imagem não seja cortada
+    }
+
+    headerMensagem.appendChild(imgAvatar);
+
     if (msg.userId === user.id) {
         div.classList.add("message--self");
     } else {
@@ -222,9 +250,11 @@ const createMessageElement = (msg, docId) => {
         sender.className = "message--sender";
         sender.style.color = msg.userColor || colorFromId(msg.userId);
         sender.textContent = formatarNomeExibicao(msg.userName) || "Anônimo";
-        div.appendChild(sender);
+        headerMensagem.appendChild(sender);
     }
 
+    // Adiciona o cabeçalho com avatar e nome na bolha
+    div.appendChild(headerMensagem);
     div.appendChild(buildContentNode(msg.content));
 
     if (podeApagar) {

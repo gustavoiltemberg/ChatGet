@@ -299,9 +299,10 @@ body {
 }
 
 .message--sender {
-    display: block;
-    margin-bottom: 15px;
+    display: inline-block !important;
+    margin-bottom: 0 !important; /* ✅ Removeu os 15px que quebravam o alinhamento com o avatar */
     font-weight: 700;
+    font-size: 0.85rem;
     color: cadetblue;
 }
 
@@ -765,4 +766,33 @@ body.is-admin .btn-moderate-user {
     font-size: 0.85em;
     color: #888;
     margin-left: 4px;
+}
+
+/* ================= ESTILO DOS AVATARES ================= */
+.message--header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.message--avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+/* Pequeno ajuste para a bolha do próprio usuário alinhar o avatar à direita */
+.message--self .message--header {
+    justify-content: flex-end;
+}
+
+/* ✅ Novo estilo para o avatar do Admin */
+.message--avatar.is-admin {
+    width: 36px;  /* Aumenta a largura (padrão é 24px) */
+    height: 36px; /* Aumenta a altura */
+    margin-right: 4px; /* Um pequeno ajuste para não colar no nome */
 }
