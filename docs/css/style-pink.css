@@ -9,11 +9,13 @@ body.pink-theme {
 body.pink-theme { background-image: url("../images/background-pink.png") !important; }
 */
 
+/* Atualize a regra .login no seu style-pink.css removendo a linha "border" */
 body.pink-theme .login {
     background-color: #ffffff !important;
-    border: 2px solid #ff85a2;
+    /* A linha 'border: 2px solid #ff85a2;' foi removida daqui */
     box-shadow: 0 8px 24px rgba(255, 133, 162, 0.2);
 }
+
 
 body.pink-theme .login > h2 {
     color: #ff477e !important;

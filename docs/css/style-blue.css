@@ -1,0 +1,168 @@
+/* Ativado quando a classe .blue-theme estiver no <body> */
+body.blue-theme {
+    background: url("../images/background-blue.png") !important; 
+    color: #0f2a4a !important;
+}
+
+body.blue-theme .login {
+    background-color: #ffffff !important;
+    box-shadow: 0 8px 24px rgba(13, 110, 253, 0.15);
+}
+
+body.blue-theme .login > h2 {
+    color: #0d6efd !important;
+}
+
+body.blue-theme .login__input {
+    background-color: #f0f5ff !important;
+    color: #0f2a4a !important;
+    border: 1px solid #b3d1ff !important;
+}
+
+body.blue-theme .login__input:focus {
+    outline: 2px solid #0d6efd !important;
+}
+
+body.blue-theme .login__button {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+body.blue-theme .login__button:hover {
+    background-color: #0a58ca !important;
+}
+
+body.blue-theme .login__toggle a {
+    color: #0d6efd !important;
+}
+
+/* Elementos superiores e inferiores do Chat */
+body.blue-theme .chat__header,
+body.blue-theme .chat__form,
+body.blue-theme .chat__stickers {
+    background-color: #ffffff !important;
+    border-color: #d3e4ff !important;
+}
+
+body.blue-theme .chat__sidebar {
+    background-color: #f0f5ff !important;
+    border-color: #d3e4ff !important;
+}
+
+body.blue-theme .chat__input {
+    background-color: #f8faff !important;
+    color: #0f2a4a !important;
+    border: 1px solid #d3e4ff !important;
+}
+
+body.blue-theme .chat__messages {
+    background-color: transparent !important;
+}
+
+/* Ajustes das Bolhas de Mensagens */
+body.blue-theme .message--other {
+    background-color: #ffffff !important;
+    color: #0f2a4a !important;
+    border: 1px solid #d3e4ff;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.05);
+}
+
+body.blue-theme .message--self {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+body.blue-theme .message--self .message--sender {
+    color: #e6f0ff !important;
+}
+
+body.blue-theme .message--other .message--sender {
+    color: #0d6efd !important;
+}
+
+body.blue-theme .user--online .user-info {
+    color: #0f2a4a !important;
+}
+
+body.blue-theme .typing-indicator {
+    background-color: #ffffff !important;
+    color: #0d6efd !important;
+    box-shadow: 0 2px 6px rgba(13, 110, 253, 0.15);
+}
+
+body.blue-theme .modal-content {
+    background-color: #ffffff !important;
+    color: #0f2a4a !important;
+    border: 2px solid #0d6efd;
+}
+
+body.blue-theme #bans-list li {
+    background-color: #f0f5ff !important;
+    border-color: #d3e4ff !important;
+}
+
+/* Botões de Ação do Chat (Enviar, GIF e Emoticons) */
+body.blue-theme .chat__button {
+    color: #0d6efd !important;
+}
+
+body.blue-theme .chat__button:hover {
+    color: #0a58ca !important;
+}
+
+body.blue-theme .chat__button-gif {
+    color: #0a58ca !important;
+}
+
+body.blue-theme .chat__button-gif.active,
+body.blue-theme .chat__button-gif:hover {
+    color: #0d6efd !important;
+}
+
+body.blue-theme .sticker-btn {
+    background-color: #f0f5ff !important;
+}
+
+body.blue-theme .sticker-btn:hover {
+    background-color: #d3e4ff !important;
+}
+
+/* Botão Alternador de Tema Cíclico no Modo Azul */
+body.blue-theme .theme-toggle-btn {
+    background-color: #e6f0ff !important; 
+    color: #0d6efd !important;            
+}
+
+/* Altera o botão [Apagar] APENAS nas bolhas do lado direito (suas mensagens) no Tema Azul */
+body.blue-theme .message--self .delete-btn {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    opacity: 0.95 !important;
+}
+
+body.blue-theme .message--self .delete-btn:hover {
+    color: #e6f0ff !important;
+    text-decoration: underline !important;
+}
+
+/* Garante a mesma proporção e comportamento no celular para o tema azul */
+@media (max-width: 600px) {
+    body.blue-theme {
+        background-image: url("../images/background-blue.png") !important;
+        background-attachment: fixed !important;
+        background-size: cover !important;
+        background-position: center !important;
+    }
+}
+
+/* Melhora a visibilidade das mensagens de sistema (entrou/saiu) apenas no Tema Azul */
+body.blue-theme .message--system {
+    color: #ffffff !important;           /* Texto em branco para destacar no fundo azul */
+    border-bottom-color: rgba(255, 255, 255, 0.2) !important; /* Torna a linha divisória mais suave */
+    font-weight: 600 !important;         /* Deixa a fonte levemente mais nítida */
+}
+
+/* Deixa o texto com a data e hora do alerta também visível */
+body.blue-theme .message--system-time {
+    color: #d0e2ff !important;           /* Um tom de azul bem claro para diferenciar da mensagem principal */
+}
