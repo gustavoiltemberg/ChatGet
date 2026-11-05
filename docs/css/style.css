@@ -790,9 +790,11 @@ body.is-admin .btn-moderate-user {
     justify-content: flex-end;
 }
 
-/* ✅ Novo estilo para o avatar do Admin */
-.message--avatar.is-admin {
-    width: 36px;  /* Aumenta a largura (padrão é 24px) */
-    height: 36px; /* Aumenta a altura */
-    margin-right: 4px; /* Um pequeno ajuste para não colar no nome */
+
+/* ✅ Tamanho unificado para Admin e Moderador */
+.message--avatar.is-admin,
+.message--avatar.is-moderator {
+    width: 36px !important;  
+    height: 36px !important; 
+    margin-right: 4px !important;
 }

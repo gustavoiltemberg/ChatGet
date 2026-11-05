@@ -225,7 +225,10 @@ const createMessageElement = (msg, docId) => {
     // ✅ ADICIONADO: Criar a imagem do avatar
     const imgAvatar = document.createElement("img");
     imgAvatar.className = "message--avatar";
-    imgAvatar.src = obterUrlAvatar(msg.userName);
+
+    // Passa o nome e a flag de moderador para a função
+    imgAvatar.src = obterUrlAvatar(msg.userName, msg.isModerator);
+
     imgAvatar.alt = "Avatar";
     imgAvatar.loading = "lazy";
 
@@ -238,6 +241,15 @@ const createMessageElement = (msg, docId) => {
         imgAvatar.style.backgroundColor = "#f1c40f"; // Amarelo (mesmo tom do seu badge de moderador)
         imgAvatar.style.padding = "2px"; // Dá um pequeno respiro para a imagem não colar na borda
         imgAvatar.style.objectFit = "contain"; // Garante que a imagem não seja cortada
+    }
+
+    // ✅ Estilos para o Moderador (dourado/borda para destacar)
+    else if (msg.isModerator) {
+        imgAvatar.classList.add("is-moderator");
+        // Opcional: colocar um fundo dourado atrás da imagem PNG do moderador
+        imgAvatar.style.backgroundColor = "#f1c40f"; 
+        imgAvatar.style.padding = "2px";
+        imgAvatar.style.objectFit = "contain";
     }
 
     headerMensagem.appendChild(imgAvatar);
@@ -834,6 +846,7 @@ const sendMessageToDb = async (content) => {
             userId: user.id,
             userName: user.name,
             userColor: user.color,
+            isModerator: user.isModerator,
             content,
             timestamp: Date.now()
         });

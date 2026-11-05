@@ -6,17 +6,22 @@
  * @param {string} nome - Nome do usuário
  * @returns {string} URL da imagem do avatar
  */
-export const obterUrlAvatar = (nome) => {
+export const obterUrlAvatar = (nome, isModerator = false) => {
     if (!nome) nome = "Anonimo";
 
     // Limpa espaços e transforma em minúsculo para comparação
     const nomeLimpo = nome.trim();
     const nomeMinusculo = nomeLimpo.toLowerCase();
 
-    // ✅ VERIFICAÇÃO DO ADMIN
+    // 1. Verifica se é Admin
     if (nomeMinusculo === "admin") {
         // Substitua pelo caminho real da sua imagem
         return "./images/admin.png"; 
+    }
+
+    // 2. Verifica se é Moderador
+    if (isModerator) {
+        return "./images/moderador.png";
     }
 
     // Paleta de 30 cores de fundo (códigos HEX sem o #)
