@@ -317,7 +317,7 @@ const listenToMessages = () => {
     if (unsubs.messages) unsubs.messages();
     ultimoTimestampCarregado = 0;
 
-    const q = query(collection(db, "mensagens"), orderBy("timestamp", "asc"), limit(500));
+    const q = query(collection(db, "mensagens"), orderBy("timestamp", "desc"), limit(100));
 
     let primeiroSnapshot = true;
     let resolvePrimeiroSnapshot;
@@ -385,7 +385,7 @@ const listenToOnlineUsers = () => {
         onlineList.innerHTML = "";
         let count = 0;
         const agora = Date.now();
-        const TIMEOUT_MS = 60000; // ✅ 60s de tolerância
+        const TIMEOUT_MS = 120000; // ✅ 120s de tolerância
 
         snapshot.forEach((docSnap) => {
             const u = docSnap.data();
@@ -832,7 +832,7 @@ chatForm.addEventListener("submit", (event) => {
 const enviarDigitandoDebounced = criarDebounce(() => {
     if (!user.id) return;
     marcarComoDigitando(db, user).catch(() => {});
-}, 1000);
+}, 2000);
 
 chatInput.addEventListener("input", () => {
     if (!user.id) return;
@@ -911,4 +911,4 @@ setInterval(() => {
         isModerator: user.isModerator,
         ultimaAtividade: Date.now() 
     }, { merge: true }).catch(() => {});
-}, 15000);
+}, 60000);
