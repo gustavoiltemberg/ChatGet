@@ -356,6 +356,9 @@ const listenToMyRole = () => {
         const isMod = docSnap.exists() && !!docSnap.data().isModerator;
         const isAdm = docSnap.exists() && !!docSnap.data().isAdmin;
 
+        // 🔑 Verifica se o cargo realmente mudou em relação ao que estava salvo
+        const cargoMudou = (user.isModerator !== isMod) || (user.isAdmin !== (isAdm || (user.name || "").toLowerCase() === "admin"));
+
         user.isModerator = isMod;
 
         if (isAdm || (user.name || "").toLowerCase() === "admin") {
@@ -366,6 +369,83 @@ const listenToMyRole = () => {
             user.isAdmin = false;
             document.body.classList.remove("is-admin");
             adminBar.style.display = "none";
+        }
+
+        // 🔑 NOVO: Se o cargo mudou, atualiza a tela na hora!
+        if (cargoMudou) {
+            // Atualiza os botões das mensagens já na tela (Fixar e Apagar)
+            atualizarInterfaceMensagens();
+            
+            // Se o usuário virou moderador, já ativa a escuta da barra de fixados
+            if (isMod || user.isAdmin) {
+                listenToPinnedMessage();
+            }
+        }
+    });
+};
+
+// ================= ATUALIZAR INTERFACE EM TEMPO REAL =================
+const atualizarInterfaceMensagens = () => {
+    // Pega todas as mensagens que estão na tela
+    const mensagensNaTela = chatMessages.querySelectorAll("div[data-id]");
+    
+    mensagensNaTela.forEach(div => {
+        const msgId = div.dataset.id;
+        
+        // Remove o botão de fixar antigo (se existir)
+        const btnPinAntigo = div.querySelector(".pin-btn");
+        if (btnPinAntigo) btnPinAntigo.remove();
+
+        // Remove o botão de apagar antigo (se existir)
+        const btnApagarAntigo = div.querySelector(".delete-btn");
+        if (btnApagarAntigo) btnApagarAntigo.remove();
+        
+        // Se for mensagem de sistema, ignora
+        if (div.classList.contains("message--system")) return;
+
+        // Recria o botão de apagar (se o usuário tiver permissão agora)
+        // (Precisamos saber de quem é a mensagem)
+        const isAdminMsg = div.querySelector(".message--avatar.is-admin") !== null;
+        let podeApagar = false;
+        if (user.isAdmin) podeApagar = true;
+        else if (user.isModerator && !isAdminMsg) podeApagar = true;
+
+        if (podeApagar) {
+            const btn = document.createElement("button");
+            btn.className = "delete-btn";
+            btn.dataset.id = msgId;
+            btn.textContent = "[Apagar]";
+            btn.addEventListener("click", async () => {
+                if (!user.isAdmin && isAdminMsg) return alert("Sem permissão.");
+                try { await deleteDoc(doc(db, "mensagens", msgId)); } catch (e) {}
+            });
+            div.appendChild(btn);
+        }
+
+        // Recria o botão de fixar (se o usuário tiver permissão agora)
+        if (user.isAdmin || user.isModerator) {
+            const btnPin = document.createElement("button");
+            btnPin.className = "pin-btn";
+            btnPin.title = "Fixar mensagem";
+            btnPin.textContent = "📌";
+            
+            btnPin.addEventListener("click", async () => {
+                try {
+                    // Precisamos pegar o conteúdo da mensagem no Firebase
+                    const msgDoc = await getDoc(doc(db, "mensagens", msgId));
+                    if (msgDoc.exists()) {
+                        await setDoc(doc(db, "mensagem_fixada", "atual"), {
+                            messageId: msgId,
+                            text: msgDoc.data().content,
+                            sender: msgDoc.data().userName,
+                            pinnedBy: user.name
+                        });
+                    }
+                } catch (e) {
+                    console.error("Erro ao fixar:", e);
+                }
+            });
+            div.appendChild(btnPin);
         }
     });
 };
