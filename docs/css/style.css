@@ -883,15 +883,26 @@ body.is-admin .btn-moderate-user {
 .pinned-message-text {
     flex-grow: 1;
     font-size: 0.85rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     font-weight: 500;
-    
-    /* ✅ NOVAS REGRAS PARA ALINHAR O TEXTO E A IMAGEM */
     display: flex;
     align-items: center;
     gap: 8px;
+    
+    /* ✅ ROLAGEM HORIZONTAL */
+    white-space: nowrap; /* Força tudo em uma linha só */
+    overflow-x: auto;    /* Permite rolar para os lados */
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch; /* Rolagem suave no celular */
+    padding-bottom: 5px; /* Evita que a barra de rolagem cole no texto */
+}
+
+/* Esconde a barra de rolagem feia, mas mantém a rolagem ativa */
+.pinned-message-text::-webkit-scrollbar {
+    height: 4px; /* Deixa a barrinha bem fininha */
+}
+.pinned-message-text::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
 }
 
 .btn-unpin {
