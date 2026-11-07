@@ -2,7 +2,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
-    sendPasswordResetEmail, verifyBeforeUpdateEmail, updateProfile
+    sendPasswordResetEmail, verifyBeforeUpdateEmail, updateProfile,
+    onAuthStateChanged   // 🔑 NOVO: necessário para restaurar sessão ao recarregar
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import {
     getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc,
@@ -20,7 +21,6 @@ import {
 import { anunciarEntrada, anunciarSaida } from "./presence.js";
 
 import { obterUrlAvatar } from "./avatar.js";
-
 
 
 const firebaseConfig = {
@@ -94,7 +94,7 @@ const desbloquearAudios = () => {
         audio.play().then(() => {
             audio.pause();
             audio.currentTime = 0;
-        }).catch(() => {}); // Ignora se falhar
+        }).catch(() => {});
     });
 };
 
@@ -103,7 +103,9 @@ const SILENT_AUDIO = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwA
 let somAtivado = false;
 
 // Força o estado correto de visibilidade logo no carregamento da página
-loginSection.style.display = "block";
+// 🔑 MODIFICADO: começa escondido dos dois lados até o onAuthStateChanged decidir.
+// Isso evita "flash" da tela de login para usuários já logados.
+loginSection.style.display = "none";
 chatSection.style.display = "none";
 
 // ✅ FUNÇÃO AUXILIAR: Formata o nome para exibição (primeira letra maiúscula)
@@ -124,6 +126,11 @@ const user = { id: "", name: "", color: "", isAdmin: false, isModerator: false }
 
 let isLoginMode = true;
 let ultimoTimestampCarregado = 0;
+
+// 🔑 NOVO: flags de controle do fluxo de autenticação
+let logandoManualmente = false; // true durante handleLogin/handleSignup
+let jaIniciado = false;          // true quando o chat já foi montado nesta sessão
+let montandoChat = false; // 🔒 Evita condição de corrida no F5
 
 const unsubs = {
     messages: null,
@@ -190,12 +197,10 @@ const createMessageElement = (msg, docId) => {
         const div = document.createElement("div");
         div.classList.add("message--system");
 
-        // ✅ Texto da mensagem de sistema
         const texto = document.createElement("span");
         texto.textContent = msg.content;
         div.appendChild(texto);
 
-        // ✅ Data/hora ao lado (se existir timestamp)
         if (msg.timestamp) {
             const dataHora = document.createElement("span");
             dataHora.className = "message--system-time";
@@ -218,35 +223,23 @@ const createMessageElement = (msg, docId) => {
     if (user.isAdmin) podeApagar = true;
     else if (user.isModerator && !isAdminMessage) podeApagar = true;
 
-    // Criar o container da linha do remetente (Avatar + Nome)
     const headerMensagem = document.createElement("div");
     headerMensagem.className = "message--header";
 
-    // ✅ ADICIONADO: Criar a imagem do avatar
     const imgAvatar = document.createElement("img");
     imgAvatar.className = "message--avatar";
-
-    // Passa o nome e a flag de moderador para a função
     imgAvatar.src = obterUrlAvatar(msg.userName, msg.isModerator);
-
     imgAvatar.alt = "Avatar";
     imgAvatar.loading = "lazy";
 
-    // ✅ NOVO: Se for o admin, força o fundo amarelo e ajusta a imagem
-    // ✅ NOVO: Se for o admin, aplica a classe de tamanho maior
     if (msg.userName && msg.userName.toLowerCase() === "admin") {
         imgAvatar.classList.add("is-admin");
-
-        // (Opcional) Se quiser manter o fundo amarelo que você pediu antes:
-        imgAvatar.style.backgroundColor = "#f1c40f"; // Amarelo (mesmo tom do seu badge de moderador)
-        imgAvatar.style.padding = "2px"; // Dá um pequeno respiro para a imagem não colar na borda
-        imgAvatar.style.objectFit = "contain"; // Garante que a imagem não seja cortada
+        imgAvatar.style.backgroundColor = "#f1c40f";
+        imgAvatar.style.padding = "2px";
+        imgAvatar.style.objectFit = "contain";
     }
-
-    // ✅ Estilos para o Moderador (dourado/borda para destacar)
     else if (msg.isModerator) {
         imgAvatar.classList.add("is-moderator");
-        // Opcional: colocar um fundo dourado atrás da imagem PNG do moderador
         imgAvatar.style.backgroundColor = "#f1c40f"; 
         imgAvatar.style.padding = "2px";
         imgAvatar.style.objectFit = "contain";
@@ -265,7 +258,6 @@ const createMessageElement = (msg, docId) => {
         headerMensagem.appendChild(sender);
     }
 
-    // Adiciona o cabeçalho com avatar e nome na bolha
     div.appendChild(headerMensagem);
     div.appendChild(buildContentNode(msg.content));
 
@@ -349,8 +341,6 @@ const listenToMyRole = () => {
             document.body.classList.remove("is-admin");
             adminBar.style.display = "none";
         }
-
-        // ❌ NÃO re-renderiza mensagens aqui. O onSnapshot de mensagens é a fonte da verdade.
     });
 };
 
@@ -373,7 +363,7 @@ const listenToMessages = () => {
             if (snapshot.size > 0) {
                 renderAllMessagesFromSnapshot(snapshot);
             }
-            resolvePrimeiroSnapshot(); // ✅ sinaliza que o 1º snapshot chegou
+            resolvePrimeiroSnapshot();
             return;
         }
 
@@ -385,16 +375,12 @@ const listenToMessages = () => {
                 const isNewMessage = (msg.timestamp || 0) > ultimoTimestampCarregado;
                 if (isNewMessage) ultimoTimestampCarregado = msg.timestamp;
 
-                // ✅ TOCA O SOM PARA TODOS OS USUÁRIOS CONECTADOS
                 if (somAtivado && isNewMessage) {
                     if (msg.isSystem) {
-                        // Se for mensagem de entrada, todos ouvem
                         if (msg.tipo === "entrou") {
                             playSound(audioEntrou);
                         } 
-                        // Se for mensagem de saída, todos ouvem, EXCETO quem está saindo
                         else if (msg.tipo === "saiu") {
-                            // Extrai o nome de quem saiu da mensagem (remove o emoji e o texto "saiu")
                             const nomeDeQuemSaiu = msg.content.replace("🔴 ", "").replace(" saiu", "").trim();
                             const meuNomeFormatado = formatarNomeExibicao(user.name);
                             
@@ -403,7 +389,6 @@ const listenToMessages = () => {
                             }
                         }
                     } else if (msg.userId !== user.id) {
-                        // Som normal para mensagens de outros usuários
                         playSound(audioMensagem);
                     }
                 }
@@ -415,7 +400,7 @@ const listenToMessages = () => {
         });
     });
 
-    return primeiroSnapshotPromise; // ✅ retorna a Promise
+    return primeiroSnapshotPromise;
 };
 
 // ================= LISTA DE ONLINE E BANIDOS =================
@@ -427,15 +412,12 @@ const listenToOnlineUsers = () => {
         onlineList.innerHTML = "";
         let count = 0;
         const agora = Date.now();
-        const TIMEOUT_MS = 60000; // ✅ 60s de tolerância
+        const TIMEOUT_MS = 60000;
 
         snapshot.forEach((docSnap) => {
             const u = docSnap.data();
 
-            // ✅ OPCIONAL: apenas ignora na renderização, NÃO deleta
             if (!u.name) return;
-
-            // ✅ OPCIONAL: apenas ignora na renderização, NÃO deleta
             if (u.ultimaAtividade && (agora - u.ultimaAtividade > TIMEOUT_MS)) return;
 
             count++;
@@ -550,59 +532,22 @@ toggleLink.addEventListener("click", (e) => {
     forgotPasswordContainer.style.display = isLoginMode ? "block" : "none";
 });
 
-const handleLogin = async (name, email, password) => {
-    if (!name) return alert("Por favor, digite seu nome de usuário.");
-    if (!email) return alert("Por favor, digite seu e-mail.");
+// 🔑 NOVO: função reutilizável que monta o chat (chamada pelo login manual
+// E pela restauração automática de sessão via onAuthStateChanged)
+const entrarNoChat = async (uid, nome) => {
+    // 🔒 CADEADO: Se já estiver montando (por causa do F5), ignora
+    if (montandoChat) return;
+    montandoChat = true;
 
-    // 1. Autentica com o Firebase
-    const cred = await signInWithEmailAndPassword(auth, email, password);
-    const uid = cred.user.uid;
-
-    // 2. PROTEÇÃO DO ADMIN
-    const UID_ADMIN_VERDADEIRO = "J7YAEyln6ENA8v5IqYjkshznFyj2";
-    if (name.toLowerCase() === "admin" && uid !== UID_ADMIN_VERDADEIRO) {
-        await signOut(auth);
-        return alert("Acesso negado. Você não é o administrador.");
-    }
-
-    // 3. VERIFICAÇÃO DE IDENTIDADE (O nome digitado bate com a conta?)
-    const userRef = doc(db, "usuarios_online", uid);
-    const userSnap = await getDoc(userRef);
-    let nomeVerdadeiro = name.toLowerCase();
-
-    if (userSnap.exists() && userSnap.data().name) {
-        // Se já existe um perfil no banco para este UID, pega o nome verdadeiro
-        nomeVerdadeiro = userSnap.data().name;
-        
-        // Se o nome que ele digitou for DIFERENTE do nome dono da conta, bloqueia!
-        if (name.toLowerCase() !== nomeVerdadeiro) {
-            await signOut(auth);
-            return alert(`Acesso negado. Esta conta pertence a "${nomeVerdadeiro}".`);
-        }
-    } else {
-        // Se for o primeiro login (não tem perfil), verifica se alguém já usa esse nome
-        const snapUsuarios = await getDocs(query(collection(db, "usuarios_online")));
-        const nomeEmUso = snapUsuarios.docs.some(d => d.data().name && d.data().name.toLowerCase() === name.toLowerCase() && d.id !== uid);
-        if (nomeEmUso) {
-            await signOut(auth);
-            return alert("Este nome de usuário já está em uso por outra conta.");
-        }
-    }
-
-    // 4. Define o usuário com o nome VERDADEIRO
     user.id = uid;
-    user.name = nomeVerdadeiro; 
-    user.color = colorFromId(user.id);
-
-    // Atualiza o perfil no Firebase Auth para manter sincronizado
-    await updateProfile(cred.user, { displayName: user.name });
-    await cred.user.reload();
-    await cred.user.getIdToken(true); 
+    user.name = (nome || "").toLowerCase();
+    user.color = colorFromId(uid);
 
     desbloquearAudios();
     somAtivado = true;
     atualizarBotaoSom();
 
+    // Carrega cargo (admin/moderador)
     const cargoDoc = await getDoc(doc(db, "cargos", user.name));
     const isAdm = cargoDoc.exists() && cargoDoc.data().isAdmin;
 
@@ -615,15 +560,15 @@ const handleLogin = async (name, email, password) => {
         document.body.classList.remove("is-admin");
         adminBar.style.display = "none";
     }
+    user.isModerator = !!(cargoDoc.exists() && cargoDoc.data().isModerator);
 
+    // Troca as telas
     loginSection.style.display = "none";
     chatSection.style.display = "flex";
     btnEditName.style.display = "block";
     btnEditEmail.style.display = "block";
 
-    user.isModerator = !!(cargoDoc.exists() && cargoDoc.data().isModerator);
-
-    // Salva/Atualiza os dados no banco usando o UID como chave
+    // Salva/atualiza presença
     await setDoc(doc(db, "usuarios_online", user.id), {
         name: user.name,
         color: user.color,
@@ -651,11 +596,72 @@ const handleLogin = async (name, email, password) => {
 
     await primeiroSnapshotPromise;
 
-    try {
-        await anunciarEntrada(db, user.name);
-    } catch (e) {
-        console.error("Falha ao anunciar entrada:", e);
+    // 🔑 CONTROLE DA MENSAGEM DE ENTRADA (sessionStorage)
+    // Verifica se JÁ anunciou a entrada NESTA ABA do navegador.
+    const chaveEntrada = `chat_entrou_${user.id}`;
+    
+    if (!sessionStorage.getItem(chaveEntrada)) {
+        try {
+            await anunciarEntrada(db, user.name);
+            // Marca no sessionStorage que a mensagem já foi enviada.
+            // Se der F5, essa chave ainda existirá e ele NÃO enviará de novo.
+            sessionStorage.setItem(chaveEntrada, "true");
+        } catch (e) {
+            console.error("Falha ao anunciar entrada:", e);
+        }
     }
+
+    // 🔓 Libera o cadeado após tudo terminar
+    montandoChat = false;
+};
+
+// 🔑 MODIFICADO: handleLogin agora delega a montagem para entrarNoChat()
+const handleLogin = async (name, email, password) => {
+    if (!name) return alert("Por favor, digite seu nome de usuário.");
+    if (!email) return alert("Por favor, digite seu e-mail.");
+
+    // 1. Autentica com o Firebase
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const uid = cred.user.uid;
+
+    // 2. PROTEÇÃO DO ADMIN
+    const UID_ADMIN_VERDADEIRO = "J7YAEyln6ENA8v5IqYjkshznFyj2";
+    if (name.toLowerCase() === "admin" && uid !== UID_ADMIN_VERDADEIRO) {
+        await signOut(auth);
+        return alert("Acesso negado. Você não é o administrador.");
+    }
+
+    // 3. VERIFICAÇÃO DE IDENTIDADE
+    const userRef = doc(db, "usuarios_online", uid);
+    const userSnap = await getDoc(userRef);
+    let nomeVerdadeiro = name.toLowerCase();
+
+    if (userSnap.exists() && userSnap.data().name) {
+        nomeVerdadeiro = userSnap.data().name;
+        
+        if (name.toLowerCase() !== nomeVerdadeiro) {
+            await signOut(auth);
+            return alert(`Acesso negado. Esta conta pertence a "${nomeVerdadeiro}".`);
+        }
+    } else {
+        const snapUsuarios = await getDocs(query(collection(db, "usuarios_online")));
+        const nomeEmUso = snapUsuarios.docs.some(d => d.data().name && d.data().name.toLowerCase() === name.toLowerCase() && d.id !== uid);
+        if (nomeEmUso) {
+            await signOut(auth);
+            return alert("Este nome de usuário já está em uso por outra conta.");
+        }
+    }
+
+    // 4. Atualiza o perfil no Firebase Auth
+    await updateProfile(cred.user, { displayName: nomeVerdadeiro });
+    await cred.user.reload();
+    await cred.user.getIdToken(true); 
+
+    // 🔑 Marca que já iniciamos o chat para o onAuthStateChanged não duplicar
+    jaIniciado = true;
+
+    // 5. Monta o chat
+    await entrarNoChat(uid, nomeVerdadeiro);
 };
 
 const handleSignup = async (name, email, password) => {
@@ -680,6 +686,7 @@ const handleSignup = async (name, email, password) => {
     }
 };
 
+// 🔑 MODIFICADO: flag logandoManualmente evita duplicação via onAuthStateChanged
 loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     submitBtn.disabled = true;
@@ -687,6 +694,7 @@ loginForm.addEventListener("submit", async (event) => {
     const password = passwordInput.value;
     const email = emailInput.value.trim();
 
+    logandoManualmente = true; // 🔑 NOVO
     try {
         if (isLoginMode) await handleLogin(name, email, password);
         else await handleSignup(name, email, password);
@@ -697,6 +705,71 @@ loginForm.addEventListener("submit", async (event) => {
         else alert("Erro: " + error.message);
     } finally {
         submitBtn.disabled = false;
+        logandoManualmente = false; // 🔑 NOVO
+    }
+});
+
+// 🔑 NOVO: restauração automática da sessão ao carregar a página
+onAuthStateChanged(auth, async (firebaseUser) => {
+    // Se o login manual acabou de acontecer, ignora (evita duplicidade)
+    if (logandoManualmente) return;
+
+    // Se o chat já está montado, não re-monta
+    if (jaIniciado) return;
+
+    // Sem usuário logado → garante tela de login
+    if (!firebaseUser) {
+        loginSection.style.display = "block";
+        chatSection.style.display = "none";
+        return;
+    }
+
+    // Há um usuário persistido! Restaura a sessão.
+    try {
+        const uid = firebaseUser.uid;
+
+        // Descobre o nome: prioridade para displayName do Auth, depois Firestore
+        let nome = firebaseUser.displayName;
+        if (!nome) {
+            const snap = await getDoc(doc(db, "usuarios_online", uid));
+            if (snap.exists() && snap.data().name) {
+                nome = snap.data().name;
+            }
+        }
+
+        // Sem nome não conseguimos montar
+        if (!nome) {
+            await signOut(auth);
+            loginSection.style.display = "block";
+            chatSection.style.display = "none";
+            return;
+        }
+
+        // Verifica banimento antes de entrar
+        const banCheck = await getDoc(doc(db, "banidos", nome.toLowerCase()));
+        if (banCheck.exists()) {
+            alert("Você foi banido e não pode acessar o chat.");
+            await signOut(auth);
+            loginSection.style.display = "block";
+            chatSection.style.display = "none";
+            return;
+        }
+
+        // Verifica a proteção do admin
+        const UID_ADMIN_VERDADEIRO = "J7YAEyln6ENA8v5IqYjkshznFyj2";
+        if (nome.toLowerCase() === "admin" && uid !== UID_ADMIN_VERDADEIRO) {
+            await signOut(auth);
+            loginSection.style.display = "block";
+            chatSection.style.display = "none";
+            return;
+        }
+
+        jaIniciado = true;
+        await entrarNoChat(uid, nome);
+    } catch (e) {
+        console.error("Erro ao restaurar sessão:", e);
+        loginSection.style.display = "block";
+        chatSection.style.display = "none";
     }
 });
 
@@ -777,8 +850,18 @@ btnEditEmail.addEventListener("click", async () => {
     }
 });
 
+// 🔑 MODIFICADO: reseta as flags para permitir restauração em um próximo login
 const cleanupChatSession = async () => {
     cleanupAllListeners();
+
+    jaIniciado = false;         
+    logandoManualmente = false; 
+    montandoChat = false; // 🔓 Libera o cadeado no logout
+
+    // 🔑 LIMPA A CHAVE DE ENTRADA DO NAVEGADOR
+    if (user.id) {
+        sessionStorage.removeItem(`chat_entrou_${user.id}`);
+    }
 
     estaDigitando = false;
     clearTimeout(timeoutPararDigitando);
@@ -815,7 +898,6 @@ btnLogout.addEventListener("click", async () => {
             clearTimeout(timeoutPararDigitando);
             await pararDeDigitar(db, user.id).catch(() => {});
 
-            // ✅ Anuncia saída ANTES de limpar o listener
             try { await anunciarSaida(db, user.name); } catch (e) { console.error(e); }
             
             await deleteDoc(doc(db, "usuarios_online", user.id)).catch(() => {});
@@ -823,8 +905,6 @@ btnLogout.addEventListener("click", async () => {
     } catch (e) {
         console.error("Erro no logout:", e);
     } finally {
-        // ✅ Dá 1 segundo antes de desligar os listeners.
-        // Isso dá tempo do Firebase avisar todo mundo (inclusive o próprio usuário A)
         setTimeout(() => {
             cleanupChatSession();
         }, 1000);
@@ -897,7 +977,6 @@ btnGifKeyboard.addEventListener("click", () => {
     stickersBar.classList.toggle("show");
     btnGifKeyboard.classList.toggle("active");
     
-    // Se o painel de stickers abrir, esconde o teclado do celular imediatamente
     if (stickersBar.classList.contains("show")) {
         chatInput.blur();
     }
@@ -919,7 +998,6 @@ btnClearAll.addEventListener("click", async () => {
 
 btnSom.addEventListener("click", () => {
     if (somAtivado) {
-        // Desliga o som e pausa tudo
         somAtivado = false;
         audioMensagem.pause();
         audioMensagem.currentTime = 0;
@@ -929,12 +1007,11 @@ btnSom.addEventListener("click", () => {
         audioSaiu.currentTime = 0;
         atualizarBotaoSom();
     } else {
-        // ✅ Desbloqueia os áudios no navegador
         desbloquearAudios();
         
         somAtivado = true;
         atualizarBotaoSom();
-        playSound(audioMensagem, 0.5); // Toca um som de teste para confirmar
+        playSound(audioMensagem, 0.5);
     }
 });
 
@@ -943,9 +1020,7 @@ window.addEventListener("beforeunload", () => {
     deleteDoc(doc(db, "usuarios_online", user.id)).catch(() => {});
 });
 
-// ✅ Reenvia TODOS os dados, não só ultimaAtividade
-// Assim, se o documento for deletado (por expiração ou outro cliente),
-// ele é recriado completo na próxima batida — o nome não some mais.
+// ✅ Reenvia TODOS os dados a cada 15s
 setInterval(() => {
     if (!user.id) return;
     setDoc(doc(db, "usuarios_online", user.id), { 
