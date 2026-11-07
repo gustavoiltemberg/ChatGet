@@ -1,0 +1,264 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap");
+/* Ativado quando a classe .green-theme estiver no <body> */
+body.green-theme {
+    /* Lembre-se de criar a imagem background-green.png na pasta images */
+    background: url("../images/background-green.png") !important; 
+    color: #0a2e14 !important;
+}
+
+/* ================= TELA DE LOGIN ================= */
+body.green-theme .login {
+    background-color: #e8f8f0 !important; 
+    box-shadow: 0 8px 24px rgba(46, 204, 113, 0.2);
+}
+
+body.green-theme .login > h2 {
+    color: #2ecc71 !important;
+}
+
+body.green-theme .login__input {
+    background-color: #ffffff !important;
+    color: #0a2e14 !important;
+    border: 1px solid #a3e4c4 !important;
+}
+
+body.green-theme .login__input:focus {
+    outline: 2px solid #2ecc71 !important;
+}
+
+body.green-theme .login__button {
+    background-color: #2ecc71 !important;
+    color: #ffffff !important;
+}
+
+body.green-theme .login__button:hover {
+    background-color: #27ae60 !important;
+}
+
+body.green-theme .login__toggle a {
+    color: #2ecc71 !important;
+}
+
+/* ================= CHAT ================= */
+
+/* Topo (header), caixa de digitar e barra de emojis */
+body.green-theme .chat__header,
+body.green-theme .chat__form,
+body.green-theme .chat__stickers {
+    background-color: #d1f2e0 !important; /* Verde menta claro */
+    border-color: #a3e4c4 !important;
+}
+
+/* Botões do topo (Editar, etc) ganham um tom que combina */
+body.green-theme .chat__header button {
+    background-color: #ffffff !important;
+    color: #2ecc71 !important;
+    border: 1px solid #a3e4c4 !important;
+}
+body.green-theme .chat__header button:hover {
+    background-color: #e8f8f0 !important;
+}
+
+/* 🟢 MANTÉM O BOTÃO DE SOM ORIGINAL (Verde/Vermelho) */
+body.green-theme #btn-som {
+    background-color: #2ecc71 !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+body.green-theme #btn-som.muted {
+    background-color: #7f3c3c !important;
+}
+
+body.green-theme #btn-som:hover {
+    background-color: #27ae60 !important;
+}
+
+body.green-theme #btn-som.muted:hover {
+    background-color: #c0392b !important;
+}
+
+/* 🔴 MANTÉM O BOTÃO DE SAIR ORIGINAL (Escuro com hover vermelho) */
+body.green-theme #btn-logout {
+    background-color: #333 !important;
+    color: #f2f2f2 !important;
+    border: 1px solid #555 !important;
+}
+
+body.green-theme #btn-logout:hover {
+    background-color: #c0392b !important;
+    border-color: #c0392b !important;
+    color: #ffffff !important;
+}
+
+/* Mantém os botões de Admin coloridos */
+body.green-theme .btn-admin {
+    border: none !important;
+    color: #fff !important;
+}
+
+/* Barra Lateral (Usuários) */
+body.green-theme .chat__sidebar {
+    background-color: #d1f2e0 !important; 
+    border-color: #a3e4c4 !important;
+}
+
+body.green-theme .chat__sidebar h3 {
+    color: #27ae60 !important;
+}
+
+body.green-theme .user--online .user-info {
+    color: #0a2e14 !important;
+}
+
+/* Caixa de digitar texto */
+body.green-theme .chat__input {
+    background-color: #ffffff !important;
+    color: #0a2e14 !important;
+    border: 1px solid #a3e4c4 !important;
+}
+
+body.green-theme .chat__messages {
+    background-color: transparent !important;
+}
+
+/* ================= BOLHAS DE MENSAGENS ================= */
+
+/* Mensagens dos outros */
+body.green-theme .message--other {
+    background-color: #e8f8f0 !important; /* Verde muito claro no lugar do branco */
+    color: #0a2e14 !important;
+    border: 1px solid #a3e4c4;
+    box-shadow: 0 2px 4px rgba(46, 204, 113, 0.08);
+}
+
+/* Suas mensagens */
+body.green-theme .message--self {
+    background-color: #2ecc71 !important;
+    color: #ffffff !important;
+}
+
+body.green-theme .message--self .message--sender {
+    color: #d1f2e0 !important;
+}
+
+body.green-theme .message--other .message--sender {
+    color: #2ecc71 !important;
+}
+
+/* Botão [Apagar] nas suas mensagens */
+body.green-theme .message--self .delete-btn {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    opacity: 0.95 !important;
+}
+
+body.green-theme .message--self .delete-btn:hover {
+    color: #d1f2e0 !important;
+    text-decoration: underline !important;
+}
+
+/* ================= DEMAIS ELEMENTOS ================= */
+
+body.green-theme .typing-indicator {
+    background-color: #e8f8f0 !important;
+    color: #2ecc71 !important;
+    box-shadow: 0 2px 6px rgba(46, 204, 113, 0.15);
+}
+
+body.green-theme .modal-content {
+    background-color: #e8f8f0 !important;
+    color: #0a2e14 !important;
+    border: 2px solid #2ecc71;
+}
+
+body.green-theme #bans-list li {
+    background-color: #ffffff !important;
+    border-color: #a3e4c4 !important;
+}
+
+/* Ícones de Enviar e GIF */
+body.green-theme .chat__button {
+    color: #2ecc71 !important;
+}
+
+body.green-theme .chat__button:hover {
+    color: #27ae60 !important;
+}
+
+body.green-theme .chat__button-gif {
+    color: #27ae60 !important;
+}
+
+body.green-theme .chat__button-gif.active,
+body.green-theme .chat__button-gif:hover {
+    color: #2ecc71 !important;
+}
+
+/* Botões de Emoticon */
+body.green-theme .sticker-btn {
+    background-color: #ffffff !important;
+    border: 1px solid #a3e4c4 !important;
+}
+
+body.green-theme .sticker-btn:hover {
+    background-color: #e8f8f0 !important;
+}
+
+/* Botão Redondo de Troca de Tema */
+body.green-theme .theme-toggle-btn {
+    background-color: #ffffff !important; 
+    color: #2ecc71 !important;            
+    box-shadow: 0 2px 8px rgba(46, 204, 113, 0.2);
+}
+
+/* ================= AJUSTES DO CELULAR ================= */
+@media (max-width: 600px) {
+    body.green-theme {
+        background-image: url("../images/background-green.png") !important;
+        background-attachment: fixed !important;
+        background-size: cover !important;
+        background-position: center !important;
+    }
+
+    /* Barra de usuários no topo do celular */
+    body.green-theme .chat__sidebar {
+        background-color: #b2ebd4 !important; 
+        border-bottom: 1px solid #a3e4c4 !important; 
+    }
+
+    /* Header do celular */
+    body.green-theme .chat__header {
+        background-color: #b2ebd4 !important; 
+        border-bottom: 1px solid #a3e4c4 !important;
+    }
+
+    /* Botões do header no celular */
+    body.green-theme .chat__header button:not(.btn-admin):not(#btn-som):not(#btn-logout) {
+        background-color: #ffffff !important;
+        border: 1px solid #a3e4c4 !important;
+        color: #2ecc71 !important;
+    }
+
+    /* Área de digitar mensagem no rodapé */
+    body.green-theme .chat__form {
+        background-color: #b2ebd4 !important;
+        border-top: 1px solid #a3e4c4 !important;
+    }
+
+    /* Caixa de texto (input) no celular */
+    body.green-theme .chat__input {
+        border: 1px solid #a3e4c4 !important;
+    }
+}
+
+/* Mensagens de sistema (Entrou/Saiu) */
+body.green-theme .message--system {
+    color: #0a2e14 !important;           
+    border-bottom-color: rgba(46, 204, 113, 0.2) !important; 
+    font-weight: 600 !important;         
+}
+
+body.green-theme .message--system-time {
+    color: #27ae60 !important;           
+}

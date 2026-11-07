@@ -7,6 +7,8 @@
         document.body.classList.add("pink-theme");
     } else if (temaSalvo === "blue") {
         document.body.classList.add("blue-theme");
+    } else if (temaSalvo === "green") {
+        document.body.classList.add("green-theme");
     }
 
     // 2. Aguarda o botão aparecer na tela para configurar o clique cíclico
@@ -23,6 +25,8 @@
                 toggleBtn.textContent = "🌸";
             } else if (document.body.classList.contains("blue-theme")) {
                 toggleBtn.textContent = "💎";
+            } else if (document.body.classList.contains("green-theme")) {
+                toggleBtn.textContent = "🍀";
             } else {
                 toggleBtn.textContent = "🌙";
             }
@@ -31,29 +35,36 @@
             toggleBtn.addEventListener("click", (e) => {
                 e.preventDefault();
 
-                // CASO 1: Está no Modo Escuro -> Vai para o Claro
-                if (!document.body.classList.contains("light-theme") && !document.body.classList.contains("pink-theme") && !document.body.classList.contains("blue-theme")) {
+                // CASO 1: Modo Escuro -> Claro
+                if (!document.body.classList.contains("light-theme") && !document.body.classList.contains("pink-theme") && !document.body.classList.contains("blue-theme") && !document.body.classList.contains("green-theme")) {
                     document.body.classList.add("light-theme");
                     toggleBtn.textContent = "☀️";
                     localStorage.setItem("chat-tema", "light");
                 }
-                // CASO 2: Está no Modo Claro -> Vai para o Rosa
+                // CASO 2: Modo Claro -> Rosa
                 else if (document.body.classList.contains("light-theme")) {
                     document.body.classList.remove("light-theme");
                     document.body.classList.add("pink-theme");
                     toggleBtn.textContent = "🌸";
                     localStorage.setItem("chat-tema", "pink");
                 }
-                // CASO 3: Está no Modo Rosa -> Vai para o Azul
+                // CASO 3: Modo Rosa -> Azul
                 else if (document.body.classList.contains("pink-theme")) {
                     document.body.classList.remove("pink-theme");
                     document.body.classList.add("blue-theme");
                     toggleBtn.textContent = "💎";
                     localStorage.setItem("chat-tema", "blue");
                 }
-                // CASO 4: Está no Modo Azul -> Volta para o Escuro Padrão
+                // CASO 4: Modo Azul -> Verde 🍀 NOVO
                 else if (document.body.classList.contains("blue-theme")) {
                     document.body.classList.remove("blue-theme");
+                    document.body.classList.add("green-theme");
+                    toggleBtn.textContent = "🍀";
+                    localStorage.setItem("chat-tema", "green");
+                }
+                // CASO 5: Modo Verde -> Volta para o Escuro Padrão
+                else if (document.body.classList.contains("green-theme")) {
+                    document.body.classList.remove("green-theme");
                     toggleBtn.textContent = "🌙";
                     localStorage.setItem("chat-tema", "dark");
                 }
