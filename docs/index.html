@@ -20,15 +20,14 @@
         <section class="login">
             <h2 id="form-title">Login</h2>
 
-<!-- Deixe o botão exatamente assim dentro da div da classe "login" -->
-<button type="button" id="manual-theme-toggle" class="theme-toggle-btn" aria-label="Mudar tema">🌙</button>
-
+            <!-- Botão de Troca de Tema -->
+            <button type="button" id="manual-theme-toggle" class="theme-toggle-btn" aria-label="Mudar tema">🌙</button>
 
             <form class="login__form" id="auth-form">
                 <!-- Nome de exibição -->
                 <input type="text" class="login__input" id="username" placeholder="Seu nome de usuário (ex: joao)" required />
                 
-                <!-- E-mail (Agora sempre visível) -->
+                <!-- E-mail -->
                 <input type="email" class="login__input" id="email" placeholder="Seu e-mail" required />
                 
                 <!-- Senha -->
@@ -64,6 +63,13 @@
                     <button id="btn-som" class="btn-som" style="display: none;">🔊 Som Ligado</button>
                     <button id="btn-logout" class="btn-logout">Sair</button>
                 </div>
+            </div>
+
+            <!-- 🔑 FIXAR: Barra de mensagem fixada (Fora do header) -->
+            <div id="pinned-message-bar" class="pinned-message-bar" style="display: none;">
+                <span class="material-symbols-outlined" style="font-size: 1.2rem; margin-right: 8px;">push_pin</span>
+                <div class="pinned-message-text" id="pinned-text"></div>
+                <button type="button" id="btn-unpin" class="btn-unpin" title="Desafixar mensagem">&times;</button>
             </div>
 
             <aside class="chat__sidebar">

@@ -52,6 +52,11 @@ const btnEditEmail = document.querySelector("#btn-edit-email");
 const stickersBar = document.querySelector("#stickers-bar");
 const btnGifKeyboard = document.querySelector("#btn-gif-keyboard");
 
+// 🔑 FIXAR: Novos elementos do DOM para a barra de fixados
+const pinnedBar = document.querySelector("#pinned-message-bar");
+const pinnedText = document.querySelector("#pinned-text");
+const btnUnpin = document.querySelector("#btn-unpin");
+
 const emailInput = document.querySelector("#email");
 const forgotPasswordContainer = document.querySelector("#forgot-password-container");
 const forgotPasswordLink = document.querySelector("#forgot-password");
@@ -103,8 +108,6 @@ const SILENT_AUDIO = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwA
 let somAtivado = false;
 
 // Força o estado correto de visibilidade logo no carregamento da página
-// 🔑 MODIFICADO: começa escondido dos dois lados até o onAuthStateChanged decidir.
-// Isso evita "flash" da tela de login para usuários já logados.
 loginSection.style.display = "none";
 chatSection.style.display = "none";
 
@@ -127,10 +130,9 @@ const user = { id: "", name: "", color: "", isAdmin: false, isModerator: false }
 let isLoginMode = true;
 let ultimoTimestampCarregado = 0;
 
-// 🔑 NOVO: flags de controle do fluxo de autenticação
-let logandoManualmente = false; // true durante handleLogin/handleSignup
-let jaIniciado = false;          // true quando o chat já foi montado nesta sessão
-let montandoChat = false; // 🔒 Evita condição de corrida no F5
+let logandoManualmente = false; 
+let jaIniciado = false;          
+let montandoChat = false; 
 
 const unsubs = {
     messages: null,
@@ -139,6 +141,7 @@ const unsubs = {
     banCheck: null,
     myRole: null,
     typing: null,
+    pinned: null, // 🔑 FIXAR: Novo listener
 };
 
 const cleanupAllListeners = () => {
@@ -193,7 +196,7 @@ const buildContentNode = (content) => {
 };
 
 const createMessageElement = (msg, docId) => {
-        if (msg.isSystem) {
+    if (msg.isSystem) {
         const div = document.createElement("div");
         div.classList.add("message--system");
 
@@ -276,6 +279,29 @@ const createMessageElement = (msg, docId) => {
         div.appendChild(btn);
     }
 
+    // 🔑 FIXAR: Botão de Fixar Mensagem
+    if ((user.isAdmin || user.isModerator) && !msg.isSystem) {
+        const btnPin = document.createElement("button");
+        btnPin.className = "pin-btn";
+        btnPin.title = "Fixar mensagem";
+        btnPin.textContent = "📌";
+        
+        btnPin.addEventListener("click", async () => {
+            try {
+                await setDoc(doc(db, "mensagem_fixada", "atual"), {
+                    messageId: docId,
+                    text: msg.content,
+                    sender: msg.userName,
+                    pinnedBy: user.name
+                });
+            } catch (e) {
+                console.error("Erro ao fixar:", e);
+                alert("Erro ao fixar a mensagem.");
+            }
+        });
+        div.appendChild(btnPin);
+    }
+
     return div;
 };
 
@@ -343,6 +369,63 @@ const listenToMyRole = () => {
         }
     });
 };
+
+// 🔑 FIXAR: Função para escutar a mensagem fixada
+const listenToPinnedMessage = () => {
+    if (unsubs.pinned) unsubs.pinned();
+    
+    const pinnedRef = doc(db, "mensagem_fixada", "atual");
+    
+    unsubs.pinned = onSnapshot(pinnedRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            const remetente = formatarNomeExibicao(data.sender);
+            
+            // Limpa o conteúdo anterior
+            pinnedText.innerHTML = "";
+
+            // Cria o span do remetente
+            const spanRemetente = document.createElement("strong");
+            spanRemetente.textContent = `${remetente}: `;
+            pinnedText.appendChild(spanRemetente);
+
+            // Verifica se o conteúdo é uma imagem (usando a mesma função que o chat usa)
+            if (isImageURL(data.text)) {
+                const img = document.createElement("img");
+                img.src = data.text;
+                img.alt = "Fixado";
+                // Estilo para a imagem ficar pequena e alinhada na barra
+                img.style.height = "24px";
+                img.style.verticalAlign = "middle";
+                img.style.marginLeft = "5px";
+                img.style.borderRadius = "4px";
+                pinnedText.appendChild(img);
+            } else {
+                // Se for texto normal, adiciona o texto
+                const textNode = document.createTextNode(data.text);
+                pinnedText.appendChild(textNode);
+            }
+
+            pinnedBar.style.display = "flex";
+        } else {
+            pinnedBar.style.display = "none";
+            pinnedText.innerHTML = "";
+        }
+    });
+};
+
+// 🔑 FIXAR: Evento para desafixar
+btnUnpin.addEventListener("click", async () => {
+    if (!user.isAdmin && !user.isModerator) {
+        return alert("Apenas administradores e moderadores podem desafixar.");
+    }
+    try {
+        await deleteDoc(doc(db, "mensagem_fixada", "atual"));
+    } catch (e) {
+        console.error("Erro ao desafixar:", e);
+        alert("Erro ao desafixar.");
+    }
+});
 
 // ================= OUVINTE DE MENSAGENS =================
 const listenToMessages = () => {
@@ -532,10 +615,7 @@ toggleLink.addEventListener("click", (e) => {
     forgotPasswordContainer.style.display = isLoginMode ? "block" : "none";
 });
 
-// 🔑 NOVO: função reutilizável que monta o chat (chamada pelo login manual
-// E pela restauração automática de sessão via onAuthStateChanged)
 const entrarNoChat = async (uid, nome) => {
-    // 🔒 CADEADO: Se já estiver montando (por causa do F5), ignora
     if (montandoChat) return;
     montandoChat = true;
 
@@ -547,7 +627,6 @@ const entrarNoChat = async (uid, nome) => {
     somAtivado = true;
     atualizarBotaoSom();
 
-    // Carrega cargo (admin/moderador)
     const cargoDoc = await getDoc(doc(db, "cargos", user.name));
     const isAdm = cargoDoc.exists() && cargoDoc.data().isAdmin;
 
@@ -562,13 +641,11 @@ const entrarNoChat = async (uid, nome) => {
     }
     user.isModerator = !!(cargoDoc.exists() && cargoDoc.data().isModerator);
 
-    // Troca as telas
     loginSection.style.display = "none";
     chatSection.style.display = "flex";
     btnEditName.style.display = "block";
     btnEditEmail.style.display = "block";
 
-    // Salva/atualiza presença
     await setDoc(doc(db, "usuarios_online", user.id), {
         name: user.name,
         color: user.color,
@@ -576,10 +653,10 @@ const entrarNoChat = async (uid, nome) => {
         ultimaAtividade: Date.now()
     }, { merge: true });
 
-    // Listeners
     const primeiroSnapshotPromise = listenToMessages();
     listenToOnlineUsers();
     listenToMyRole();
+    listenToPinnedMessage(); // 🔑 FIXAR: Chamada do listener aqui
 
     unsubs.typing = ouvirDigitando(db, user.id, (nomes) => {
         const texto = formatarTextoDigitando(nomes);
@@ -596,42 +673,33 @@ const entrarNoChat = async (uid, nome) => {
 
     await primeiroSnapshotPromise;
 
-    // 🔑 CONTROLE DA MENSAGEM DE ENTRADA (sessionStorage)
-    // Verifica se JÁ anunciou a entrada NESTA ABA do navegador.
     const chaveEntrada = `chat_entrou_${user.id}`;
     
     if (!sessionStorage.getItem(chaveEntrada)) {
         try {
             await anunciarEntrada(db, user.name);
-            // Marca no sessionStorage que a mensagem já foi enviada.
-            // Se der F5, essa chave ainda existirá e ele NÃO enviará de novo.
             sessionStorage.setItem(chaveEntrada, "true");
         } catch (e) {
             console.error("Falha ao anunciar entrada:", e);
         }
     }
 
-    // 🔓 Libera o cadeado após tudo terminar
     montandoChat = false;
 };
 
-// 🔑 MODIFICADO: handleLogin agora delega a montagem para entrarNoChat()
 const handleLogin = async (name, email, password) => {
     if (!name) return alert("Por favor, digite seu nome de usuário.");
     if (!email) return alert("Por favor, digite seu e-mail.");
 
-    // 1. Autentica com o Firebase
     const cred = await signInWithEmailAndPassword(auth, email, password);
     const uid = cred.user.uid;
 
-    // 2. PROTEÇÃO DO ADMIN
     const UID_ADMIN_VERDADEIRO = "J7YAEyln6ENA8v5IqYjkshznFyj2";
     if (name.toLowerCase() === "admin" && uid !== UID_ADMIN_VERDADEIRO) {
         await signOut(auth);
         return alert("Acesso negado. Você não é o administrador.");
     }
 
-    // 3. VERIFICAÇÃO DE IDENTIDADE
     const userRef = doc(db, "usuarios_online", uid);
     const userSnap = await getDoc(userRef);
     let nomeVerdadeiro = name.toLowerCase();
@@ -652,15 +720,12 @@ const handleLogin = async (name, email, password) => {
         }
     }
 
-    // 4. Atualiza o perfil no Firebase Auth
     await updateProfile(cred.user, { displayName: nomeVerdadeiro });
     await cred.user.reload();
     await cred.user.getIdToken(true); 
 
-    // 🔑 Marca que já iniciamos o chat para o onAuthStateChanged não duplicar
     jaIniciado = true;
 
-    // 5. Monta o chat
     await entrarNoChat(uid, nomeVerdadeiro);
 };
 
@@ -686,7 +751,6 @@ const handleSignup = async (name, email, password) => {
     }
 };
 
-// 🔑 MODIFICADO: flag logandoManualmente evita duplicação via onAuthStateChanged
 loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     submitBtn.disabled = true;
@@ -694,7 +758,7 @@ loginForm.addEventListener("submit", async (event) => {
     const password = passwordInput.value;
     const email = emailInput.value.trim();
 
-    logandoManualmente = true; // 🔑 NOVO
+    logandoManualmente = true; 
     try {
         if (isLoginMode) await handleLogin(name, email, password);
         else await handleSignup(name, email, password);
@@ -705,30 +769,23 @@ loginForm.addEventListener("submit", async (event) => {
         else alert("Erro: " + error.message);
     } finally {
         submitBtn.disabled = false;
-        logandoManualmente = false; // 🔑 NOVO
+        logandoManualmente = false; 
     }
 });
 
-// 🔑 NOVO: restauração automática da sessão ao carregar a página
 onAuthStateChanged(auth, async (firebaseUser) => {
-    // Se o login manual acabou de acontecer, ignora (evita duplicidade)
     if (logandoManualmente) return;
-
-    // Se o chat já está montado, não re-monta
     if (jaIniciado) return;
 
-    // Sem usuário logado → garante tela de login
     if (!firebaseUser) {
         loginSection.style.display = "block";
         chatSection.style.display = "none";
         return;
     }
 
-    // Há um usuário persistido! Restaura a sessão.
     try {
         const uid = firebaseUser.uid;
 
-        // Descobre o nome: prioridade para displayName do Auth, depois Firestore
         let nome = firebaseUser.displayName;
         if (!nome) {
             const snap = await getDoc(doc(db, "usuarios_online", uid));
@@ -737,7 +794,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
             }
         }
 
-        // Sem nome não conseguimos montar
         if (!nome) {
             await signOut(auth);
             loginSection.style.display = "block";
@@ -745,7 +801,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
             return;
         }
 
-        // Verifica banimento antes de entrar
         const banCheck = await getDoc(doc(db, "banidos", nome.toLowerCase()));
         if (banCheck.exists()) {
             alert("Você foi banido e não pode acessar o chat.");
@@ -755,7 +810,6 @@ onAuthStateChanged(auth, async (firebaseUser) => {
             return;
         }
 
-        // Verifica a proteção do admin
         const UID_ADMIN_VERDADEIRO = "J7YAEyln6ENA8v5IqYjkshznFyj2";
         if (nome.toLowerCase() === "admin" && uid !== UID_ADMIN_VERDADEIRO) {
             await signOut(auth);
@@ -850,15 +904,13 @@ btnEditEmail.addEventListener("click", async () => {
     }
 });
 
-// 🔑 MODIFICADO: reseta as flags para permitir restauração em um próximo login
 const cleanupChatSession = async () => {
     cleanupAllListeners();
 
     jaIniciado = false;         
     logandoManualmente = false; 
-    montandoChat = false; // 🔓 Libera o cadeado no logout
+    montandoChat = false; 
 
-    // 🔑 LIMPA A CHAVE DE ENTRADA DO NAVEGADOR
     if (user.id) {
         sessionStorage.removeItem(`chat_entrou_${user.id}`);
     }
@@ -887,6 +939,9 @@ const cleanupChatSession = async () => {
     btnSom.classList.remove("muted");
     somAtivado = false;
     ultimoTimestampCarregado = 0;
+
+    // 🔑 FIXAR: Esconde a barra de fixados ao deslogar
+    if (pinnedBar) pinnedBar.style.display = "none";
 
     if (!isLoginMode) toggleLink.click();
 };
@@ -1020,7 +1075,6 @@ window.addEventListener("beforeunload", () => {
     deleteDoc(doc(db, "usuarios_online", user.id)).catch(() => {});
 });
 
-// ✅ Reenvia TODOS os dados a cada 15s
 setInterval(() => {
     if (!user.id) return;
     setDoc(doc(db, "usuarios_online", user.id), { 

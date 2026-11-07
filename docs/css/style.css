@@ -836,3 +836,133 @@ body.is-admin .btn-moderate-user {
 .chat__button-gif.active {
     color: cadetblue !important; /* Destaca em cadetblue quando ativo */
 }
+
+/* ================= BARRA DE MENSAGEM FIXADA ================= */
+.pinned-message-bar {
+    position: fixed;
+    top: 50px; 
+    left: 180px; 
+    right: 30px;
+    background-color: #2a2a2a;
+    color: #f2f2f2;
+    padding: 8px 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    z-index: 9;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border-left: 4px solid #f1c40f;
+    animation: fadeInDown 0.3s ease-out;
+    min-height: 40px; /* ✅ Impede que a barra fique esmagada com imagens */
+}
+
+.pinned-message-text {
+    flex-grow: 1;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+    
+    /* ✅ NOVAS REGRAS PARA ALINHAR O TEXTO E A IMAGEM */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-unpin {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    font-size: 1.2rem;
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 10px;
+    padding: 0 5px;
+    transition: transform 0.2s;
+}
+.btn-unpin:hover {
+    transform: scale(1.2);
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Ajuste para o Celular */
+@media (max-width: 600px) {
+    .pinned-message-bar {
+        top: 130px; 
+        left: 12px;
+        right: 12px;
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+    
+    .pinned-message-text {
+        font-size: 0.75rem;
+    }
+}
+
+/* ================= CORES DA BARRA NOS TEMAS ================= */
+
+/* Tema Claro */
+body.light-theme .pinned-message-bar {
+    background-color: #ffffff;
+    color: #1c1e21;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-left-color: cadetblue;
+}
+
+/* Tema Azul */
+body.blue-theme .pinned-message-bar {
+    background-color: #e6f0ff;
+    color: #0f2a4a;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+    border-left-color: #0d6efd;
+}
+
+/* Tema Rosa */
+body.pink-theme .pinned-message-bar {
+    background-color: #fff0f3;
+    color: #4a0e17;
+    box-shadow: 0 4px 12px rgba(255, 133, 162, 0.2);
+    border-left-color: #ff477e;
+}
+
+/* Tema Verde */
+body.green-theme .pinned-message-bar {
+    background-color: #e8f8f0;
+    color: #0a2e14;
+    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.2);
+    border-left-color: #2ecc71;
+}
+
+/* ================= ESTILO DO BOTÃO DE FIXAR (📌) ================= */
+
+.pin-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem; 
+    margin-left: 8px;
+    padding: 0 4px;
+    transition: transform 0.2s;
+    
+    /* ✨ O CONTORNO BRANCO PARA DESTACAR EM QUALQUER FUNDO ✨ */
+    filter: drop-shadow(0px 0px 1px #ffffff) 
+            drop-shadow(0px 0px 2px #ffffff) 
+            drop-shadow(0px 0px 3px #ffffff);
+}
+
+.pin-btn:hover {
+    transform: scale(1.2); /* Efeito de zoom ao passar o mouse */
+}
+
+/* No celular, o dedo cobre o ícone, então deixamos um pouquinho maior */
+@media (max-width: 600px) {
+    .pin-btn {
+        font-size: 1.1rem;
+    }
+}
