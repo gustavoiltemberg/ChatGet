@@ -323,19 +323,43 @@ body {
     display: block;
 }
 
-.delete-btn {
-    background: none;
+/* ================= ESTILO DOS BOTÕES DE AÇÃO (Apagar ❌ e Fixar 📌) ================= */
+
+.delete-btn, .pin-btn {
+    background: transparent;
     border: none;
-    color: #e74c3c;
     cursor: pointer;
-    font-size: 0.8rem;
-    margin-left: 10px;
-    padding: 0;
-    display: inline-block;
+    font-size: 1rem;
+    margin-left: 8px;
+    padding: 0 4px;
+    transition: transform 0.2s, opacity 0.2s;
+    
+    /* ✨ O CONTORNO BRANCO MÁGICO ✨ */
+    filter: drop-shadow(0px 0px 1px #ffffff) 
+            drop-shadow(0px 0px 2px #ffffff) 
+            drop-shadow(0px 0px 3px #ffffff);
 }
 
-.delete-btn:hover {
-    text-decoration: underline;
+/* Efeito ao passar o mouse */
+.delete-btn:hover, .pin-btn:hover {
+    transform: scale(1.2);
+    opacity: 1;
+}
+
+/* Ajuste específico para o X (um pouco menor e mais discreto) */
+.delete-btn {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+/* Ajuste para o celular */
+@media (max-width: 600px) {
+    .delete-btn, .pin-btn {
+        font-size: 1.1rem;
+    }
+    .delete-btn {
+        font-size: 0.95rem;
+    }
 }
 
 /* ================= STICKERS ================= */
@@ -965,4 +989,17 @@ body.green-theme .pinned-message-bar {
     .pin-btn {
         font-size: 1.1rem;
     }
+}
+
+/* ✅ Correção do layout para links e textos longos */
+.message--content {
+    word-break: break-word; /* Quebra palavras gigantes se necessário */
+    overflow-wrap: break-word; /* Padrão moderno para quebrar textos longos */
+    hyphens: auto;
+}
+
+.message--content a {
+    color: inherit; /* O link herda a cor do texto da bolha */
+    text-decoration: underline;
+    word-break: break-all; /* Garante que o próprio link se quebre se for muito grande */
 }

@@ -183,6 +183,7 @@ const isImageURL = (url) => {
 const buildContentNode = (content) => {
     const container = document.createElement("div");
     container.className = "message--content";
+    
     if (isImageURL(content)) {
         const img = document.createElement("img");
         img.src = content;
@@ -190,11 +191,23 @@ const buildContentNode = (content) => {
         img.loading = "lazy";
         container.appendChild(img);
     } else {
-        container.textContent = content;
+        // ✅ NOVO: Transforma links em <a> clicáveis e seguros
+        // Essa Regex encontra URLs (http, https, www)
+        const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+        
+        // Substitui o texto normal por HTML seguro
+        const htmlContent = content.replace(urlRegex, (url) => {
+            const href = url.startsWith('http') ? url : `https://${url}`;
+            return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+        });
+        
+        // Usa innerHTML para renderizar o link, mas o conteúdo já foi tratado pela Regex
+        container.innerHTML = htmlContent;
     }
     return container;
 };
 
+// CreateMessageElemente ==========================
 const createMessageElement = (msg, docId) => {
     if (msg.isSystem) {
         const div = document.createElement("div");
@@ -264,19 +277,26 @@ const createMessageElement = (msg, docId) => {
     div.appendChild(headerMensagem);
     div.appendChild(buildContentNode(msg.content));
 
+    // 🔑 NOVO: Container para agrupar os botões de ação
+    const actionsContainer = document.createElement("div");
+    actionsContainer.className = "message-actions";
+
     if (podeApagar) {
         const btn = document.createElement("button");
         btn.className = "delete-btn";
         btn.dataset.id = docId;
-        btn.textContent = "[Apagar]";
+        btn.textContent = "❌";
+        btn.title = "Apagar mensagem";
+
         btn.addEventListener("click", async () => {
             if (!user.isAdmin && isAdminMessage) {
                 return alert("Você não tem permissão para apagar mensagens do Administrador.");
             }
+            if (!confirm("Tem certeza que deseja apagar esta mensagem?")) return; // Confirmação para não apagar sem querer
             try { await deleteDoc(doc(db, "mensagens", docId)); }
             catch (e) { console.error("Erro ao apagar:", e); alert("Erro ao apagar. Verifique se você tem permissão."); }
         });
-        div.appendChild(btn);
+        actionsContainer.appendChild(btn); // Adiciona ao container
     }
 
     // 🔑 FIXAR: Botão de Fixar Mensagem
@@ -299,7 +319,12 @@ const createMessageElement = (msg, docId) => {
                 alert("Erro ao fixar a mensagem.");
             }
         });
-        div.appendChild(btnPin);
+        actionsContainer.appendChild(btnPin); // Adiciona ao container
+    }
+
+    // Se houver algum botão dentro do container, adiciona ele na mensagem
+    if (actionsContainer.children.length > 0) {
+        div.appendChild(actionsContainer);
     }
 
     return div;
