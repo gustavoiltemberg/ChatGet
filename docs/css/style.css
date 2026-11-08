@@ -386,6 +386,7 @@ body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-
     color: #121212;
     border-radius: 10px 10px 0 10px;
     align-self: flex-end;
+    text-align: justify; /* ✅ Adicionado aqui */
 }
 
 .message--other {
@@ -393,6 +394,7 @@ body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-
     color: #f2f2f2;
     border-radius: 0 10px 10px 10px;
     align-self: flex-start;
+    text-align: justify; /* ✅ Adicionado aqui */
 }
 
 .message--sender {
@@ -1100,6 +1102,10 @@ body.green-theme .pinned-message-bar { background-color: #e8f8f0; color: #0a2e14
     word-break: break-word;
     overflow-wrap: break-word;
     hyphens: auto;
+
+    /* ✅ ADICIONE ESTA LINHA AQUI */
+    text-align: justify; 
+    text-justify: inter-word; /* Ajuda a distribuir melhor as palavras */
 }
 
 .message--content a {
@@ -1275,6 +1281,15 @@ body.light-theme .chat-theme-btn:hover {
         height: 32px !important;
         min-height: 32px !important;
         font-size: 0.9rem !important;
+    }
+
+    /* Justifica o texto no celular também */
+    .message--self,
+    .message--other {
+        text-align: justify;
+        text-justify: inter-word;
+        hyphens: auto; /* Permite quebrar palavras longas com hífen */
+        -webkit-hyphens: auto; /* Para Safari/iOS */
     }
 }
 
