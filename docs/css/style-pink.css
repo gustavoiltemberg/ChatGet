@@ -265,6 +265,10 @@ body.pink-theme .theme-toggle-btn:hover {
         /* Mantém as cores que você escolheu */
         color: #ff477e !important;
         border-bottom-color: rgba(255, 71, 126, 0.3) !important;
+
+        /* ✅ ADICIONE AQUI TAMBÉM: */
+        width: 100% !important;
+        max-width: 95% !important; 
     }
 
     body.pink-theme .message--system-time {

@@ -277,6 +277,10 @@ body.blue-theme .message--system-time {
         /* Cores do tema Blue */
         color: #0a58ca !important;
         border-bottom-color: rgba(10, 88, 202, 0.3) !important;
+
+        /* ✅ ADICIONE AQUI TAMBÉM: */
+        width: 100% !important;
+        max-width: 95% !important; 
     }
 
     body.blue-theme .message--system-time {

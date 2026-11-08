@@ -274,6 +274,10 @@ body.light-theme .theme-toggle-btn {
         /* Cores do tema Light */
         color: #5f9ea0 !important;
         border-bottom-color: rgba(95, 158, 160, 0.3) !important;
+
+        /* ✅ ADICIONE AQUI TAMBÉM: */
+        width: 100% !important;
+        max-width: 95% !important; 
     }
 
     body.light-theme .message--system-time {

@@ -266,6 +266,10 @@ body.green-theme .theme-toggle-btn:hover {
         color: #27ae60 !important;
         /* Usando a mesma cor do texto (39, 174, 96) com 30% de transparência */
         border-bottom-color: rgba(39, 174, 96, 0.3) !important;
+
+        /* ✅ ADICIONE AQUI TAMBÉM: */
+        width: 100% !important;
+        max-width: 95% !important; 
     }
 
     body.green-theme .message--system-time {

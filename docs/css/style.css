@@ -164,7 +164,7 @@ body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat
 }
 
 .btn-logout:hover {
-    background-color: #c0392b !important;
+     background-color: #c0392b !important;
     border-color: #c0392b !important;
     transform: scale(1.05); /* Efeito de zoom no hover */
 }
@@ -372,13 +372,14 @@ body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-
 
 .chat__messages > div {
     padding: 10px;
-    width: 100%;
-    max-width: 250px;
+    width: fit-content;
+    max-width: 45%;
     font-size: 0.9rem;
     font-weight: 500;
     margin-bottom: 15px;
     line-height: 22px;
     position: relative;
+    word-wrap: break-word;
 }
 
 .message--self {
@@ -386,7 +387,6 @@ body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-
     color: #121212;
     border-radius: 10px 10px 0 10px;
     align-self: flex-end;
-    text-align: justify; /* ✅ Adicionado aqui */
 }
 
 .message--other {
@@ -394,7 +394,6 @@ body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-
     color: #f2f2f2;
     border-radius: 0 10px 10px 10px;
     align-self: flex-start;
-    text-align: justify; /* ✅ Adicionado aqui */
 }
 
 .message--sender {
@@ -498,6 +497,10 @@ body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-
     text-transform: uppercase;
     letter-spacing: 1px;
     border-bottom: 1px solid #333;
+
+    /* ✅ ADICIONE ESTAS DUAS LINHAS PARA CORRIGIR A LINHA: */
+    width: 100% !important;
+    max-width: 95% !important; /* O 90% dá um respiro nas laterais. Se quiser colada, use 100% */
 }
 
 /* ================= SIDEBAR ================= */
@@ -882,7 +885,7 @@ body.is-admin .btn-moderate-user {
 @media (max-width: 380px) {
     :root { font-size: 14px; }
     .chat__header button { font-size: 0.7rem; padding: 6px 8px; height: 30px; min-height: 30px; }
-    
+
     .btn-som,
     .chat-theme-btn,
     .btn-logout {
@@ -1002,6 +1005,9 @@ body.is-admin .btn-moderate-user {
     line-height: 1.4;
     padding-right: 8px;
     word-break: break-word;
+
+    /* ✅ ADICIONE ESTA LINHA AQUI */
+    text-align: justify;
 }
 
 .pinned-message-bar.expanded .pinned-message-text {
@@ -1060,6 +1066,10 @@ body.is-admin .btn-moderate-user {
 
     .pinned-message-text {
         font-size: 0.75rem;
+
+        /* ✅ GARANTE O JUSTIFICADO NO CELULAR: */
+        text-align: justify;
+        text-justify: inter-word;
     }
 
     .pinned-message-bar.expanded .pinned-message-text {
@@ -1282,7 +1292,7 @@ body.light-theme .chat-theme-btn:hover {
         min-height: 32px !important;
         font-size: 0.9rem !important;
     }
-
+    
     /* Justifica o texto no celular também */
     .message--self,
     .message--other {
@@ -1322,13 +1332,17 @@ body.light-theme .chat-theme-btn:hover {
         margin: 8px 0 !important;
         color: #888 !important; /* Cinza */
         border-bottom-color: rgba(136, 136, 136, 0.3) !important;
+
+        /* ✅ ADICIONE ESTAS DUAS LINHAS AQUI: */
+        width: 100% !important;
+        max-width: 95% !important; /* 90% deixa a linha bem larga, mas com uma folguinha nas bordas */
     }
 
     body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .message--system-time {
         font-size: 0.7rem !important; 
         color: #888 !important; /* Cinza */
     }
-
+    
     /* Modal de Banidos */
     #bans-list li {
         flex-direction: column;
@@ -1337,12 +1351,6 @@ body.light-theme .chat-theme-btn:hover {
     }
     #bans-list li span {
         word-break: break-all; /* Evita que nomes grandes quebrem o layout */
-    }
-
-    /* Exemplo: esconder texto de botões no mobile (opcional) */
-    .btn-edit-name {
-        font-size: 0.75rem !important;
-        padding: 7px 8px !important;
     }
 }
 
@@ -1389,5 +1397,7 @@ body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .mess
 body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .message--system-time {
     color: #888 !important;           
 }
+
+
 
 /* ================= FIM DO ARQUIVO ================= */
