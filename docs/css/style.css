@@ -1234,11 +1234,6 @@ body.light-theme .chat-theme-btn:hover {
     border: 1px solid #555 !important;
     z-index: 10 !important;
     transition: background 0.3s, transform 0.2s !important;
-
-        text-shadow:
-        0 0 1px #000000,
-        0 0 2px #000000,
-        0 0 3px #000000;
 }
 
 .theme-toggle-btn:hover {
