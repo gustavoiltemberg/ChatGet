@@ -252,12 +252,31 @@ body.pink-theme .theme-toggle-btn:hover {
     body.pink-theme .chat__input {
         border: 1px solid #ffb3c6 !important;
     }
+
+
+        body.pink-theme .message--system {
+        /* Deixa a fonte um pouquinho menor para telas pequenas */
+        font-size: 0.75rem !important; 
+        
+        /* Ajusta o espaçamento em cima e embaixo */
+        padding: 4px 10px !important;
+        margin: 8px 0 !important;
+        
+        /* Mantém as cores que você escolheu */
+        color: #ff477e !important;
+        border-bottom-color: rgba(255, 71, 126, 0.3) !important;
+    }
+
+    body.pink-theme .message--system-time {
+        font-size: 0.7rem !important; /* O horário fica levemente menor que o texto */
+        color: #ff477e !important;
+    }
 }
 
 /* Mensagens de sistema (Entrou/Saiu) */
 body.pink-theme .message--system {
-    color: #4a0e17 !important;           
-    border-bottom-color: rgba(255, 71, 126, 0.2) !important; 
+    color: #ff477e !important;           
+    border-bottom-color: rgba(255, 71, 126, 0.3) !important; 
     font-weight: 600 !important;         
 }
 
