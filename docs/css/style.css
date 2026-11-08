@@ -149,16 +149,24 @@ body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat
     background-color: #333;
     color: #f2f2f2;
     border: 1px solid #555;
-    padding: 8px 15px;
-    border-radius: 5px;
+    border-radius: 50% !important; /* Deixa redondo */
+    width: 36px !important;        /* Largura fixa */
+    height: 36px !important;       /* Altura fixa */
+    padding: 0 !important;         /* Remove o preenchimento lateral */
+    margin: 0 !important;
     cursor: pointer;
-    font-weight: 600;
-    transition: 0.3s;
+    font-size: 1.1rem !important;  /* Tamanho do emoji */
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: transform 0.2s, background-color 0.3s, border-color 0.3s !important;
+    flex-shrink: 0;
 }
 
 .btn-logout:hover {
-    background-color: #c0392b;
-    border-color: #c0392b;
+    background-color: #c0392b !important;
+    border-color: #c0392b !important;
+    transform: scale(1.05); /* Efeito de zoom no hover */
 }
 
 .btn-admin {
@@ -856,11 +864,14 @@ body.is-admin .btn-moderate-user {
 @media (max-width: 380px) {
     :root { font-size: 14px; }
     .chat__header button { font-size: 0.7rem; padding: 6px 8px; height: 30px; min-height: 30px; }
+    
     .btn-som,
-    .chat-theme-btn {
+    .chat-theme-btn,
+    .btn-logout {
         width: 30px !important;
         height: 30px !important;
         min-height: 30px !important;
+        padding: 0 !important; /* Importante para o círculo não achatar */
         font-size: 0.85rem !important;
     }
     .login { padding: 18px 14px; }
@@ -1290,6 +1301,22 @@ body.light-theme .chat-theme-btn:hover {
     body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .message--system-time {
         font-size: 0.7rem !important; 
         color: #888 !important; /* Cinza */
+    }
+
+    /* Modal de Banidos */
+    #bans-list li {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    #bans-list li span {
+        word-break: break-all; /* Evita que nomes grandes quebrem o layout */
+    }
+
+    /* Exemplo: esconder texto de botões no mobile (opcional) */
+    .btn-edit-name {
+        font-size: 0.75rem !important;
+        padding: 7px 8px !important;
     }
 }
 
