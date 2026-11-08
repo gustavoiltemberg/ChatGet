@@ -59,23 +59,21 @@ body.blue-theme .chat__header button:hover {
     background-color: #f0f5ff !important;
 }
 
-/* 🟢 MANTÉM O BOTÃO DE SOM ORIGINAL (Verde/Vermelho) */
+/* 🟢 BOTÃO DE SOM REDONDO (verde/vermelho) */
 body.blue-theme #btn-som {
-    background-color: #2ecc71 !important; /* Força o verde original */
+    background-color: #2ecc71 !important;
     color: #ffffff !important;
-    border: none !important;
+    border: 1px solid #27ae60 !important;
 }
-
 body.blue-theme #btn-som.muted {
-    background-color: #7f3c3c !important; /* Força o vermelho escuro original */
+    background-color: #c0392b !important;
+    border-color: #a93226 !important;
 }
-
 body.blue-theme #btn-som:hover {
-    background-color: #27ae60 !important; /* Verde escuro no hover */
+    background-color: #27ae60 !important;
 }
-
 body.blue-theme #btn-som.muted:hover {
-    background-color: #c0392b !important; /* Vermelho vivo no hover */
+    background-color: #a93226 !important;
 }
 
 /* Mantém os botões de Admin coloridos */
@@ -212,14 +210,8 @@ body.blue-theme .theme-toggle-btn {
     box-shadow: 0 2px 8px rgba(13, 110, 253, 0.2);
 }
 
-/* ================= AJUSTES DO CELULAR ================= */
-@media (max-width: 600px) {
-    body.blue-theme {
-        background-image: url("../images/background-blue.png") !important;
-        background-attachment: fixed !important;
-        background-size: cover !important;
-        background-position: center !important;
-    }
+body.blue-theme .theme-toggle-btn:hover {
+    transform: scale(1.05);
 }
 
 /* Mensagens de sistema (Entrou/Saiu) */
@@ -235,7 +227,14 @@ body.blue-theme .message--system-time {
 
 /* ================= AJUSTES ESPECÍFICOS PARA CELULAR ================= */
 @media (max-width: 600px) {
-    
+       
+    body.blue-theme {
+        background-image: url("../images/background-blue.png") !important;
+        background-attachment: fixed !important;
+        background-size: cover !important;
+        background-position: center !important;
+    }
+
     /* Barra de usuários no topo do celular */
     body.blue-theme .chat__sidebar {
         background-color: #cce0ff !important; /* Um tom de azul um pouco mais escuro para destacar do fundo */
@@ -249,7 +248,7 @@ body.blue-theme .message--system-time {
     }
 
     /* Botões do header no celular (para não ficarem todos brancos e poluídos) */
-    body.blue-theme .chat__header button:not(.btn-admin):not(#btn-som) {
+    body.blue-theme .chat__header button:not(.btn-admin):not(#btn-som):not(#btn-logout) {
         background-color: #ffffff !important;
         border: 1px solid #99c2ff !important;
         color: #0d6efd !important;

@@ -50,7 +50,6 @@ body.light-theme .chat__form,
 body.light-theme .chat__stickers {
     background-color: #ffffff !important;
     border-color: #e5e5e5 !important;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
 }
 
 /* Botões do topo (Editar, etc) ganham um tom que combina */
@@ -63,23 +62,21 @@ body.light-theme .chat__header button:hover {
     background-color: #e4e6eb !important;
 }
 
-/* 🟢 MANTÉM O BOTÃO DE SOM ORIGINAL (Verde/Vermelho) */
+/* 🟢 BOTÃO DE SOM REDONDO (verde/vermelho) */
 body.light-theme #btn-som {
     background-color: #2ecc71 !important;
     color: #ffffff !important;
-    border: none !important;
+    border: 1px solid #27ae60 !important;
 }
-
 body.light-theme #btn-som.muted {
-    background-color: #7f3c3c !important;
+    background-color: #c0392b !important;
+    border-color: #a93226 !important;
 }
-
 body.light-theme #btn-som:hover {
     background-color: #27ae60 !important;
 }
-
 body.light-theme #btn-som.muted:hover {
-    background-color: #c0392b !important;
+    background-color: #a93226 !important;
 }
 
 /* 🔴 MANTÉM O BOTÃO DE SAIR ORIGINAL (Escuro com hover vermelho) */
@@ -214,27 +211,7 @@ body.light-theme .sticker-btn:hover {
     position: relative !important;
 }
 
-.theme-toggle-btn {
-    position: absolute !important;
-    top: 15px !important;
-    right: 15px !important;
-    width: 36px !important;
-    height: 36px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border-radius: 50% !important;
-    background-color: #2a2a2a !important;
-    font-size: 1.1rem !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    cursor: pointer !important;
-    z-index: 10 !important;
-    transition: background 0.3s, transform 0.2s !important;
-    border: none !important;
-}
-
-.theme-toggle-btn:hover {
+body.light-theme .theme-toggle-btn:hover {
     transform: scale(1.05);
 }
 
@@ -279,7 +256,7 @@ body.light-theme .theme-toggle-btn {
     }
 
     /* Ajuste do botão de tema no mobile */
-    .theme-toggle-btn {
+    body.light-theme .theme-toggle-btn {
         padding: 12px !important;
         font-size: 0.95rem !important;
         margin-top: 12px !important;

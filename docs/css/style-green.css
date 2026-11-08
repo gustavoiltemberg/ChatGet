@@ -59,23 +59,21 @@ body.green-theme .chat__header button:hover {
     background-color: #e8f8f0 !important;
 }
 
-/* 🟢 MANTÉM O BOTÃO DE SOM ORIGINAL (Verde/Vermelho) */
+/* 🟢 BOTÃO DE SOM REDONDO (verde/vermelho) */
 body.green-theme #btn-som {
     background-color: #2ecc71 !important;
     color: #ffffff !important;
-    border: none !important;
+    border: 1px solid #27ae60 !important;
 }
-
 body.green-theme #btn-som.muted {
-    background-color: #7f3c3c !important;
+    background-color: #c0392b !important;
+    border-color: #a93226 !important;
 }
-
 body.green-theme #btn-som:hover {
     background-color: #27ae60 !important;
 }
-
 body.green-theme #btn-som.muted:hover {
-    background-color: #c0392b !important;
+    background-color: #a93226 !important;
 }
 
 /* 🔴 MANTÉM O BOTÃO DE SAIR ORIGINAL (Escuro com hover vermelho) */
@@ -212,6 +210,10 @@ body.green-theme .theme-toggle-btn {
     box-shadow: 0 2px 8px rgba(46, 204, 113, 0.2);
 }
 
+body.green-theme .theme-toggle-btn:hover {
+    transform: scale(1.05);
+}
+
 /* ================= AJUSTES DO CELULAR ================= */
 @media (max-width: 600px) {
     body.green-theme {
@@ -249,7 +251,7 @@ body.green-theme .theme-toggle-btn {
     /* Caixa de texto (input) no celular */
     body.green-theme .chat__input {
         border: 1px solid #a3e4c4 !important;
-    }
+    } 
 }
 
 /* Mensagens de sistema (Entrou/Saiu) */

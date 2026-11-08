@@ -59,23 +59,21 @@ body.pink-theme .chat__header button:hover {
     background-color: #fff0f3 !important;
 }
 
-/* 🟢 MANTÉM O BOTÃO DE SOM ORIGINAL (Verde/Vermelho) */
+/* 🟢 BOTÃO DE SOM REDONDO (verde/vermelho) */
 body.pink-theme #btn-som {
     background-color: #2ecc71 !important;
     color: #ffffff !important;
-    border: none !important;
+    border: 1px solid #27ae60 !important;
 }
-
 body.pink-theme #btn-som.muted {
-    background-color: #7f3c3c !important;
+    background-color: #c0392b !important;
+    border-color: #a93226 !important;
 }
-
 body.pink-theme #btn-som:hover {
     background-color: #27ae60 !important;
 }
-
 body.pink-theme #btn-som.muted:hover {
-    background-color: #c0392b !important;
+    background-color: #a93226 !important;
 }
 
 /* 🔴 MANTÉM O BOTÃO DE SAIR ORIGINAL (Escuro com hover vermelho) */
@@ -210,6 +208,10 @@ body.pink-theme .theme-toggle-btn {
     background-color: #ffffff !important; 
     color: #ff477e !important;            
     box-shadow: 0 2px 8px rgba(255, 71, 126, 0.2);
+}
+
+body.pink-theme .theme-toggle-btn:hover {
+    transform: scale(1.05);
 }
 
 /* ================= AJUSTES DO CELULAR ================= */

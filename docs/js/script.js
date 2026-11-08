@@ -347,11 +347,11 @@ const playSound = (audio, volume = 1.0) => {
 const atualizarBotaoSom = () => {
     btnSom.style.display = "block";
     if (somAtivado) {
-        btnSom.textContent = "🔊 Som Ligado";
+        btnSom.textContent = "🔊";
         btnSom.classList.remove("muted");
         btnSom.title = "Clique para desligar o som";
     } else {
-        btnSom.textContent = "🔇 Som Desligado";
+        btnSom.textContent = "🔇";
         btnSom.classList.add("muted");
         btnSom.title = "Clique para ligar o som";
     }
@@ -439,7 +439,7 @@ const atualizarInterfaceMensagens = () => {
             const btn = document.createElement("button");
             btn.className = "delete-btn";
             btn.dataset.id = msgId;
-            btn.textContent = "[Apagar]";
+            btn.textContent = "❌";
             btn.addEventListener("click", async () => {
                 if (!user.isAdmin && isAdminMsg) return alert("Sem permissão.");
                 try { await deleteDoc(doc(db, "mensagens", msgId)); } catch (e) {}
@@ -486,27 +486,25 @@ const listenToPinnedMessage = () => {
             const data = docSnap.data();
             const remetente = formatarNomeExibicao(data.sender);
             
-            // Limpa o conteúdo anterior
+            // Remove o estado de expandido ao carregar uma nova mensagem fixada
+            pinnedBar.classList.remove("expanded");
+
             pinnedText.innerHTML = "";
 
-            // Cria o span do remetente
             const spanRemetente = document.createElement("strong");
             spanRemetente.textContent = `${remetente}: `;
             pinnedText.appendChild(spanRemetente);
 
-            // Verifica se o conteúdo é uma imagem (usando a mesma função que o chat usa)
             if (isImageURL(data.text)) {
                 const img = document.createElement("img");
                 img.src = data.text;
                 img.alt = "Fixado";
-                // Estilo para a imagem ficar pequena e alinhada na barra
                 img.style.height = "24px";
                 img.style.verticalAlign = "middle";
                 img.style.marginLeft = "5px";
                 img.style.borderRadius = "4px";
                 pinnedText.appendChild(img);
             } else {
-                // Se for texto normal, adiciona o texto
                 const textNode = document.createTextNode(data.text);
                 pinnedText.appendChild(textNode);
             }
@@ -518,6 +516,15 @@ const listenToPinnedMessage = () => {
         }
     });
 };
+
+// 🔑 EVENTO PARA EXPANDIR / RECOLHER A MENSAGEM FIXADA AO CLICAR NELA
+pinnedBar.addEventListener("click", (e) => {
+    // Se o clique for no botão de desafixar (X), não faz nada aqui para não conflitar
+    if (e.target.closest("#btn-unpin")) return;
+    
+    // Adiciona ou remove a classe 'expanded'
+    pinnedBar.classList.toggle("expanded");
+});
 
 // 🔑 FIXAR: Evento para desafixar
 btnUnpin.addEventListener("click", async () => {
@@ -645,7 +652,7 @@ const listenToOnlineUsers = () => {
                 li.appendChild(btnModerateUser);
 
                 const btnDeleteUser = document.createElement("button");
-                btnDeleteUser.textContent = "✖";
+                btnDeleteUser.textContent = "🚫";
                 btnDeleteUser.classList.add("btn-delete-user");
                 btnDeleteUser.setAttribute("aria-label", "Banir usuário");
                 btnDeleteUser.addEventListener("click", async () => {

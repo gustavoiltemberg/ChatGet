@@ -31,8 +31,7 @@ body {
     background-color: #212121;
     border-radius: 5px;
     padding: 20px;
-    box-sizing: border-box; /* ✅ OBRIGATÓRIO para manter o tamanho exato */
-    /* Adicione esta sombra base para o tema escuro também! */
+    box-sizing: border-box;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
@@ -50,7 +49,7 @@ body {
 }
 
 .login__input {
-    border: 1px solid transparent; /* ✅ Reserva o espaço da borda */
+    border: 1px solid transparent;
     padding: 15px;
     font-size: 0.85rem;
     font-weight: 600;
@@ -65,7 +64,7 @@ body {
 }
 
 .login__button {
-    border: 1px solid transparent; /* ✅ Reserva o espaço da borda */
+    border: 1px solid transparent;
     padding: 15px;
     border-radius: 5px;
     font-size: 0.85rem;
@@ -74,8 +73,6 @@ body {
     cursor: pointer;
     color: #121212;
     transition: 0.3s;
-
-    /* ✅ ADICIONE ESTAS LINHAS PARA CENTRALIZAR O TEXTO NO TEMA ESCURO */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -122,6 +119,13 @@ body {
     left: 0;
     width: 100%;
     z-index: 10;
+    /* ✅ Sombra adicionada para igualar ao tema claro */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+/* Sombra mais suave apenas no tema escuro (quando nenhum tema colorido está ativo) */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__header {
+    box-shadow: 0 2px 10px rgba(136, 136, 136, 0.25);
 }
 
 .chat__header-scroll {
@@ -130,6 +134,15 @@ body {
     gap: 10px;
     width: 100%;
     justify-content: flex-end;
+}
+
+/* ✅ PADRONIZAÇÃO DA ALTURA DE TODOS OS BOTÕES DO HEADER */
+.chat__header button {
+    box-sizing: border-box;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-logout {
@@ -169,33 +182,84 @@ body {
     transition: 0.3s;
 }
 
+
+/* ================= PADRONIZAÇÃO DOS BOTÕES DO HEADER (TEMA ESCURO) ================= */
+/* Equivalente ao que existe em style-light/blue/pink/green.css */
+
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__header button {
+    background-color: #333 !important;
+    color: #f2f2f2 !important;
+    border: 1px solid #555 !important;
+}
+
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__header button:hover {
+    background-color: #444 !important;
+}
+
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .btn-edit-name:hover {
+    background-color: cadetblue !important;
+    border-color: cadetblue !important;
+}
+
+/* Mantém o hover vermelho do botão de sair */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-logout:hover {
+    background-color: #c0392b !important;
+    border-color: #c0392b !important;
+    color: #ffffff !important;
+}
+
+/* Botão de som continua verde/vermelho */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-som {
+    background-color: #2ecc71 !important;
+    color: #ffffff !important;
+    border: 1px solid #27ae60 !important;
+}
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-som.muted {
+    background-color: #c0392b !important;
+    border-color: #a93226 !important;
+}
+
 .btn-edit-name:hover {
     background-color: cadetblue;
     border-color: cadetblue;
 }
 
+/* ✅ BOTÃO DE SOM REDONDO — 36px */
 .btn-som {
-    background-color: #2ecc71;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 5px;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    background-color: #2ecc71 !important;
+    color: #ffffff !important;
+    border: 1px solid #27ae60 !important;
+    padding: 0 !important;
+    margin: 0 !important;
     cursor: pointer;
-    font-weight: 600;
-    transition: 0.3s;
+    font-size: 1rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: transform 0.2s, background 0.3s, box-shadow 0.3s !important;
+    flex-shrink: 0;
+    text-shadow:
+        0 0 1px #000000,
+        0 0 2px #000000,
+        0 0 3px #000000;
 }
 
 .btn-som:hover {
-    background-color: #27ae60;
+    transform: scale(1.05);
+    background-color: #27ae60 !important;
 }
 
 .btn-som.muted {
-    background-color: #7f3c3c;
+    background-color: #c0392b !important;
+    border-color: #a93226 !important;
     animation: pulseSom 1.5s infinite;
 }
 
 .btn-som.muted:hover {
-    background-color: #c0392b;
+    background-color: #a93226 !important;
     animation: none;
 }
 
@@ -309,7 +373,7 @@ body {
 
 .message--sender {
     display: inline-block !important;
-    margin-bottom: 0 !important; /* ✅ Removeu os 15px que quebravam o alinhamento com o avatar */
+    margin-bottom: 0 !important;
     font-weight: 700;
     font-size: 0.85rem;
     color: cadetblue;
@@ -323,7 +387,7 @@ body {
     display: block;
 }
 
-/* ================= ESTILO DOS BOTÕES DE AÇÃO (Apagar ❌ e Fixar 📌) ================= */
+/* ================= BOTÕES DE AÇÃO (Apagar ❌ e Fixar 📌) ================= */
 
 .delete-btn, .pin-btn {
     background: transparent;
@@ -333,26 +397,21 @@ body {
     margin-left: 8px;
     padding: 0 4px;
     transition: transform 0.2s, opacity 0.2s;
-    
-    /* ✨ O CONTORNO BRANCO MÁGICO ✨ */
     filter: drop-shadow(0px 0px 1px #ffffff) 
             drop-shadow(0px 0px 2px #ffffff) 
             drop-shadow(0px 0px 3px #ffffff);
 }
 
-/* Efeito ao passar o mouse */
 .delete-btn:hover, .pin-btn:hover {
     transform: scale(1.2);
     opacity: 1;
 }
 
-/* Ajuste específico para o X (um pouco menor e mais discreto) */
 .delete-btn {
     font-size: 0.85rem;
     opacity: 0.8;
 }
 
-/* Ajuste para o celular */
 @media (max-width: 600px) {
     .delete-btn, .pin-btn {
         font-size: 1.1rem;
@@ -658,14 +717,12 @@ body.is-admin .btn-moderate-user {
     .container { height: 100dvh; align-items: stretch; justify-content: stretch; }
     .login { margin: auto; max-width: 92%; padding: 22px 18px; }
 
-
     .chat { 
         position: relative; 
         height: 100dvh; 
         padding-top: 140px; 
         flex-direction: column;
-}
-
+    }
 
     /* Header fixo no topo */
     .chat__header {
@@ -682,7 +739,31 @@ body.is-admin .btn-moderate-user {
     }
     .chat__header::-webkit-scrollbar { display: none; }
     .chat__header-scroll { justify-content: flex-start; width: max-content; padding-right: 10px; }
-    .chat__header button { flex-shrink: 0; font-size: 0.75rem; padding: 7px 10px; white-space: nowrap; }
+
+    /* ✅ Botões do header no mobile: 32px */
+    .chat__header button {
+        flex-shrink: 0;
+        font-size: 0.75rem;
+        padding: 7px 10px;
+        white-space: nowrap;
+        min-height: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* ✅ Botões redondos no mobile: 32×32 */
+    .btn-som,
+    .chat-theme-btn {
+        width: 32px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 0.9rem !important;
+        flex-shrink: 0;
+    }
 
     /* Admin bar — botões lado a lado */
     #admin-bar {
@@ -699,6 +780,8 @@ body.is-admin .btn-moderate-user {
         padding: 7px 10px;
         white-space: nowrap;
         border-radius: 5px;
+        height: 32px;
+        min-height: 32px;
     }
 
     /* Sidebar logo abaixo do header */
@@ -716,13 +799,12 @@ body.is-admin .btn-moderate-user {
     .chat__sidebar ul { display: flex; gap: 12px; flex-wrap: nowrap; margin: 0; padding: 0; }
     .chat__sidebar li { margin: 0; flex-shrink: 0; font-size: 0.8rem; }
 
-    /* ✅ ÁREA DE MENSAGENS (CORRIGIDA) */
+    /* ÁREA DE MENSAGENS */
     .chat__messages {
         position: relative;
         top: auto;    
         bottom: auto;             
         left: auto; right: auto;
-        /* Aumentei o padding para 130px para dar muita folga da sendbox */
         flex-grow: 1;
         height: auto;
         padding: 10px 12px 20px 12px; 
@@ -734,26 +816,24 @@ body.is-admin .btn-moderate-user {
         z-index: 5;
     }
 
-    /* ✅ BOLHA DA MENSAGEM (SEM ACHATAR A IMAGEM) */
     .chat__messages > div {
         max-width: 85%;
         font-size: 0.88rem;
         width: fit-content;
         margin-bottom: 12px;
-        display: block; /* Removido o flex column que estava esmagando a imagem */
+        display: block;
     }
 
     .message--self { align-self: flex-end; }
     .message--other { align-self: flex-start; }
 
-    /* O SEGREDO ESTÁ AQUI: Tratamento direto na tag img */
     .message--content img {
         display: block;
-        max-width: 100%;         /* Não deixa passar das bordas da tela */
-        max-height: 200px;       /* Permite que o emoticon apareça inteiro */
+        max-width: 100%;
+        max-height: 200px;
         width: auto;             
         height: auto;            
-        object-fit: contain;     /* Mantém a proporção do desenho */
+        object-fit: contain;
         border-radius: 8px;
         margin-top: 5px;
     }
@@ -779,20 +859,26 @@ body.is-admin .btn-moderate-user {
 
 @media (max-width: 380px) {
     :root { font-size: 14px; }
-    .chat__header button { font-size: 0.7rem; padding: 6px 8px; }
+    .chat__header button { font-size: 0.7rem; padding: 6px 8px; height: 30px; min-height: 30px; }
+    .btn-som,
+    .chat-theme-btn {
+        width: 30px !important;
+        height: 30px !important;
+        min-height: 30px !important;
+        font-size: 0.85rem !important;
+    }
     .login { padding: 18px 14px; }
     .chat__sidebar { max-height: 70px; }
     
     .chat__messages { padding-bottom: 120px; }
     .chat__form{ height: 75px;}
 
-    /* Ajuste fino da admin bar */
     #admin-bar { gap: 5px; flex-wrap: nowrap; }
-    #admin-bar .btn-admin { font-size: 0.7rem; padding: 6px 8px; white-space: nowrap; }
+    #admin-bar .btn-admin { font-size: 0.7rem; padding: 6px 8px; white-space: nowrap; height: 30px; min-height: 30px; }
 }
 
 @media (max-width: 900px) and (max-height: 500px) {
-.chat__sidebar { max-height: 60px; }
+    .chat__sidebar { max-height: 60px; }
 }
 
 .message--system-time {
@@ -818,13 +904,10 @@ body.is-admin .btn-moderate-user {
     display: inline-block;
 }
 
-/* Pequeno ajuste para a bolha do próprio usuário alinhar o avatar à direita */
 .message--self .message--header {
     justify-content: flex-end;
 }
 
-
-/* ✅ Tamanho unificado para Admin e Moderador */
 .message--avatar.is-admin {
     width: 24px !important;  
     height: 24px !important; 
@@ -839,26 +922,22 @@ body.is-admin .btn-moderate-user {
 
 /* ================= CUSTOMIZAÇÃO DOS BOTÕES NO MODO ESCURO ================= */
 
-/* Altera a cor padrão do botão Enviar no tema escuro */
 .chat__button {
-    color: #ffffff !important; /* Cor branca padrão para dar contraste */
+    color: #ffffff !important;
     transition: color 0.3s;
 }
 
-/* Altera a cor do botão Enviar ao passar o mouse */
 .chat__button:hover {
-    color: cadetblue !important; /* Destaca em cadetblue no foco */
+    color: cadetblue !important;
 }
 
-/* Altera a cor padrão do botão GIF no tema escuro */
 .chat__button-gif {
-    color: #ffffff !important; /* Cor branca padrão */
+    color: #ffffff !important;
 }
 
-/* Altera a cor do botão GIF ao passar o mouse ou quando o painel estiver aberto */
 .chat__button-gif:hover,
 .chat__button-gif.active {
-    color: cadetblue !important; /* Destaca em cadetblue quando ativo */
+    color: cadetblue !important;
 }
 
 /* ================= BARRA DE MENSAGEM FIXADA ================= */
@@ -877,32 +956,47 @@ body.is-admin .btn-moderate-user {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     border-left: 4px solid #f1c40f;
     animation: fadeInDown 0.3s ease-out;
-    min-height: 40px; /* ✅ Impede que a barra fique esmagada com imagens */
+    cursor: pointer;
+    transition: max-height 0.3s ease-in-out;
+    max-height: 42px;
+}
+
+.pinned-message-bar.expanded {
+    max-height: 250px;
+    align-items: flex-start;
 }
 
 .pinned-message-text {
     flex-grow: 1;
     font-size: 0.85rem;
     font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    
-    /* ✅ ROLAGEM HORIZONTAL */
-    white-space: nowrap; /* Força tudo em uma linha só */
-    overflow-x: auto;    /* Permite rolar para os lados */
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch; /* Rolagem suave no celular */
-    padding-bottom: 5px; /* Evita que a barra de rolagem cole no texto */
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+    padding-right: 8px;
+    word-break: break-word;
 }
 
-/* Esconde a barra de rolagem feia, mas mantém a rolagem ativa */
-.pinned-message-text::-webkit-scrollbar {
-    height: 4px; /* Deixa a barrinha bem fininha */
+.pinned-message-bar.expanded .pinned-message-text {
+    display: block;
+    overflow-y: auto;
+    max-height: 180px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
 }
-.pinned-message-text::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.3);
+
+.pinned-message-bar.expanded .pinned-message-text::-webkit-scrollbar {
+    width: 6px;
+}
+.pinned-message-bar.expanded .pinned-message-text::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.4);
     border-radius: 4px;
+}
+
+.pinned-message-text strong {
+    white-space: nowrap; 
 }
 
 .btn-unpin {
@@ -925,7 +1019,6 @@ body.is-admin .btn-moderate-user {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Ajuste para o Celular */
 @media (max-width: 600px) {
     .pinned-message-bar {
         top: 130px; 
@@ -933,46 +1026,27 @@ body.is-admin .btn-moderate-user {
         right: 12px;
         padding: 6px 10px;
         font-size: 0.75rem;
+        max-height: 38px;
     }
     
+    .pinned-message-bar.expanded {
+        max-height: 200px;
+    }
+
     .pinned-message-text {
         font-size: 0.75rem;
     }
+
+    .pinned-message-bar.expanded .pinned-message-text {
+        max-height: 140px;
+    }
 }
 
-/* ================= CORES DA BARRA NOS TEMAS ================= */
-
-/* Tema Claro */
-body.light-theme .pinned-message-bar {
-    background-color: #ffffff;
-    color: #1c1e21;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    border-left-color: cadetblue;
-}
-
-/* Tema Azul */
-body.blue-theme .pinned-message-bar {
-    background-color: #e6f0ff;
-    color: #0f2a4a;
-    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
-    border-left-color: #0d6efd;
-}
-
-/* Tema Rosa */
-body.pink-theme .pinned-message-bar {
-    background-color: #fff0f3;
-    color: #4a0e17;
-    box-shadow: 0 4px 12px rgba(255, 133, 162, 0.2);
-    border-left-color: #ff477e;
-}
-
-/* Tema Verde */
-body.green-theme .pinned-message-bar {
-    background-color: #e8f8f0;
-    color: #0a2e14;
-    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.2);
-    border-left-color: #2ecc71;
-}
+/* Cores da Barra nos Temas */
+body.light-theme .pinned-message-bar { background-color: #ffffff; color: #1c1e21; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-left-color: cadetblue; }
+body.blue-theme .pinned-message-bar { background-color: #e6f0ff; color: #0f2a4a; box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2); border-left-color: #0d6efd; }
+body.pink-theme .pinned-message-bar { background-color: #fff0f3; color: #4a0e17; box-shadow: 0 4px 12px rgba(255, 133, 162, 0.2); border-left-color: #ff477e; }
+body.green-theme .pinned-message-bar { background-color: #e8f8f0; color: #0a2e14; box-shadow: 0 4px 12px rgba(46, 204, 113, 0.2); border-left-color: #2ecc71; }
 
 /* ================= ESTILO DO BOTÃO DE FIXAR (📌) ================= */
 
@@ -984,42 +1058,38 @@ body.green-theme .pinned-message-bar {
     margin-left: 8px;
     padding: 0 4px;
     transition: transform 0.2s;
-    
-    /* ✨ O CONTORNO BRANCO PARA DESTACAR EM QUALQUER FUNDO ✨ */
     filter: drop-shadow(0px 0px 1px #ffffff) 
             drop-shadow(0px 0px 2px #ffffff) 
             drop-shadow(0px 0px 3px #ffffff);
 }
 
 .pin-btn:hover {
-    transform: scale(1.2); /* Efeito de zoom ao passar o mouse */
+    transform: scale(1.2);
 }
 
-/* No celular, o dedo cobre o ícone, então deixamos um pouquinho maior */
 @media (max-width: 600px) {
     .pin-btn {
         font-size: 1.1rem;
     }
 }
 
-/* ✅ Correção do layout para links e textos longos */
 .message--content {
-    word-break: break-word; /* Quebra palavras gigantes se necessário */
-    overflow-wrap: break-word; /* Padrão moderno para quebrar textos longos */
+    word-break: break-word;
+    overflow-wrap: break-word;
     hyphens: auto;
 }
 
 .message--content a {
-    color: inherit; /* O link herda a cor do texto da bolha */
+    color: inherit;
     text-decoration: underline;
-    word-break: break-all; /* Garante que o próprio link se quebre se for muito grande */
+    word-break: break-all;
 }
 
 /* ================= BOTÃO DE TEMA DENTRO DO CHAT ================= */
 .chat-theme-btn {
-    position: static !important; /* Tira a flutuação */
-    width: 34px !important;
-    height: 34px !important;
+    position: static !important;
+    width: 36px !important;
+    height: 36px !important;
     border-radius: 50% !important;
     background-color: #333 !important;
     color: #fff !important;
@@ -1030,7 +1100,43 @@ body.green-theme .pinned-message-bar {
     cursor: pointer !important;
     border: 1px solid #555 !important;
     transition: transform 0.2s, background 0.3s !important;
-    margin-right: 5px !important;
+    /* ✅ CORRIGIDO: margin: 0 (antes era margin-right: 5px) */
+    margin: 0 !important;
+    padding: 0 !important;
+    flex-shrink: 0;
+
+    text-shadow:
+        0 0 1px #000000,
+        0 0 2px #000000,
+        0 0 3px #000000;
+
+}
+
+/* ================= SOMBRA BRANCA NA LUA DO CHAT (TEMA ESCURO) ================= */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat-theme-btn {
+    filter: drop-shadow(0px 0px 4px rgba(255, 255, 255, 0.8)) !important;
+}
+
+/* ================= SOMBRA BRANCA NA LUA (TEMA ESCURO) ================= */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .theme-toggle-btn {
+      filter: drop-shadow(0px 0px 4px rgba(255, 255, 255, 0.8)) !important; 
+      text-shadow: 
+        0 0 4px rgba(255, 255, 255, 0.8), 
+        0 0 8px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* ================= BRILHO ESCURO NOS TEMAS COLORIDOS ================= */
+/* Aplica o drop-shadow escuro nos botões de tema do Login e do Chat */
+body.light-theme .theme-toggle-btn,
+body.blue-theme .theme-toggle-btn,
+body.pink-theme .theme-toggle-btn,
+body.green-theme .theme-toggle-btn,
+body.light-theme .chat-theme-btn,
+body.blue-theme .chat-theme-btn,
+body.pink-theme .chat-theme-btn,
+body.green-theme .chat-theme-btn {
+    /* Um brilho suave e escuro (preto com 40% de opacidade) */
+    filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.4)) !important;
 }
 
 .chat-theme-btn:hover {
@@ -1050,10 +1156,107 @@ body.light-theme .chat-theme-btn:hover {
     color: #fff !important;
 }
 
+/* ============================================================
+   ✅ BLINDAGEM FINAL: botões redondos idênticos em TODOS os temas
+   ============================================================ */
+
+/* Header: mesmo alinhamento em todos os temas */
+.chat__header {
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+
+.chat__header-scroll {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+/* Todos os botões do header: mesma altura e alinhamento */
+.chat__header button {
+    box-sizing: border-box !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    vertical-align: middle !important;
+    line-height: 1 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    align-self: center !important;
+}
+
+/* Botões redondos: 36×36 exatos em qualquer tema */
+.btn-som,
+.chat-theme-btn {
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    align-self: center !important;
+    flex-shrink: 0 !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+}
+
+/* ================= BOTÃO DE TEMA NA TELA DE LOGIN ================= */
+.theme-toggle-btn {
+    position: absolute !important;
+    top: 15px !important;
+    right: 15px !important;
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 50% !important;
+    background-color: #2a2a2a !important;
+    color: #f2f2f2 !important;
+    font-size: 1.1rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    border: 1px solid #555 !important;
+    z-index: 10 !important;
+    transition: background 0.3s, transform 0.2s !important;
+
+        text-shadow:
+        0 0 1px #000000,
+        0 0 2px #000000,
+        0 0 3px #000000;
+}
+
+.theme-toggle-btn:hover {
+    transform: scale(1.05);
+}
+
+/* ✅ Força apenas a ESPESSURA da borda (cor fica com cada tema) */
+.chat-theme-btn,
+.btn-som {
+    border-width: 1px !important;
+    border-style: solid !important;
+}
+
+/* Mobile: 32px */
 @media (max-width: 600px) {
+    .chat__header button {
+        height: 32px !important;
+        min-height: 32px !important;
+    }
+    .btn-som,
     .chat-theme-btn {
-        width: 30px !important;
-        height: 30px !important;
+        width: 32px !important;
+        height: 32px !important;
+        min-height: 32px !important;
         font-size: 0.9rem !important;
     }
 }
+/* ================= FIM DO ARQUIVO ================= */
