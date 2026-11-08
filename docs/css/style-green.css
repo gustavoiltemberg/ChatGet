@@ -252,15 +252,39 @@ body.green-theme .theme-toggle-btn:hover {
     body.green-theme .chat__input {
         border: 1px solid #a3e4c4 !important;
     } 
+
+    /* Mensagens de sistema (Entrou/Saiu) celular */
+    body.green-theme .message--system {
+        /* Deixa a fonte um pouquinho menor para telas pequenas */
+        font-size: 0.75rem !important; 
+        
+        /* Ajusta o espaçamento em cima e embaixo */
+        padding: 4px 10px !important;
+        margin: 8px 0 !important;
+        
+        /* Cores do tema Green */
+        color: #27ae60 !important;
+        /* Usando a mesma cor do texto (39, 174, 96) com 30% de transparência */
+        border-bottom-color: rgba(39, 174, 96, 0.3) !important;
+    }
+
+    body.green-theme .message--system-time {
+        font-size: 0.7rem !important; /* O horário fica levemente menor que o texto */
+        color: #27ae60 !important;
+    }
 }
 
 /* Mensagens de sistema (Entrou/Saiu) */
 body.green-theme .message--system {
-    color: #0a2e14 !important;           
-    border-bottom-color: rgba(46, 204, 113, 0.2) !important; 
+    color: #27ae60 !important;           
+    border-bottom-color: rgba(39, 174, 96, 0.3) !important; /* Mesma cor do texto, 30% de opacidade */
     font-weight: 600 !important;         
 }
 
 body.green-theme .message--system-time {
     color: #27ae60 !important;           
+}
+
+body.green-theme .icone-seta {
+    background-color: #27ae60 !important; 
 }

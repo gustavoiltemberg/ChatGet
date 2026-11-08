@@ -261,4 +261,38 @@ body.light-theme .theme-toggle-btn {
         font-size: 0.95rem !important;
         margin-top: 12px !important;
     }
+
+    /* Mensagens de sistema (Entrou/Saiu) celular */
+    body.light-theme .message--system {
+        /* Deixa a fonte um pouquinho menor para telas pequenas */
+        font-size: 0.75rem !important; 
+        
+        /* Ajusta o espaçamento em cima e embaixo */
+        padding: 4px 10px !important;
+        margin: 8px 0 !important;
+        
+        /* Cores do tema Light */
+        color: #5f9ea0 !important;
+        border-bottom-color: rgba(95, 158, 160, 0.3) !important;
+    }
+
+    body.light-theme .message--system-time {
+        font-size: 0.7rem !important; /* O horário fica levemente menor que o texto */
+        color: #5f9ea0 !important;
+    }
+}
+
+/* Mensagens de sistema (Entrou/Saiu) */
+body.light-theme .message--system {
+    color: #5f9ea0 !important;           
+    border-bottom-color: rgba(95, 158, 160, 0.3) !important; 
+    font-weight: 600 !important;         
+}
+
+body.light-theme .message--system-time {
+    color: #5f9ea0 !important;           
+}
+
+body.light-theme .icone-seta {
+    background-color: #5f9ea0 !important; 
 }

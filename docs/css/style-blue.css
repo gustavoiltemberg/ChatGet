@@ -264,4 +264,38 @@ body.blue-theme .message--system-time {
     body.blue-theme .chat__input {
         border: 1px solid #99c2ff !important;
     }
+
+    /* Mensagens de sistema (Entrou/Saiu) celular */
+    body.blue-theme .message--system {
+        /* Deixa a fonte um pouquinho menor para telas pequenas */
+        font-size: 0.75rem !important; 
+        
+        /* Ajusta o espaçamento em cima e embaixo */
+        padding: 4px 10px !important;
+        margin: 8px 0 !important;
+        
+        /* Cores do tema Blue */
+        color: #0a58ca !important;
+        border-bottom-color: rgba(10, 88, 202, 0.3) !important;
+    }
+
+    body.blue-theme .message--system-time {
+        font-size: 0.7rem !important; /* O horário fica levemente menor que o texto */
+        color: #0a58ca !important;
+    }
+}
+
+/* Mensagens de sistema (Entrou/Saiu) */
+body.blue-theme .message--system {
+    color: #0a58ca !important;           
+    border-bottom-color: rgba(10, 88, 202, 0.3) !important; /* Mesma cor do texto, 30% de opacidade */
+    font-weight: 600 !important;         
+}
+
+body.blue-theme .message--system-time {
+    color: #0a58ca !important;           
+}
+
+body.blue-theme .icone-seta {
+    background-color: #0a58ca !important; 
 }

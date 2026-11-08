@@ -214,7 +214,7 @@ const createMessageElement = (msg, docId) => {
         div.classList.add("message--system");
 
         const texto = document.createElement("span");
-        texto.textContent = msg.content;
+        texto.innerHTML = msg.content;
         div.appendChild(texto);
 
         if (msg.timestamp) {

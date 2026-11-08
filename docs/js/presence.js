@@ -21,9 +21,9 @@ const enviarMensagemSistema = async (db, texto, tipo) => {
 };
 
 export const anunciarEntrada = (db, nome) => {
-    return enviarMensagemSistema(db, `🟢 ${formatarNome(nome)} entrou`, "entrou");
+    return enviarMensagemSistema(db, `<span class="icone-seta seta-entrou"></span> ${formatarNome(nome)} entrou`, "entrou");
 };
 
 export const anunciarSaida = (db, nome) => {
-    return enviarMensagemSistema(db, `🔴 ${formatarNome(nome)} saiu`, "saiu");
+    return enviarMensagemSistema(db, `<span class="icone-seta seta-saiu"></span> ${formatarNome(nome)} saiu`, "saiu");
 };

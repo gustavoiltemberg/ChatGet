@@ -1265,5 +1265,76 @@ body.light-theme .chat-theme-btn:hover {
         font-size: 0.85rem; 
         padding: 4px 6px; 
     }
+
+    /* Ajuste do tamanho da setinha no celular */
+    .icone-seta {
+        /* No celular, deixamos a seta um pouquinho menor para acompanhar o texto (0.75rem) */
+        width: 12px; 
+        height: 12px;
+        
+        /* Garante que ela fique centralizada com a linha de texto */
+        vertical-align: middle; 
+        margin-right: 4px; /* Diminui o espaço para não empurrar o texto */
+        margin-bottom: 1px; 
+    }
+
+    /* Mensagens de sistema (Entrou/Saiu) no celular - Tema Escuro */
+    body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .message--system {
+        font-size: 0.75rem !important; 
+        padding: 4px 10px !important;
+        margin: 8px 0 !important;
+        color: #888 !important; /* Cinza */
+        border-bottom-color: rgba(136, 136, 136, 0.3) !important;
+    }
+
+    body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .message--system-time {
+        font-size: 0.7rem !important; 
+        color: #888 !important; /* Cinza */
+    }
 }
+
+
+/* Estrutura básica de todas as setas */
+.icone-seta {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+    margin-right: 6px;
+    margin-bottom: 2px;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+
+/* Configuração da imagem de cada seta (usando a imagem preta como molde) */
+.seta-entrou {
+    -webkit-mask-image: url('../images/seta-entrou.png'); /* Ajuste o caminho se precisar */
+    mask-image: url('../images/seta-entrou.png');
+}
+
+.seta-saiu {
+    -webkit-mask-image: url('../images/seta-saiu.png');
+    mask-image: url('../images/seta-saiu.png');
+}
+
+/* Cor da seta no Tema Escuro (usa a mesma cor da fonte das msgs do sistema) */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .icone-seta {
+    background-color: #888; 
+}
+
+/* Cores do Tema Escuro para Mensagens de Sistema */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .message--system {
+    color: #888 !important;           
+    border-bottom-color: rgba(136, 136, 136, 0.3) !important; /* Linha em cinza */
+    font-weight: 600 !important;         
+}
+
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .message--system-time {
+    color: #888 !important;           
+}
+
 /* ================= FIM DO ARQUIVO ================= */

@@ -253,8 +253,8 @@ body.pink-theme .theme-toggle-btn:hover {
         border: 1px solid #ffb3c6 !important;
     }
 
-
-        body.pink-theme .message--system {
+    /* Mensagens de sistema (Entrou/Saiu) celular */
+    body.pink-theme .message--system {
         /* Deixa a fonte um pouquinho menor para telas pequenas */
         font-size: 0.75rem !important; 
         
@@ -282,4 +282,8 @@ body.pink-theme .message--system {
 
 body.pink-theme .message--system-time {
     color: #ff477e !important;           
+}
+
+body.pink-theme .icone-seta {
+    background-color: #ff477e !important; 
 }
