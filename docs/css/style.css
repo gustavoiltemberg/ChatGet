@@ -416,9 +416,6 @@ body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-
     .delete-btn, .pin-btn {
         font-size: 1.1rem;
     }
-    .delete-btn {
-        font-size: 0.95rem;
-    }
 }
 
 /* ================= STICKERS ================= */
@@ -854,7 +851,6 @@ body.is-admin .btn-moderate-user {
     .typing-indicator { bottom: 75px; left: 12px; font-size: 0.72rem; padding: 4px 10px; }
     .modal-content { width: 92%; max-height: 80vh; overflow-y: auto; padding: 16px; }
     #bans-list li { flex-direction: column; align-items: flex-start; gap: 8px; }
-    .delete-btn { font-size: 0.75rem; }
 }
 
 @media (max-width: 380px) {
