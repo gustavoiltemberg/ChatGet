@@ -982,11 +982,14 @@ body.is-admin .btn-moderate-user {
     align-items: center;
     z-index: 9;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    border-left: 4px solid #f1c40f;
+    border-left: 4px solid #aaa;
     animation: fadeInDown 0.3s ease-out;
     cursor: pointer;
     transition: max-height 0.3s ease-in-out;
     max-height: 42px;
+
+    /* ✅ ADICIONE ESTA LINHA AQUI: */
+    border-bottom: 1px solid #aaa; /* ou a cor que preferir */
 }
 
 .pinned-message-bar.expanded {
@@ -1058,6 +1061,9 @@ body.is-admin .btn-moderate-user {
         padding: 6px 10px;
         font-size: 0.75rem;
         max-height: 38px;
+
+        /* ✅ ADICIONE A BORDA AQUI PARA O CELULAR: */
+        border-bottom: 1px solid #aaa; 
     }
     
     .pinned-message-bar.expanded {

@@ -276,6 +276,11 @@ body.green-theme .theme-toggle-btn:hover {
         font-size: 0.7rem !important; /* O horário fica levemente menor que o texto */
         color: #27ae60 !important;
     }
+
+    body.green-theme .pinned-message-bar {
+        /* ✅ ADICIONE A BORDA AQUI PARA O CELULAR: */
+        border-bottom: 1px solid #27ae60; 
+    }
 }
 
 /* Mensagens de sistema (Entrou/Saiu) */
@@ -291,4 +296,8 @@ body.green-theme .message--system-time {
 
 body.green-theme .icone-seta {
     background-color: #27ae60 !important; 
+}
+
+body.green-theme .pinned-message-bar {
+    border-bottom: 1px solid #27ae60; /* ✅ Linha embaixo */
 }

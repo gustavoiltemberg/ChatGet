@@ -275,6 +275,11 @@ body.pink-theme .theme-toggle-btn:hover {
         font-size: 0.7rem !important; /* O horário fica levemente menor que o texto */
         color: #ff477e !important;
     }
+
+    body.pink-theme .pinned-message-bar {
+        /* ✅ ADICIONE A BORDA AQUI PARA O CELULAR: */
+        border-bottom: 1px solid #ff477e; 
+    }
 }
 
 /* Mensagens de sistema (Entrou/Saiu) */
@@ -290,4 +295,8 @@ body.pink-theme .message--system-time {
 
 body.pink-theme .icone-seta {
     background-color: #ff477e !important; 
+}
+
+body.pink-theme .pinned-message-bar {
+    border-bottom: 1px solid #ff477e; /* ✅ Linha embaixo */
 }
