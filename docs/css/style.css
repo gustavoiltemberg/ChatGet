@@ -1405,5 +1405,42 @@ body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .mess
 }
 
 
+/* ============================================================
+   ✅ BLINDAGEM: botão de tema do LOGIN idêntico em todos os temas
+   ============================================================ */
+
+.theme-toggle-btn,
+body.light-theme .theme-toggle-btn,
+body.blue-theme .theme-toggle-btn,
+body.green-theme .theme-toggle-btn,
+body.pink-theme .theme-toggle-btn {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.1rem !important;
+    line-height: 1 !important;
+}
+
+@media (max-width: 600px) {
+    .theme-toggle-btn,
+    body.light-theme .theme-toggle-btn,
+    body.blue-theme .theme-toggle-btn,
+    body.green-theme .theme-toggle-btn,
+    body.pink-theme .theme-toggle-btn {
+        width: 32px !important;
+        height: 32px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 0.95rem !important;
+    }
+}
+
+
 
 /* ================= FIM DO ARQUIVO ================= */
