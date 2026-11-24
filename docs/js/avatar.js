@@ -2,8 +2,9 @@
 
 /**
  * Retorna a URL de um avatar baseado no nome do usuário.
- * Se for admin, retorna uma imagem específica.
+ * Se for admin, bot ou moderador, retorna uma imagem específica.
  * @param {string} nome - Nome do usuário
+ * @param {boolean} isModerator - Indica se o usuário é moderador
  * @returns {string} URL da imagem do avatar
  */
 export const obterUrlAvatar = (nome, isModerator = false) => {
@@ -13,20 +14,20 @@ export const obterUrlAvatar = (nome, isModerator = false) => {
     const nomeLimpo = nome.trim();
     const nomeMinusculo = nomeLimpo.toLowerCase();
 
-    // 1. Verifica se é Admin
+    // 1. Verifica se é o Bot (precisa ficar antes de isModerator)
+    if (nomeMinusculo === "bot") {
+        return "./images/bot.png";
+    }
+
+    // 2. Verifica se é Admin
     if (nomeMinusculo === "admin") {
         // Substitua pelo caminho real da sua imagem
         return "./images/admin.png"; 
     }
 
-    // 2. Verifica se é Moderador
+    // 3. Verifica se é Moderador
     if (isModerator) {
         return "./images/moderador.png";
-    }
-
-    // Exemplo de como adicionar na sua função de avatar:
-    if (userId === "bot-python" || userName === "Bot") {
-        return "./images/bot.png";
     }
 
     // Paleta de 30 cores de fundo (códigos HEX sem o #)
@@ -72,7 +73,7 @@ export const obterUrlAvatar = (nome, isModerator = false) => {
     const corFundo = coresFundo[corIndex];
 
     // URL correta da API ui-avatars
-    const url = `https://ui-avatars.com/api/?name=${encodeURIComponent(nomeLimpo)}&background=${corFundo}&color=cadetblue&size=64&rounded=true&bold=true`;
+    const url = `https://ui-avatars.com{encodeURIComponent(nomeLimpo)}&background=${corFundo}&color=cadetblue&size=64&rounded=true&bold=true`;
 
     return url;
 };
