@@ -31,6 +31,85 @@ const formatarNome = (nome) => {
     return nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
 };
 
+// ================= EFEITOS SONOROS (WEB AUDIO API) =================
+let audioCtxDamas = null;
+
+const tocarSomDamas = (tipo) => {
+    // Respeita o botão de som do chat (se estiver mutado, não toca)
+    const btnSom = document.getElementById("btn-som");
+    if (btnSom && btnSom.classList.contains("muted")) return;
+
+    try {
+        if (!audioCtxDamas) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            audioCtxDamas = new AudioCtx();
+        }
+        if (audioCtxDamas.state === "suspended") {
+            audioCtxDamas.resume();
+        }
+
+        const agora = audioCtxDamas.currentTime;
+
+        if (tipo === "mover") {
+            // Som seco de peça tocando o tabuleiro
+            const osc = audioCtxDamas.createOscillator();
+            const gain = audioCtxDamas.createGain();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(280, agora);
+            osc.frequency.exponentialRampToValueAtTime(110, agora + 0.08);
+
+            gain.gain.setValueAtTime(0.25, agora);
+            gain.gain.exponentialRampToValueAtTime(0.001, agora + 0.09);
+
+            osc.connect(gain);
+            gain.connect(audioCtxDamas.destination);
+            osc.start(agora);
+            osc.stop(agora + 0.09);
+        } 
+        else if (tipo === "dama") {
+            // Arpejo rápido brilhante ao promover para Dama (👑)
+            const notas = [523.25, 659.25, 783.99, 1046.5]; // Dó, Mi, Sol, Dó agudo
+            notas.forEach((freq, i) => {
+                const osc = audioCtxDamas.createOscillator();
+                const gain = audioCtxDamas.createGain();
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(freq, agora + i * 0.07);
+
+                gain.gain.setValueAtTime(0.2, agora + i * 0.07);
+                gain.gain.exponentialRampToValueAtTime(0.001, agora + i * 0.07 + 0.22);
+
+                osc.connect(gain);
+                gain.connect(audioCtxDamas.destination);
+                osc.start(agora + i * 0.07);
+                osc.stop(agora + i * 0.07 + 0.22);
+            });
+        } 
+        else if (tipo === "vitoria") {
+            // Fanfarra de vitória
+            const notas = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5];
+            const tempos = [0, 0.11, 0.22, 0.33, 0.50, 0.64];
+            const duracoes = [0.12, 0.12, 0.12, 0.16, 0.13, 0.45];
+
+            notas.forEach((freq, i) => {
+                const osc = audioCtxDamas.createOscillator();
+                const gain = audioCtxDamas.createGain();
+                osc.type = "triangle";
+                osc.frequency.setValueAtTime(freq, agora + tempos[i]);
+
+                gain.gain.setValueAtTime(0.25, agora + tempos[i]);
+                gain.gain.exponentialRampToValueAtTime(0.001, agora + tempos[i] + duracoes[i]);
+
+                osc.connect(gain);
+                gain.connect(audioCtxDamas.destination);
+                osc.start(agora + tempos[i]);
+                osc.stop(agora + tempos[i] + duracoes[i]);
+            });
+        }
+    } catch (e) {
+        console.warn("Áudio das damas bloqueado pelo navegador:", e);
+    }
+};
+
 // ================= MOTOR DE REGRAS DAS DAMAS =================
 const obterCapturasDaPeca = (tab, idx, turno) => {
     const peca = tab[idx];
@@ -225,8 +304,10 @@ const injetarEstilosDamas = () => {
         .damas-board {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr); /* Trava a altura igual das 8 linhas */
             width: min(82vw, 352px);
             height: min(82vw, 352px);
+            aspect-ratio: 1 / 1;
             margin: 0 auto;
             border: 3px solid #444;
             border-radius: 6px;
@@ -238,6 +319,9 @@ const injetarEstilosDamas = () => {
             align-items: center;
             justify-content: center;
             position: relative;
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden; /* Impede que o emoji estique a casa */
         }
         .damas-cell.light { background: #e8dcc8; }
         .damas-cell.dark { background: #5c4033; }
@@ -253,11 +337,13 @@ const injetarEstilosDamas = () => {
         .damas-piece {
             width: 78%;
             height: 78%;
+            aspect-ratio: 1 / 1; /* Garante que a peça seja sempre um círculo perfeito */
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
+            font-size: clamp(0.75rem, 3.2vw, 1rem); /* Ajusta o tamanho da coroa no mobile e desktop */
+            line-height: 1;
             transition: transform 0.15s, box-shadow 0.15s;
         }
         .damas-piece.white {
@@ -678,12 +764,33 @@ export const iniciarJogoDamas = (db, user) => {
         }
     };
 
-    // Listener em tempo real
+    // Listener em tempo real com detecção de sons
     if (unsubDamas) unsubDamas();
     unsubDamas = onSnapshot(
         jogoRef,
         (docSnap) => {
-            estadoAtual = docSnap.exists() ? docSnap.data() : null;
+            const estadoAnterior = estadoAtual;
+            const novoEstado = docSnap.exists() ? docSnap.data() : null;
+
+            if (estadoAnterior && novoEstado) {
+                // 1. Verifica vitória
+                if (estadoAnterior.status === "jogando" && novoEstado.status === "finalizado" && novoEstado.winner) {
+                    tocarSomDamas("vitoria");
+                } 
+                // 2. Verifica se alguma peça acabou de virar Dama (2 = dama branca, 4 = dama preta)
+                else if (Array.isArray(estadoAnterior.board) && Array.isArray(novoEstado.board)) {
+                    const damasAntes = estadoAnterior.board.filter((p) => p === 2 || p === 4).length;
+                    const damasDepois = novoEstado.board.filter((p) => p === 2 || p === 4).length;
+
+                    if (damasDepois > damasAntes) {
+                        tocarSomDamas("dama");
+                    } else if (estadoAnterior.board.join(",") !== novoEstado.board.join(",")) {
+                        tocarSomDamas("mover");
+                    }
+                }
+            }
+
+            estadoAtual = novoEstado;
             renderizar();
         },
         (err) => {
