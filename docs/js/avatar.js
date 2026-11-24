@@ -24,6 +24,11 @@ export const obterUrlAvatar = (nome, isModerator = false) => {
         return "./images/moderador.png";
     }
 
+    // Exemplo de como adicionar na sua função de avatar:
+    if (userId === "bot-python" || userName === "Bot") {
+        return "./images/bot.png";
+    }
+
     // Paleta de 30 cores de fundo (códigos HEX sem o #)
     const coresFundo = [
         "212121", // cinza escuro
