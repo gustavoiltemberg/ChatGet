@@ -1447,6 +1447,68 @@ body.pink-theme .theme-toggle-btn {
     }
 }
 
-
-
 /* ================= FIM DO ARQUIVO ================= */
+
+
+
+
+
+
+
+
+/* ============================================================
+   ✅ PADRONIZAÇÃO DO TEMA ESCURO (Igual aos demais temas)
+   ============================================================ */
+
+/* 1. Unifica cor e bordas do topo, lateral e barra de digitar */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__header,
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__sidebar,
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__form,
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__stickers {
+    background-color: #191919 !important;
+    border-color: #2e2e2e !important;
+}
+
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__header {
+    border-bottom: 1px solid #2e2e2e !important;
+}
+
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__form {
+    border-top: 1px solid #2e2e2e !important;
+}
+
+/* 2. Mantém os botões do Admin vermelhos (como nos outros temas) */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__header .btn-admin {
+    background-color: #c0392b !important;
+    border: none !important;
+    color: #ffffff !important;
+}
+
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__header .btn-admin:hover {
+    background-color: #a93226 !important;
+}
+
+/* 3. Balões de mensagem no mesmo estilo (seu balão com cor destaque e letra branca) */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .message--self {
+    background-color: cadetblue !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .message--other {
+    background-color: #262626 !important;
+    color: #f2f2f2 !important;
+    border: 1px solid #363636;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+/* 4. Caixa de digitar e barra fixada com acabamento padronizado */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__input {
+    border: 1px solid #333 !important;
+}
+
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .pinned-message-bar {
+    background-color: #222222 !important;
+    border-left-color: cadetblue !important;
+    border-bottom-color: cadetblue !important;
+}
