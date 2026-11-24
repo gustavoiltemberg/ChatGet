@@ -22,6 +22,9 @@ import { anunciarEntrada, anunciarSaida } from "./presence.js";
 
 import { obterUrlAvatar } from "./avatar.js";
 
+import { iniciarJogoDamas } from "./damas.js";   // ⬅️ ADICIONE ESTA LINHA
+
+
 const firebaseConfig = {
   apiKey: "AIzaSyDZlENtMvC3u6HRr4T1n_TnnlbkxRfNid4",
   authDomain: "chat-get-ed551.firebaseapp.com",
@@ -773,6 +776,13 @@ const entrarNoChat = async (uid, nome) => {
     listenToOnlineUsers();
     listenToMyRole();
     listenToPinnedMessage(); // 🔑 FIXAR: Chamada do listener aqui
+     
+    // ⬇️ SUBSTITUA A CHAMADA POR ESTE BLOCO:
+    try {
+        iniciarJogoDamas(db, user);
+    } catch (e) {
+        console.error("Erro ao carregar Damas:", e);
+    }
 
     unsubs.typing = ouvirDigitando(db, user.id, (nomes) => {
         const texto = formatarTextoDigitando(nomes);
