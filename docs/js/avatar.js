@@ -75,6 +75,7 @@ export const obterUrlAvatar = (nome, isModerator = false) => {
         return canvas.toDataURL("image/png");
     } catch (e) {
         const corTextoHex = corTexto.replace("#", "");
-        return `https://ui-avatars.com{encodeURIComponent(nomeLimpo)}&background=${corHex}&color=${corTextoHex}&size=64&rounded=true&bold=true`;
+        const urlBase = ["https://ui-avatars.com", "api", "?name="].join("/");
+        return urlBase + encodeURIComponent(nomeLimpo) + "&background=" + corHex + "&color=" + corTextoHex + "&size=64&rounded=true&bold=true";
     }
 };

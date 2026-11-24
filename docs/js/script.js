@@ -1,9 +1,11 @@
-// ================= CONFIGURAÇÃO DO FIREBASE =================
+// =====================================================================
+// IMPORTS
+// =====================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
     sendPasswordResetEmail, verifyBeforeUpdateEmail, updateProfile,
-    onAuthStateChanged   // 🔑 NOVO: necessário para restaurar sessão ao recarregar
+    onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import {
     getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc,
@@ -22,9 +24,12 @@ import { anunciarEntrada, anunciarSaida } from "./presence.js";
 
 import { obterUrlAvatar } from "./avatar.js";
 
-import { iniciarJogoDamas } from "./damas.js";   // ⬅️ ADICIONE ESTA LINHA
+import { iniciarJogoDamas } from "./damas.js";
 
 
+// =====================================================================
+// CONFIGURAÇÃO DO FIREBASE
+// =====================================================================
 const firebaseConfig = {
   apiKey: "AIzaSyDZlENtMvC3u6HRr4T1n_TnnlbkxRfNid4",
   authDomain: "chat-get-ed551.firebaseapp.com",
@@ -38,7 +43,10 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ================= ELEMENTOS DO DOM =================
+
+// =====================================================================
+// ELEMENTOS DO DOM
+// =====================================================================
 const loginSection = document.querySelector(".login");
 const loginForm = document.querySelector("#auth-form");
 const chatSection = document.querySelector(".chat");
@@ -79,14 +87,18 @@ const toggleMsg = document.querySelector("#toggle-msg");
 const toggleLink = document.querySelector("#toggle-auth");
 
 
-
-// ================= INDICADOR DE DIGITAÇÃO (UI) =================
+// =====================================================================
+// INDICADOR DE DIGITAÇÃO (UI)
+// =====================================================================
 const typingIndicator = document.createElement("div");
 typingIndicator.className = "typing-indicator";
 typingIndicator.style.display = "none";
 chatForm.parentNode.insertBefore(typingIndicator, chatForm);
 
-// ================= ÁUDIOS =================
+
+// =====================================================================
+// ÁUDIOS
+// =====================================================================
 const audioMensagem = new Audio("./sounds/mensagem.mp3");
 const audioEntrou = new Audio("./sounds/entrou.mp3"); 
 const audioSaiu = new Audio("./sounds/saiu.mp3");     
@@ -107,17 +119,22 @@ const desbloquearAudios = () => {
 
 const SILENT_AUDIO = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
 
+
+// =====================================================================
+// ESTADO GLOBAL
+// =====================================================================
 let somAtivado = false;
 
 // Força o estado correto de visibilidade logo no carregamento da página
 loginSection.style.display = "none";
 chatSection.style.display = "none";
 
-// ✅ FUNÇÃO AUXILIAR: Formata o nome para exibição (primeira letra maiúscula)
-const formatarNomeExibicao = (nome) => {
-    if (!nome) return "Anônimo";
-    return nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
-};
+let isLoginMode = true;
+let ultimoTimestampCarregado = 0;
+
+let logandoManualmente = false; 
+let jaIniciado = false;          
+let montandoChat = false; 
 
 const colors = ["cadetblue", "darkgoldenrod", "cornflowerblue", "darkkhaki", "hotpink", "gold"];
 const colorFromId = (id) => {
@@ -127,20 +144,17 @@ const colorFromId = (id) => {
     return colors[Math.abs(h) % colors.length];
 };
 
-const user = { id: "", name: "", color: "", isAdmin: false, isModerator: false };
-
-let isLoginMode = true;
-let ultimoTimestampCarregado = 0;
-
-let logandoManualmente = false; 
-let jaIniciado = false;          
-let montandoChat = false; 
+const user = { 
+    id: "", name: "", color: "", 
+    isAdmin: false, isModerator: false, isGuardian: false, isHelper: false, isVip: false 
+};
 
 const unsubs = {
     messages: null,
     users: null,
     bans: null,
     banCheck: null,
+    accountCheck: null, // ⬅️ Adicione esta linha
     myRole: null,
     typing: null,
     pinned: null, // 🔑 FIXAR: Novo listener
@@ -155,7 +169,16 @@ const cleanupAllListeners = () => {
 let timeoutPararDigitando = null;
 let estaDigitando = false;
 
-// ================= FUNÇÕES AUXILIARES =================
+
+// =====================================================================
+// FUNÇÕES AUXILIARES
+// =====================================================================
+// ✅ FUNÇÃO AUXILIAR: Formata o nome para exibição (primeira letra maiúscula)
+const formatarNomeExibicao = (nome) => {
+    if (!nome) return "Anônimo";
+    return nome.charAt(0).toUpperCase() + nome.slice(1).toLowerCase();
+};
+
 let scrollPending = false;
 const scrollScreen = () => {
     if (scrollPending) return;
@@ -193,23 +216,31 @@ const buildContentNode = (content) => {
         img.loading = "lazy";
         container.appendChild(img);
     } else {
-        // ✅ NOVO: Transforma links em <a> clicáveis e seguros
-        // Essa Regex encontra URLs (http, https, www)
+        // Divide o texto pelas URLs sem usar innerHTML (100% protegido contra XSS)
         const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
-        
-        // Substitui o texto normal por HTML seguro
-        const htmlContent = content.replace(urlRegex, (url) => {
-            const href = url.startsWith('http') ? url : `https://${url}`;
-            return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+        const partes = String(content).split(urlRegex);
+
+        partes.forEach((parte) => {
+            if (!parte) return;
+            if (parte.match(urlRegex)) {
+                const a = document.createElement("a");
+                a.href = parte.startsWith("http") ? parte : `https://${parte}`;
+                a.target = "_blank";
+                a.rel = "noopener noreferrer";
+                a.textContent = parte;
+                container.appendChild(a);
+            } else {
+                container.appendChild(document.createTextNode(parte));
+            }
         });
-        
-        // Usa innerHTML para renderizar o link, mas o conteúdo já foi tratado pela Regex
-        container.innerHTML = htmlContent;
     }
     return container;
 };
 
-// CreateMessageElemente ==========================
+
+// =====================================================================
+// CRIAÇÃO DE ELEMENTOS DE MENSAGEM
+// =====================================================================
 const createMessageElement = (msg, docId) => {
     if (msg.isSystem) {
         const div = document.createElement("div");
@@ -237,9 +268,12 @@ const createMessageElement = (msg, docId) => {
     div.dataset.id = docId;
 
     const isAdminMessage = (msg.userName || "").toLowerCase() === "admin";
+    const isStaffMessage = isAdminMessage || !!msg.isModerator;
+
     let podeApagar = false;
     if (user.isAdmin) podeApagar = true;
     else if (user.isModerator && !isAdminMessage) podeApagar = true;
+    else if (user.isGuardian && !isStaffMessage) podeApagar = true;
 
     const headerMensagem = document.createElement("div");
     headerMensagem.className = "message--header";
@@ -250,17 +284,25 @@ const createMessageElement = (msg, docId) => {
     imgAvatar.alt = "Avatar";
     imgAvatar.loading = "lazy";
 
-    if (msg.userName && msg.userName.toLowerCase() === "admin") {
+    if (isAdminMessage) {
         imgAvatar.classList.add("is-admin");
         imgAvatar.style.backgroundColor = "#f1c40f";
         imgAvatar.style.padding = "2px";
         imgAvatar.style.objectFit = "contain";
-    }
-    else if (msg.isModerator) {
+    } else if (msg.isModerator) {
         imgAvatar.classList.add("is-moderator");
-        imgAvatar.style.backgroundColor = "#f1c40f"; 
+        imgAvatar.style.backgroundColor = "#f1c40f";
         imgAvatar.style.padding = "2px";
         imgAvatar.style.objectFit = "contain";
+    } else if (msg.isGuardian) {
+        imgAvatar.style.border = "2px solid #3498db";
+        imgAvatar.style.boxShadow = "0 0 6px rgba(52, 152, 219, 0.7)";
+    } else if (msg.isHelper) {
+        imgAvatar.style.border = "2px solid #2ecc71";
+        imgAvatar.style.boxShadow = "0 0 6px rgba(46, 204, 113, 0.7)";
+    } else if (msg.isVip) {
+        imgAvatar.style.border = "2px solid #9b59b6";
+        imgAvatar.style.boxShadow = "0 0 6px rgba(155, 89, 182, 0.7)";
     }
 
     headerMensagem.appendChild(imgAvatar);
@@ -302,7 +344,7 @@ const createMessageElement = (msg, docId) => {
     }
 
     // 🔑 FIXAR: Botão de Fixar Mensagem
-    if ((user.isAdmin || user.isModerator) && !msg.isSystem) {
+    if ((user.isAdmin || user.isModerator || user.isGuardian || user.isHelper) && !msg.isSystem) {
         const btnPin = document.createElement("button");
         btnPin.className = "pin-btn";
         btnPin.title = "Fixar mensagem";
@@ -332,7 +374,10 @@ const createMessageElement = (msg, docId) => {
     return div;
 };
 
-// ================= REPRODUÇÃO DE SOM =================
+
+// =====================================================================
+// REPRODUÇÃO DE SOM
+// =====================================================================
 const playSound = (audio, volume = 1.0) => {
     if (!somAtivado) return;
     try {
@@ -359,7 +404,10 @@ const atualizarBotaoSom = () => {
     }
 };
 
-// ================= RENDERIZAÇÃO INICIAL =================
+
+// =====================================================================
+// RENDERIZAÇÃO INICIAL
+// =====================================================================
 const renderAllMessagesFromSnapshot = (snapshot) => {
     const frag = document.createDocumentFragment();
     let maiorTs = ultimoTimestampCarregado;
@@ -374,83 +422,100 @@ const renderAllMessagesFromSnapshot = (snapshot) => {
     scrollScreen();
 };
 
-// ================= OUVINTE DE CARGO =================
+
+// =====================================================================
+// OUVINTE DE CARGO
+// =====================================================================
 const listenToMyRole = () => {
     if (unsubs.myRole) unsubs.myRole();
 
     const myRoleRef = doc(db, "cargos", (user.name || "").toLowerCase());
     unsubs.myRole = onSnapshot(myRoleRef, (docSnap) => {
-        const isMod = docSnap.exists() && !!docSnap.data().isModerator;
-        const isAdm = docSnap.exists() && !!docSnap.data().isAdmin;
+        const data = docSnap.exists() ? docSnap.data() : {};
+        const isMod = !!data.isModerator;
+        const isGuard = !!data.isGuardian;
+        const isHelp = !!data.isHelper;
+        const isVipUser = !!data.isVip;
+        const isAdm = !!data.isAdmin || (user.name || "").toLowerCase() === "admin";
 
-        // 🔑 Verifica se o cargo realmente mudou em relação ao que estava salvo
-        const cargoMudou = (user.isModerator !== isMod) || (user.isAdmin !== (isAdm || (user.name || "").toLowerCase() === "admin"));
+        const cargoMudou = (
+            user.isModerator !== isMod ||
+            user.isGuardian !== isGuard ||
+            user.isHelper !== isHelp ||
+            user.isVip !== isVipUser ||
+            user.isAdmin !== isAdm
+        );
 
         user.isModerator = isMod;
+        user.isGuardian = isGuard;
+        user.isHelper = isHelp;
+        user.isVip = isVipUser;
+        user.isAdmin = isAdm;
 
-        if (isAdm || (user.name || "").toLowerCase() === "admin") {
-            user.isAdmin = true;
+        if (isAdm) {
             document.body.classList.add("is-admin");
             adminBar.style.display = "block";
         } else {
-            user.isAdmin = false;
             document.body.classList.remove("is-admin");
             adminBar.style.display = "none";
         }
 
-        // 🔑 NOVO: Se o cargo mudou, atualiza a tela na hora!
         if (cargoMudou) {
-            // Atualiza os botões das mensagens já na tela (Fixar e Apagar)
             atualizarInterfaceMensagens();
-            
-            // Se o usuário virou moderador, já ativa a escuta da barra de fixados
-            if (isMod || user.isAdmin) {
+            if (isMod || isGuard || isHelp || isAdm) {
                 listenToPinnedMessage();
             }
         }
     });
 };
 
-// ================= ATUALIZAR INTERFACE EM TEMPO REAL =================
+
+// =====================================================================
+// ATUALIZAR INTERFACE EM TEMPO REAL
+// =====================================================================
 const atualizarInterfaceMensagens = () => {
-    // Pega todas as mensagens que estão na tela
     const mensagensNaTela = chatMessages.querySelectorAll("div[data-id]");
     
     mensagensNaTela.forEach(div => {
         const msgId = div.dataset.id;
         
-        // Remove o botão de fixar antigo (se existir)
+        const actionsAntigo = div.querySelector(".message-actions");
+        if (actionsAntigo) actionsAntigo.remove();
+
         const btnPinAntigo = div.querySelector(".pin-btn");
         if (btnPinAntigo) btnPinAntigo.remove();
 
-        // Remove o botão de apagar antigo (se existir)
         const btnApagarAntigo = div.querySelector(".delete-btn");
         if (btnApagarAntigo) btnApagarAntigo.remove();
         
-        // Se for mensagem de sistema, ignora
         if (div.classList.contains("message--system")) return;
 
-        // Recria o botão de apagar (se o usuário tiver permissão agora)
-        // (Precisamos saber de quem é a mensagem)
         const isAdminMsg = div.querySelector(".message--avatar.is-admin") !== null;
+        const isStaffMsg = isAdminMsg || div.querySelector(".message--avatar.is-moderator") !== null;
+
         let podeApagar = false;
         if (user.isAdmin) podeApagar = true;
         else if (user.isModerator && !isAdminMsg) podeApagar = true;
+        else if (user.isGuardian && !isStaffMsg) podeApagar = true;
+
+        const actionsContainer = document.createElement("div");
+        actionsContainer.className = "message-actions";
 
         if (podeApagar) {
             const btn = document.createElement("button");
             btn.className = "delete-btn";
             btn.dataset.id = msgId;
             btn.textContent = "❌";
+            btn.title = "Apagar mensagem";
             btn.addEventListener("click", async () => {
                 if (!user.isAdmin && isAdminMsg) return alert("Sem permissão.");
+                if (!confirm("Tem certeza que deseja apagar esta mensagem?")) return;
                 try { await deleteDoc(doc(db, "mensagens", msgId)); } catch (e) {}
             });
-            div.appendChild(btn);
+            actionsContainer.appendChild(btn);
         }
 
-        // Recria o botão de fixar (se o usuário tiver permissão agora)
-        if (user.isAdmin || user.isModerator) {
+        if (user.isAdmin || user.isModerator || user.isGuardian || user.isHelper) {
             const btnPin = document.createElement("button");
             btnPin.className = "pin-btn";
             btnPin.title = "Fixar mensagem";
@@ -458,7 +523,6 @@ const atualizarInterfaceMensagens = () => {
             
             btnPin.addEventListener("click", async () => {
                 try {
-                    // Precisamos pegar o conteúdo da mensagem no Firebase
                     const msgDoc = await getDoc(doc(db, "mensagens", msgId));
                     if (msgDoc.exists()) {
                         await setDoc(doc(db, "mensagem_fixada", "atual"), {
@@ -472,11 +536,19 @@ const atualizarInterfaceMensagens = () => {
                     console.error("Erro ao fixar:", e);
                 }
             });
-            div.appendChild(btnPin);
+            actionsContainer.appendChild(btnPin);
+        }
+
+        if (actionsContainer.children.length > 0) {
+            div.appendChild(actionsContainer);
         }
     });
 };
 
+
+// =====================================================================
+// MENSAGEM FIXADA (PIN)
+// =====================================================================
 // 🔑 FIXAR: Função para escutar a mensagem fixada
 const listenToPinnedMessage = () => {
     if (unsubs.pinned) unsubs.pinned();
@@ -530,8 +602,8 @@ pinnedBar.addEventListener("click", (e) => {
 
 // 🔑 FIXAR: Evento para desafixar
 btnUnpin.addEventListener("click", async () => {
-    if (!user.isAdmin && !user.isModerator) {
-        return alert("Apenas administradores e moderadores podem desafixar.");
+    if (!user.isAdmin && !user.isModerator && !user.isGuardian && !user.isHelper) {
+        return alert("Apenas administradores, moderadores, guardiões e ajudantes podem desafixar.");
     }
     try {
         await deleteDoc(doc(db, "mensagem_fixada", "atual"));
@@ -541,7 +613,10 @@ btnUnpin.addEventListener("click", async () => {
     }
 });
 
-// ================= OUVINTE DE MENSAGENS =================
+
+// =====================================================================
+// OUVINTE DE MENSAGENS
+// =====================================================================
 const listenToMessages = () => {
     if (unsubs.messages) unsubs.messages();
     ultimoTimestampCarregado = 0;
@@ -600,7 +675,20 @@ const listenToMessages = () => {
     return primeiroSnapshotPromise;
 };
 
-// ================= LISTA DE ONLINE E BANIDOS =================
+
+// =====================================================================
+// LISTA DE ONLINE E BANIDOS
+// =====================================================================
+// Fecha o menu de moderação ao clicar fora ou pressionar ESC
+document.addEventListener("click", () => {
+    document.querySelectorAll(".user-context-menu").forEach((m) => m.remove());
+});
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        document.querySelectorAll(".user-context-menu").forEach((m) => m.remove());
+    }
+});
+
 const listenToOnlineUsers = () => {
     if (unsubs.users) unsubs.users();
     const q = query(collection(db, "usuarios_online"));
@@ -628,49 +716,90 @@ const listenToOnlineUsers = () => {
             userInfo.appendChild(nameSpan);
 
             if (u.isModerator) {
-                userInfo.insertAdjacentHTML("beforeend", `<span class="moderator-badge" aria-label="Moderador">🛡️</span>`);
+                userInfo.insertAdjacentHTML("beforeend", `<span class="moderator-badge" title="Moderador">🛡️</span>`);
+            } else if (u.isGuardian) {
+                userInfo.insertAdjacentHTML("beforeend", `<span class="moderator-badge" title="Guardião">🔰</span>`);
+            } else if (u.isHelper) {
+                userInfo.insertAdjacentHTML("beforeend", `<span class="moderator-badge" title="Ajudante">🌟</span>`);
+            } else if (u.isVip) {
+                userInfo.insertAdjacentHTML("beforeend", `<span class="moderator-badge" title="VIP">💎</span>`);
             }
 
             li.appendChild(userInfo);
             li.classList.add("user--online");
 
             if (user.isAdmin && (u.name || "").toLowerCase() !== "admin") {
-                const btnModerateUser = document.createElement("button");
-                btnModerateUser.textContent = "🛡️";
-                btnModerateUser.classList.add("btn-moderate-user");
-                btnModerateUser.title = u.isModerator ? "Remover Moderador" : "Tornar Moderador";
-                btnModerateUser.setAttribute("aria-label", btnModerateUser.title);
+                const btnMenu = document.createElement("button");
+                btnMenu.textContent = "⋮";
+                btnMenu.className = "btn-user-menu";
+                btnMenu.title = `Gerenciar ${formatarNomeExibicao(u.name)}`;
+                btnMenu.setAttribute("aria-label", btnMenu.title);
 
-                btnModerateUser.addEventListener("click", async () => {
-                    const acao = u.isModerator ? "remover o cargo de moderador de" : "tornar moderador";
-                    if (!confirm(`Tem certeza que deseja ${acao} "${u.name}"?`)) return;
-                    try {
-                        await setDoc(doc(db, "cargos", (u.name || "").toLowerCase()), { isModerator: !u.isModerator }, { merge: true });
+                btnMenu.addEventListener("click", (e) => {
+                    e.stopPropagation();
+
+                    const menuAberto = document.querySelector(`.user-context-menu[data-target="${docSnap.id}"]`);
+                    document.querySelectorAll(".user-context-menu").forEach((m) => m.remove());
+                    if (menuAberto) return;
+
+                    const menu = document.createElement("div");
+                    menu.className = "user-context-menu";
+                    menu.dataset.target = docSnap.id;
+                    menu.addEventListener("click", (ev) => ev.stopPropagation());
+
+                    const criarOpcaoCargo = (campo, labelAtivo, labelInativo, valorAtual) => {
+                        const btn = document.createElement("button");
+                        btn.textContent = valorAtual ? labelAtivo : labelInativo;
+                        btn.addEventListener("click", async () => {
+                            menu.remove();
+                            const acao = valorAtual ? `remover "${labelInativo.slice(2)}" de` : `promover "${u.name}" a ${labelInativo.slice(2)}`;
+                            if (!confirm(`Tem certeza que deseja ${acao}?`)) return;
+                            try {
+                                const novoValor = !valorAtual;
+                                await setDoc(doc(db, "cargos", (u.name || "").toLowerCase()), { [campo]: novoValor }, { merge: true });
+                                await setDoc(doc(db, "usuarios_online", docSnap.id), { [campo]: novoValor }, { merge: true }).catch(() => {});
+                            } catch (err) {
+                                alert("Erro ao alterar cargo: " + err.message);
+                            }
+                        });
+                        return btn;
+                    };
+
+                    const itemBan = document.createElement("button");
+                    itemBan.className = "danger";
+                    itemBan.textContent = "🚫 Banir Usuário";
+                    itemBan.addEventListener("click", async () => {
+                        menu.remove();
+                        if (!confirm(`Tem certeza que deseja BANIR "${u.name}"?`)) return;
                         try {
-                            await setDoc(doc(db, "usuarios_online", docSnap.id), { isModerator: !u.isModerator }, { merge: true });
+                            await setDoc(doc(db, "banidos", (u.name || "").toLowerCase()), { banido: true });
+                            await deleteDoc(doc(db, "usuarios_online", docSnap.id));
                         } catch (err) {
-                            console.log("Aviso: Cargo salvo, mas a lista online não pôde ser atualizada.");
+                            console.error("Erro ao banir:", err);
+                            alert("Erro ao banir: " + err.message);
                         }
-                    } catch (e) { 
-                        console.error("Erro ao moderar:", e); 
-                        alert("Erro ao moderar: " + e.message); 
-                    }
-                });
-                li.appendChild(btnModerateUser);
+                    });
 
-                const btnDeleteUser = document.createElement("button");
-                btnDeleteUser.textContent = "🚫";
-                btnDeleteUser.classList.add("btn-delete-user");
-                btnDeleteUser.setAttribute("aria-label", "Banir usuário");
-                btnDeleteUser.addEventListener("click", async () => {
-                    if (!confirm(`Tem certeza que deseja BANIR "${u.name}"?`)) return;
-                    try {
-                        await setDoc(doc(db, "banidos", (u.name || "").toLowerCase()), { banido: true });
-                        await deleteDoc(doc(db, "usuarios_online", docSnap.id));
-                    } catch (e) { console.error("Erro ao banir:", e); alert("Erro ao banir: " + e.message); }
+                    menu.appendChild(criarOpcaoCargo("isModerator", "🛡️ Remover Moderador", "🛡️ Tornar Moderador", !!u.isModerator));
+                    menu.appendChild(criarOpcaoCargo("isGuardian", "🔰 Remover Guardião", "🔰 Tornar Guardião", !!u.isGuardian));
+                    menu.appendChild(criarOpcaoCargo("isHelper", "🌟 Remover Ajudante", "🌟 Tornar Ajudante", !!u.isHelper));
+                    menu.appendChild(criarOpcaoCargo("isVip", "💎 Remover VIP", "💎 Tornar VIP", !!u.isVip));
+                    menu.appendChild(itemBan);
+                    document.body.appendChild(menu);
+
+                    const rect = btnMenu.getBoundingClientRect();
+                    const menuWidth = 190;
+                    const menuHeight = 205;
+                    const left = Math.min(Math.max(8, rect.left), window.innerWidth - menuWidth - 8);
+                    const top = Math.min(rect.bottom + 4, window.innerHeight - menuHeight - 8);
+
+                    menu.style.left = `${left}px`;
+                    menu.style.top = `${top}px`;
                 });
-                li.appendChild(btnDeleteUser);
+
+                li.appendChild(btnMenu);
             }
+
             onlineList.appendChild(li);
         });
         onlineCount.textContent = count;
@@ -720,8 +849,10 @@ const listenToBans = () => {
     });
 };
 
-// ================= AUTENTICAÇÃO E LOGIN =================
 
+// =====================================================================
+// AUTENTICAÇÃO E LOGIN
+// =====================================================================
 toggleLink.addEventListener("click", (e) => {
     e.preventDefault();
     isLoginMode = !isLoginMode;
@@ -747,7 +878,8 @@ const entrarNoChat = async (uid, nome) => {
     atualizarBotaoSom();
 
     const cargoDoc = await getDoc(doc(db, "cargos", user.name));
-    const isAdm = cargoDoc.exists() && cargoDoc.data().isAdmin;
+    const cData = cargoDoc.exists() ? cargoDoc.data() : {};
+    const isAdm = !!cData.isAdmin;
 
     if (user.name === "admin" || isAdm) {
         user.isAdmin = true;
@@ -758,7 +890,21 @@ const entrarNoChat = async (uid, nome) => {
         document.body.classList.remove("is-admin");
         adminBar.style.display = "none";
     }
-    user.isModerator = !!(cargoDoc.exists() && cargoDoc.data().isModerator);
+    user.isModerator = !!cData.isModerator;
+    user.isGuardian = !!cData.isGuardian;
+    user.isHelper = !!cData.isHelper;
+    user.isVip = !!cData.isVip;
+
+    if (!user.isAdmin) {
+        listenToOwnBanStatus();
+
+        unsubs.accountCheck = onSnapshot(doc(db, "nomes_registrados", user.name), (docSnap) => {
+            if (!docSnap.exists() && jaIniciado) {
+                alert("Sua conta foi excluída pelo administrador.");
+                cleanupChatSession();
+            }
+        });
+    }
 
     loginSection.style.display = "none";
     chatSection.style.display = "flex";
@@ -769,15 +915,17 @@ const entrarNoChat = async (uid, nome) => {
         name: user.name,
         color: user.color,
         isModerator: user.isModerator,
+        isGuardian: user.isGuardian,
+        isHelper: user.isHelper,
+        isVip: user.isVip,
         ultimaAtividade: Date.now()
     }, { merge: true });
 
     const primeiroSnapshotPromise = listenToMessages();
     listenToOnlineUsers();
     listenToMyRole();
-    listenToPinnedMessage(); // 🔑 FIXAR: Chamada do listener aqui
+    listenToPinnedMessage();
      
-    // ⬇️ SUBSTITUA A CHAMADA POR ESTE BLOCO:
     try {
         iniciarJogoDamas(db, user);
     } catch (e) {
@@ -794,8 +942,6 @@ const entrarNoChat = async (uid, nome) => {
             typingIndicator.textContent = "";
         }
     });
-
-    if (!user.isAdmin) listenToOwnBanStatus();
 
     await primeiroSnapshotPromise;
 
@@ -860,23 +1006,20 @@ const handleSignup = async (name, email, password) => {
     if (!email) return alert("Por favor, digite um e-mail válido para se cadastrar.");
 
     const nomeMinusculo = name.trim().toLowerCase();
-    if (["admin", "bot", "sistema", "moderador"].includes(nomeMinusculo)) {
+    if (["admin", "bot", "sistema", "moderador", "guardiao", "ajudante", "vip"].includes(nomeMinusculo)) {
         return alert("Este nome é reservado. Escolha outro.");
     }
 
-    try {  // ⬅️ MUDOU DE LUGAR: Subiu para antes da consulta ao banco
-        // Verifica se o nome já está registrado por outra conta
+    try {
         const nomeRef = doc(db, "nomes_registrados", nomeMinusculo);
         const nomeSnap = await getDoc(nomeRef);
         if (nomeSnap.exists()) {
             return alert("❌ Este nome de usuário já está em uso! Escolha outro.");
         }
 
-        // (Antes o 'try {' ficava aqui embaixo)
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(cred.user, { displayName: nomeMinusculo });
 
-        // Salva o nome como propriedade exclusiva deste UID
         await setDoc(nomeRef, { uid: cred.user.uid });
 
         await signOut(auth);
@@ -896,14 +1039,12 @@ loginForm.addEventListener("submit", async (event) => {
     const password = passwordInput.value;
     const email = emailInput.value.trim();
 
-    // ================= ADICIONE ESTE BLOCO AQUI =================
-    const nomesReservados = ["bot", "sistema", "moderador"];
+    const nomesReservados = ["bot", "sistema", "moderador", "guardiao", "ajudante", "vip"];
     if (nomesReservados.includes(name.toLowerCase())) {
         alert("❌ Este nome é reservado pelo sistema. Escolha outro apelido!");
-        submitBtn.disabled = false; // Reativa o botão antes de parar
+        submitBtn.disabled = false;
         return;
     }
-    // ============================================================
 
     logandoManualmente = true; 
     try {
@@ -965,8 +1106,7 @@ onAuthStateChanged(auth, async (firebaseUser) => {
             return;
         }
 
-        // Bloqueia nomes reservados do sistema (Bot, Moderador, etc.)
-        const nomesReservados = ["bot", "sistema", "moderador"];
+        const nomesReservados = ["bot", "sistema", "moderador", "guardiao", "ajudante", "vip"];
         if (nomesReservados.includes(nome.toLowerCase())) {
             alert("❌ Este nome é reservado pelo sistema. Escolha outro apelido!");
             await signOut(auth);
@@ -975,22 +1115,18 @@ onAuthStateChanged(auth, async (firebaseUser) => {
             return;
         }
 
-        // Registra ou valida o dono único do nome no banco
         const nomeRegRef = doc(db, "nomes_registrados", nome.toLowerCase());
         const nomeRegSnap = await getDoc(nomeRegRef);
 
         if (!nomeRegSnap.exists()) {
-            // Se ninguém registrou ainda (contas/moderadores antigos), salva este UID como dono
             await setDoc(nomeRegRef, { uid: uid });
         } else if (nomeRegSnap.data().uid !== uid) {
-            // Se já pertence a outro UID, bloqueia o acesso
             alert("❌ Este nome já pertence a outro usuário!");
             await signOut(auth);
             loginSection.style.display = "block";
             chatSection.style.display = "none";
             return;
         }
-
 
         jaIniciado = true;
         await entrarNoChat(uid, nome);
@@ -1001,7 +1137,10 @@ onAuthStateChanged(auth, async (firebaseUser) => {
     }
 });
 
-// ================= MODAL DE BANIDOS =================
+
+// =====================================================================
+// MODAL DE BANIDOS
+// =====================================================================
 const abrirModalBans = () => {
     bansModal.classList.add("show");
     listenToBans();
@@ -1017,7 +1156,10 @@ bansModal.addEventListener("click", (e) => {
     if (e.target === bansModal) fecharModalBans();
 });
 
-// ================= OUTRAS FUNÇÕES =================
+
+// =====================================================================
+// OUTRAS FUNÇÕES
+// =====================================================================
 forgotPasswordLink.addEventListener("click", async (e) => {
     e.preventDefault();
     const email = prompt("Digite seu E-MAIL cadastrado para receber o link de recuperação:");
@@ -1034,36 +1176,39 @@ btnEditName.addEventListener("click", async () => {
     const novoNome = prompt("Digite o seu novo nome de exibição:", user.name);
     if (!novoNome || !novoNome.trim() || novoNome.trim() === user.name) return;
     const nomeFormatado = novoNome.trim().toLowerCase();
-
-    if (["admin", "bot", "sistema", "moderador"].includes(nomeFormatado)) {
+    if (["admin", "bot", "sistema", "moderador", "guardiao", "ajudante", "vip"].includes(nomeFormatado)) {
         return alert("Este nome é reservado.");
     }
-
-    // Verifica se o novo nome já pertence a outra pessoa
     const novoNomeRef = doc(db, "nomes_registrados", nomeFormatado);
     const novoNomeSnap = await getDoc(novoNomeRef);
     if (novoNomeSnap.exists() && novoNomeSnap.data().uid !== user.id) {
         return alert("❌ Este nome já está em uso por outro usuário!");
     }
-
     try {
         const nomeAntigo = user.name.toLowerCase();
-
-        // Apaga o registro do nome antigo e reserva o novo
         if (nomeAntigo !== nomeFormatado) {
+            if (unsubs.accountCheck) {
+                unsubs.accountCheck();
+                unsubs.accountCheck = null;
+            }
             await deleteDoc(doc(db, "nomes_registrados", nomeAntigo));
             await setDoc(novoNomeRef, { uid: user.id });
+            if (!user.isAdmin) {
+                unsubs.accountCheck = onSnapshot(doc(db, "nomes_registrados", nomeFormatado), (docSnap) => {
+                    if (!docSnap.exists() && jaIniciado) {
+                        alert("Sua conta foi excluída pelo administrador.");
+                        cleanupChatSession();
+                    }
+                });
+            }
         }
-
         user.name = nomeFormatado;
         await updateProfile(auth.currentUser, { displayName: user.name });
         await auth.currentUser.reload();
-
+        if (!user.isAdmin) listenToOwnBanStatus();
         await setDoc(doc(db, "usuarios_online", user.id), { name: user.name, color: user.color }, { merge: true });
-
         const q = query(collection(db, "mensagens"), where("userId", "==", user.id));
         const snap = await getDocs(q);
-
         const MAX = 500;
         const docs = snap.docs;
         for (let i = 0; i < docs.length; i += MAX) {
@@ -1071,7 +1216,6 @@ btnEditName.addEventListener("click", async () => {
             docs.slice(i, i + MAX).forEach((d) => batch.update(d.ref, { userName: user.name }));
             await batch.commit();
         }
-
         alert("Nome atualizado com sucesso!");
     } catch (e) {
         alert("Erro ao atualizar nome: " + e.message);
@@ -1095,26 +1239,21 @@ btnEditEmail.addEventListener("click", async () => {
 
 const cleanupChatSession = async () => {
     cleanupAllListeners();
-
-    jaIniciado = false;         
-    logandoManualmente = false; 
-    montandoChat = false; 
-
+    jaIniciado = false;
+    logandoManualmente = false;
+    montandoChat = false;
     if (user.id) {
-        sessionStorage.removeItem(`chat_entrou_${user.id}`);
+        sessionStorage.removeItem("chat_entrou_" + user.id);
     }
-
     estaDigitando = false;
     clearTimeout(timeoutPararDigitando);
     typingIndicator.style.display = "none";
     typingIndicator.textContent = "";
-
     await signOut(auth);
-
     user.id = ""; user.name = ""; user.color = "";
     user.isAdmin = false; user.isModerator = false;
+    user.isGuardian = false; user.isHelper = false; user.isVip = false;
     document.body.classList.remove("is-admin");
-
     chatMessages.innerHTML = "";
     onlineList.innerHTML = "";
     onlineCount.textContent = "0";
@@ -1128,10 +1267,7 @@ const cleanupChatSession = async () => {
     btnSom.classList.remove("muted");
     somAtivado = false;
     ultimoTimestampCarregado = 0;
-
-    // 🔑 FIXAR: Esconde a barra de fixados ao deslogar
     if (pinnedBar) pinnedBar.style.display = "none";
-
     if (!isLoginMode) toggleLink.click();
 };
 
@@ -1141,9 +1277,7 @@ btnLogout.addEventListener("click", async () => {
             estaDigitando = false;
             clearTimeout(timeoutPararDigitando);
             await pararDeDigitar(db, user.id).catch(() => {});
-
             try { await anunciarSaida(db, user.name); } catch (e) { console.error(e); }
-            
             await deleteDoc(doc(db, "usuarios_online", user.id)).catch(() => {});
         }
     } catch (e) {
@@ -1157,7 +1291,6 @@ btnLogout.addEventListener("click", async () => {
 
 const sendMessageToDb = async (content) => {
     if (!user.id || !content) return;
-
     try {
         const banCheck = await getDoc(doc(db, "banidos", user.name));
         if (banCheck.exists()) {
@@ -1165,16 +1298,17 @@ const sendMessageToDb = async (content) => {
             btnLogout.click();
             return;
         }
-
         await addDoc(collection(db, "mensagens"), {
             userId: user.id,
             userName: user.name,
             userColor: user.color,
             isModerator: user.isModerator,
+            isGuardian: user.isGuardian,
+            isHelper: user.isHelper,
+            isVip: user.isVip,
             content,
             timestamp: Date.now()
         });
-
         if (somAtivado) playSound(audioMensagem);
     } catch (e) {
         console.error("Erro ao enviar:", e);
@@ -1186,11 +1320,9 @@ chatForm.addEventListener("submit", (event) => {
     event.preventDefault();
     sendMessageToDb(chatInput.value.trim());
     chatInput.value = "";
-
     if (window.innerWidth <= 600) {
         chatInput.blur();
     }
-
     estaDigitando = false;
     clearTimeout(timeoutPararDigitando);
     pararDeDigitar(db, user.id).catch(() => {});
@@ -1220,7 +1352,6 @@ stickersBar.addEventListener("click", (e) => {
 btnGifKeyboard.addEventListener("click", () => {
     stickersBar.classList.toggle("show");
     btnGifKeyboard.classList.toggle("active");
-    
     if (stickersBar.classList.contains("show")) {
         chatInput.blur();
     }
@@ -1252,7 +1383,6 @@ btnSom.addEventListener("click", () => {
         atualizarBotaoSom();
     } else {
         desbloquearAudios();
-        
         somAtivado = true;
         atualizarBotaoSom();
         playSound(audioMensagem, 0.5);
@@ -1264,12 +1394,23 @@ window.addEventListener("beforeunload", () => {
     deleteDoc(doc(db, "usuarios_online", user.id)).catch(() => {});
 });
 
-setInterval(() => {
-    if (!user.id) return;
-    setDoc(doc(db, "usuarios_online", user.id), { 
-        name: user.name,
-        color: user.color,
-        isModerator: user.isModerator,
-        ultimaAtividade: Date.now() 
-    }, { merge: true }).catch(() => {});
+setInterval(async () => {
+    if (!user.id || !auth.currentUser) return;
+    try {
+        await auth.currentUser.reload();
+        await setDoc(doc(db, "usuarios_online", user.id), {
+            name: user.name,
+            color: user.color,
+            isModerator: user.isModerator,
+            isGuardian: user.isGuardian,
+            isHelper: user.isHelper,
+            isVip: user.isVip,
+            ultimaAtividade: Date.now()
+        }, { merge: true });
+    } catch (e) {
+        if (e.code === "auth/user-not-found" || e.code === "auth/user-token-expired" || e.code === "auth/user-disabled") {
+            alert("Sua conta foi excluída ou desativada.");
+            cleanupChatSession();
+        }
+    }
 }, 15000);

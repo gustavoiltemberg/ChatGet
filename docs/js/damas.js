@@ -748,7 +748,7 @@ export const iniciarJogoDamas = (db, user) => {
             actionsEl.appendChild(btnSairMesa);
         }
 
-        if (st.status === "finalizado" || user?.isAdmin || user?.isModerator) {
+            if (st.status === "finalizado" || user?.isAdmin || user?.isModerator || user?.isGuardian || user?.isHelper) {
             const btnReset = document.createElement("button");
             btnReset.className = "damas-btn secondary";
             btnReset.textContent = "🔄 Nova Mesa";

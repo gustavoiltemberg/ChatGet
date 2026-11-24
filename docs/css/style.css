@@ -2104,3 +2104,114 @@ body.green-theme .chat__header #btn-edit-email:hover {
 }
 
 /* ================= FIM DO ARQUIVO ================= */
+/* ================= MENU FLUTUANTE DE MODERAÇÃO (⋮) ================= */
+.btn-user-menu {
+    background: transparent;
+    border: none;
+    color: inherit;
+    opacity: 0.7;
+    font-size: 1.15rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: opacity 0.2s, background-color 0.2s;
+}
+
+.btn-user-menu:hover {
+    opacity: 1;
+    background-color: rgba(128, 128, 128, 0.2);
+}
+
+/* Container do Menu (Tema Escuro Padrão) */
+.user-context-menu {
+    position: fixed;
+    z-index: 300;
+    background-color: #242424;
+    color: #f2f2f2;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 5px;
+    min-width: 185px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    animation: fadeInMenu 0.12s ease-out;
+}
+
+@keyframes fadeInMenu {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.user-context-menu button {
+    background: transparent;
+    border: none;
+    color: inherit;
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.15s;
+}
+
+.user-context-menu button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.user-context-menu button.danger {
+    color: #ff6b6b;
+}
+
+.user-context-menu button.danger:hover {
+    background-color: rgba(231, 76, 60, 0.18);
+}
+
+/* Adaptação para Temas Claro e Coloridos */
+body.light-theme .user-context-menu {
+    background-color: #ffffff;
+    color: #1c1e21;
+    border-color: #ccd0d5;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+body.light-theme .user-context-menu button:hover { background-color: #f0f2f5; }
+
+body.blue-theme .user-context-menu {
+    background-color: #e6f0ff;
+    color: #0f2a4a;
+    border-color: #b3d1ff;
+    box-shadow: 0 8px 20px rgba(13, 110, 253, 0.2);
+}
+body.blue-theme .user-context-menu button:hover { background-color: #d0e2ff; }
+
+body.pink-theme .user-context-menu {
+    background-color: #fff0f3;
+    color: #4a0e17;
+    border-color: #ffb3c6;
+    box-shadow: 0 8px 20px rgba(255, 133, 162, 0.25);
+}
+body.pink-theme .user-context-menu button:hover { background-color: #ffe0e6; }
+
+body.green-theme .user-context-menu {
+    background-color: #e8f8f0;
+    color: #0a2e14;
+    border-color: #a3e4c4;
+    box-shadow: 0 8px 20px rgba(46, 204, 113, 0.2);
+}
+body.green-theme .user-context-menu button:hover { background-color: #d1f2e0; }
+
+body.light-theme .user-context-menu button.danger,
+body.blue-theme .user-context-menu button.danger,
+body.pink-theme .user-context-menu button.danger,
+body.green-theme .user-context-menu button.danger {
+    color: #c0392b;
+}
+
