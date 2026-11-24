@@ -541,8 +541,13 @@ body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-
 .user-info {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     flex: 1;
+    min-width: 0; /* Permite que o texto interno encolha sem empurrar os ícones */
+    overflow: hidden;
+}
+
+.user-name-text {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -576,10 +581,11 @@ body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-
     font-size: 0.8rem;
     font-weight: bold;
     cursor: pointer;
-    padding: 2px 5px;
+    padding: 2px 3px;
     border-radius: 3px;
     transition: background 0.2s, color 0.2s;
     visibility: hidden;
+    flex-shrink: 0;
 }
 
 body.is-admin .btn-delete-user {
@@ -669,10 +675,11 @@ body.is-admin .btn-delete-user {
     font-size: 0.8rem;
     font-weight: bold;
     cursor: pointer;
-    padding: 2px 5px;
+    padding: 2px 3px;
     border-radius: 3px;
+    flex-shrink: 0;
     transition: background 0.2s, color 0.2s;
-    visibility: hidden;
+    visibility: hidden
 }
 
 body.is-admin .btn-moderate-user {
@@ -685,9 +692,8 @@ body.is-admin .btn-moderate-user {
 }
 
 .moderator-badge {
-    font-size: 0.7rem;
-    margin-left: 4px;
-    color: #f1c40f;
+    font-size: 0.75rem;
+    flex-shrink: 0; /* Impede que o escudo de moderador seja cortado */
 }
 
 .typing-indicator {

@@ -251,7 +251,7 @@ def on_snapshot(col_snapshot, changes, read_time):
 
 
 print("🤖 Bot conectado ao Firebase e monitorando o chat...")
-query_watch = db.collection("mensagens").on_snapshot(on_snapshot)
+query_watch = db.collection("mensagens").where("timestamp", ">=", INICIO_BOT).on_snapshot(on_snapshot)
 
 
 # ================= SERVIDOR PARA MANTER ONLINE NA NUVEM =================

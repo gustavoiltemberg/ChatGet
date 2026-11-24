@@ -619,9 +619,14 @@ const listenToOnlineUsers = () => {
             const userInfo = document.createElement("div");
             userInfo.classList.add("user-info");
 
-            let badge = u.isModerator ? ` <span class="moderator-badge" aria-label="Moderador">🛡️</span>` : "";
-            userInfo.textContent = formatarNomeExibicao(u.name);
-            if (badge) userInfo.insertAdjacentHTML("beforeend", badge);
+            const nameSpan = document.createElement("span");
+            nameSpan.className = "user-name-text";
+            nameSpan.textContent = formatarNomeExibicao(u.name);
+            userInfo.appendChild(nameSpan);
+
+            if (u.isModerator) {
+                userInfo.insertAdjacentHTML("beforeend", `<span class="moderator-badge" aria-label="Moderador">🛡️</span>`);
+            }
 
             li.appendChild(userInfo);
             li.classList.add("user--online");
