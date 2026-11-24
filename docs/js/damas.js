@@ -402,7 +402,7 @@ export const iniciarJogoDamas = (db, user) => {
         const btnOpen = document.createElement("button");
         btnOpen.id = "btn-open-damas";
         btnOpen.className = "btn-edit-name";
-        btnOpen.textContent = "♟️ Damas";
+        btnOpen.textContent = "♟️";
         btnOpen.title = "Abrir jogo de Damas";
         headerScroll.insertBefore(btnOpen, headerScroll.firstChild);
         btnOpen.addEventListener("click", () => {

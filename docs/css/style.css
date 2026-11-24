@@ -1446,16 +1446,6 @@ body.pink-theme .theme-toggle-btn {
         font-size: 0.95rem !important;
     }
 }
-
-/* ================= FIM DO ARQUIVO ================= */
-
-
-
-
-
-
-
-
 /* ============================================================
    ✅ PADRONIZAÇÃO DO TEMA ESCURO (Igual aos demais temas)
    ============================================================ */
@@ -1512,3 +1502,605 @@ body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .pinn
     border-left-color: cadetblue !important;
     border-bottom-color: cadetblue !important;
 }
+
+/* ================= AGRUPAR BOTÕES REDONDOS À DIREITA ================= */
+.chat__header-scroll {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    min-width: 100%;
+    gap: 10px !important;
+}
+
+/* Botões retangulares ficam primeiro (à esquerda) */
+.chat__header-scroll > * {
+    order: 1;
+}
+
+/* Botões redondos agrupados no canto direito */
+.chat__header-scroll .chat-theme-btn {
+    order: 2;
+}
+
+.chat__header-scroll #btn-som {
+    order: 3;
+}
+
+.chat__header-scroll #btn-logout {
+    order: 4;
+}
+
+/* Ajuste para manter o alinhamento à direita e a rolagem no celular */
+@media (max-width: 600px) {
+    .chat__header-scroll {
+        min-width: 100% !important;
+        width: max-content !important;
+        justify-content: flex-end !important;
+        gap: 6px !important;
+    }
+}
+
+/* ================= BOTÃO DAMAS REDONDO À DIREITA ================= */
+#btn-open-damas {
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 50% !important;
+    font-size: 1.05rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+    transition: transform 0.2s, background-color 0.3s, border-color 0.3s !important;
+}
+
+#btn-open-damas:hover {
+    transform: scale(1.05);
+    background-color: cadetblue !important;
+    border-color: cadetblue !important;
+    color: #ffffff !important;
+}
+
+/* Destaque branco no peão ♟️ apenas no tema escuro */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-open-damas {
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.9), 0 0 6px rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Tamanho no celular igual aos outros botões redondos */
+@media (max-width: 600px) {
+    #btn-open-damas {
+        width: 32px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        font-size: 0.95rem !important;
+    }
+}
+
+/* Ordem dos botões redondos agrupados no canto direito */
+.chat__header-scroll > * {
+    order: 1;
+}
+.chat__header-scroll #btn-open-damas {
+    order: 2;
+}
+.chat__header-scroll .chat-theme-btn {
+    order: 3;
+}
+.chat__header-scroll #btn-som {
+    order: 4;
+}
+.chat__header-scroll #btn-logout {
+    order: 5;
+}
+/* ================= FIM DO ARQUIVO ================= */
+
+/* ================= BORDA E CONTORNO UNIFICADOS NOS BOTÕES REDONDOS ================= */
+#btn-open-damas,
+.chat-theme-btn,
+#btn-som,
+#btn-logout {
+    border-width: 1px !important;
+    border-style: solid !important;
+}
+
+/* Tema Escuro: borda #555 + brilho branco igual ao botão de tema */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-open-damas,
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat-theme-btn,
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-som,
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-logout {
+    border-color: #555 !important;
+    filter: drop-shadow(0px 0px 4px rgba(255, 255, 255, 0.8)) !important;
+}
+
+/* Temas Claro e Coloridos: sombra suave escura igual ao botão de tema */
+body.light-theme #btn-open-damas,
+body.blue-theme #btn-open-damas,
+body.pink-theme #btn-open-damas,
+body.green-theme #btn-open-damas,
+body.light-theme .chat-theme-btn,
+body.blue-theme .chat-theme-btn,
+body.pink-theme .chat-theme-btn,
+body.green-theme .chat-theme-btn,
+body.light-theme #btn-som,
+body.blue-theme #btn-som,
+body.pink-theme #btn-som,
+body.green-theme #btn-som,
+body.light-theme #btn-logout,
+body.blue-theme #btn-logout,
+body.pink-theme #btn-logout,
+body.green-theme #btn-logout {
+    filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.4)) !important;
+}
+
+/* Cor exata da borda de 1px acompanhando cada tema */
+body.light-theme #btn-open-damas,
+body.light-theme .chat-theme-btn,
+body.light-theme #btn-som,
+body.light-theme #btn-logout {
+    border-color: #ccd0d5 !important;
+}
+
+body.blue-theme #btn-open-damas,
+body.blue-theme .chat-theme-btn,
+body.blue-theme #btn-som,
+body.blue-theme #btn-logout {
+    border-color: #b3d1ff !important;
+}
+
+body.pink-theme #btn-open-damas,
+body.pink-theme .chat-theme-btn,
+body.pink-theme #btn-som,
+body.pink-theme #btn-logout {
+    border-color: #ffb3c6 !important;
+}
+
+body.green-theme #btn-open-damas,
+body.green-theme .chat-theme-btn,
+body.green-theme #btn-som,
+body.green-theme #btn-logout {
+    border-color: #a3e4c4 !important;
+}
+
+/* ================= HOVER DO BOTÃO DAMAS IDÊNTICO AO BOTÃO DE TEMA ================= */
+#btn-open-damas:hover,
+.chat-theme-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Tema Escuro */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-open-damas:hover,
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat-theme-btn:hover {
+    background-color: #444 !important;
+    border-color: #555 !important;
+}
+
+/* Tema Claro */
+body.light-theme #btn-open-damas:hover,
+body.light-theme .chat-theme-btn:hover {
+    background-color: cadetblue !important;
+    border-color: cadetblue !important;
+    color: #ffffff !important;
+}
+
+/* Tema Azul */
+body.blue-theme #btn-open-damas:hover,
+body.blue-theme .chat-theme-btn:hover {
+    background-color: #f0f5ff !important;
+    border-color: #b3d1ff !important;
+}
+
+/* Tema Rosa */
+body.pink-theme #btn-open-damas:hover,
+body.pink-theme .chat-theme-btn:hover {
+    background-color: #fff0f3 !important;
+    border-color: #ffb3c6 !important;
+}
+
+/* Tema Verde */
+body.green-theme #btn-open-damas:hover,
+body.green-theme .chat-theme-btn:hover {
+    background-color: #e8f8f0 !important;
+    border-color: #a3e4c4 !important;
+}
+
+/* Tema Claro: iguala o hover cinza-claro nos dois botões */
+body.light-theme .chat__header #btn-open-damas:hover,
+body.light-theme .chat__header .chat-theme-btn:hover {
+    background-color: #e4e6eb !important;
+    border-color: #ccd0d5 !important;
+    color: #1c1e21 !important;
+}
+
+/* ================= CONTORNO BRANCO NA LUA IGUAL AO BOTÃO DAMAS (TEMA ESCURO) ================= */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) #btn-open-damas,
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat-theme-btn,
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .theme-toggle-btn {
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.9), 0 0 6px rgba(255, 255, 255, 0.6) !important;
+}
+
+/* ================= CONTORNO ESCURO NO BOTÃO DAMAS (TEMAS CLARO E COLORIDOS) ================= */
+body.light-theme #btn-open-damas,
+body.blue-theme #btn-open-damas,
+body.pink-theme #btn-open-damas,
+body.green-theme #btn-open-damas {
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.75), 0 0 4px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* ================= BOTÃO LIMPAR TUDO (🧹) REDONDO À DIREITA ================= */
+
+/* Faz os botões internos da admin-bar participarem diretamente do alinhamento do header */
+body.is-admin #admin-bar {
+    display: contents !important;
+}
+
+/* Formato redondo e dimensões iguais aos demais */
+#btn-clear-all {
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 50% !important;
+    font-size: 1.05rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    transition: transform 0.2s, background-color 0.3s, border-color 0.3s !important;
+}
+
+#btn-clear-all:hover {
+    transform: scale(1.05);
+}
+
+/* Agrupamento à direita junto aos outros botões redondos */
+.chat__header-scroll #btn-clear-all {
+    order: 2;
+}
+.chat__header-scroll #btn-open-damas {
+    order: 3;
+}
+.chat__header-scroll .chat-theme-btn {
+    order: 4;
+}
+.chat__header-scroll #btn-som {
+    order: 5;
+}
+.chat__header-scroll #btn-logout {
+    order: 6;
+}
+
+/* Tema Escuro: fundo, borda, brilho externo e contorno branco no ícone */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__header #btn-clear-all {
+    background-color: #333 !important;
+    color: #f2f2f2 !important;
+    border-color: #555 !important;
+    filter: drop-shadow(0px 0px 4px rgba(255, 255, 255, 0.8)) !important;
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.9), 0 0 6px rgba(255, 255, 255, 0.6) !important;
+}
+
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__header #btn-clear-all:hover {
+    background-color: #444 !important;
+    border-color: #555 !important;
+}
+
+/* Temas Claro e Coloridos: fundo branco, sombra escura e contorno escuro no ícone */
+body.light-theme .chat__header #btn-clear-all,
+body.blue-theme .chat__header #btn-clear-all,
+body.pink-theme .chat__header #btn-clear-all,
+body.green-theme .chat__header #btn-clear-all {
+    background-color: #ffffff !important;
+    filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.4)) !important;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.75), 0 0 4px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Borda e hover específicos de cada tema */
+body.light-theme .chat__header #btn-clear-all {
+    border-color: #ccd0d5 !important;
+    color: #1c1e21 !important;
+}
+body.light-theme .chat__header #btn-clear-all:hover {
+    background-color: #e4e6eb !important;
+    border-color: #ccd0d5 !important;
+}
+
+body.blue-theme .chat__header #btn-clear-all {
+    border-color: #b3d1ff !important;
+    color: #0d6efd !important;
+}
+body.blue-theme .chat__header #btn-clear-all:hover {
+    background-color: #f0f5ff !important;
+}
+
+body.pink-theme .chat__header #btn-clear-all {
+    border-color: #ffb3c6 !important;
+    color: #ff477e !important;
+}
+body.pink-theme .chat__header #btn-clear-all:hover {
+    background-color: #fff0f3 !important;
+}
+
+body.green-theme .chat__header #btn-clear-all {
+    border-color: #a3e4c4 !important;
+    color: #2ecc71 !important;
+}
+body.green-theme .chat__header #btn-clear-all:hover {
+    background-color: #e8f8f0 !important;
+}
+
+/* Tamanho no celular igual aos outros botões redondos */
+@media (max-width: 600px) {
+    #btn-clear-all {
+        width: 32px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        font-size: 0.95rem !important;
+    }
+}
+
+/* ================= MANTÉM O ÍCONE DE SAIR BRANCO NO HOVER ================= */
+.btn-logout:hover .icone-power,
+#btn-logout:hover .icone-power {
+    filter: invert(1) brightness(2) !important;
+}
+
+/* ================= BOTÃO GERENCIAR BANIDOS (🚫) REDONDO À DIREITA ================= */
+
+/* Formato redondo e dimensões iguais aos demais */
+#btn-manage-bans {
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 50% !important;
+    font-size: 1.05rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    transition: transform 0.2s, background-color 0.3s, border-color 0.3s !important;
+}
+
+#btn-manage-bans:hover {
+    transform: scale(1.05);
+}
+
+/* Ordem atualizada dos botões redondos agrupados à direita */
+.chat__header-scroll #btn-manage-bans {
+    order: 2;
+}
+.chat__header-scroll #btn-clear-all {
+    order: 3;
+}
+.chat__header-scroll #btn-open-damas {
+    order: 4;
+}
+.chat__header-scroll .chat-theme-btn {
+    order: 5;
+}
+.chat__header-scroll #btn-som {
+    order: 6;
+}
+.chat__header-scroll #btn-logout {
+    order: 7;
+}
+
+/* Tema Escuro: fundo, borda, brilho externo e contorno branco no ícone */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__header #btn-manage-bans {
+    background-color: #333 !important;
+    color: #f2f2f2 !important;
+    border-color: #555 !important;
+    filter: drop-shadow(0px 0px 4px rgba(255, 255, 255, 0.8)) !important;
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.9), 0 0 6px rgba(255, 255, 255, 0.6) !important;
+}
+
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__header #btn-manage-bans:hover {
+    background-color: #444 !important;
+    border-color: #555 !important;
+}
+
+/* Temas Claro e Coloridos: fundo branco, sombra escura e contorno escuro no ícone */
+body.light-theme .chat__header #btn-manage-bans,
+body.blue-theme .chat__header #btn-manage-bans,
+body.pink-theme .chat__header #btn-manage-bans,
+body.green-theme .chat__header #btn-manage-bans {
+    background-color: #ffffff !important;
+    filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.4)) !important;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.75), 0 0 4px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Borda e hover específicos de cada tema */
+body.light-theme .chat__header #btn-manage-bans {
+    border-color: #ccd0d5 !important;
+    color: #1c1e21 !important;
+}
+body.light-theme .chat__header #btn-manage-bans:hover {
+    background-color: #e4e6eb !important;
+    border-color: #ccd0d5 !important;
+}
+
+body.blue-theme .chat__header #btn-manage-bans {
+    border-color: #b3d1ff !important;
+    color: #0d6efd !important;
+}
+body.blue-theme .chat__header #btn-manage-bans:hover {
+    background-color: #f0f5ff !important;
+}
+
+body.pink-theme .chat__header #btn-manage-bans {
+    border-color: #ffb3c6 !important;
+    color: #ff477e !important;
+}
+body.pink-theme .chat__header #btn-manage-bans:hover {
+    background-color: #fff0f3 !important;
+}
+
+body.green-theme .chat__header #btn-manage-bans {
+    border-color: #a3e4c4 !important;
+    color: #2ecc71 !important;
+}
+body.green-theme .chat__header #btn-manage-bans:hover {
+    background-color: #e8f8f0 !important;
+}
+
+/* Tamanho no celular igual aos outros botões redondos */
+@media (max-width: 600px) {
+    #btn-manage-bans {
+        width: 32px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        font-size: 0.95rem !important;
+    }
+}
+
+/* ================= BOTÕES EDITAR NOME (✏️) E ALTERAR E-MAIL (📧) REDONDOS ================= */
+
+/* Formato redondo e dimensões iguais aos demais (mantendo oculto quando display: none) */
+#btn-edit-name:not([style*="display: none"]),
+#btn-edit-email:not([style*="display: none"]) {
+    display: inline-flex !important;
+}
+
+#btn-edit-name,
+#btn-edit-email {
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 50% !important;
+    font-size: 1.05rem !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    transition: transform 0.2s, background-color 0.3s, border-color 0.3s !important;
+}
+
+#btn-edit-name:hover,
+#btn-edit-email:hover {
+    transform: scale(1.05);
+}
+
+/* Ordem completa de todos os botões redondos agrupados à direita */
+.chat__header-scroll #btn-edit-name {
+    order: 2;
+}
+.chat__header-scroll #btn-edit-email {
+    order: 3;
+}
+.chat__header-scroll #btn-manage-bans {
+    order: 4;
+}
+.chat__header-scroll #btn-clear-all {
+    order: 5;
+}
+.chat__header-scroll #btn-open-damas {
+    order: 6;
+}
+.chat__header-scroll .chat-theme-btn {
+    order: 7;
+}
+.chat__header-scroll #btn-som {
+    order: 8;
+}
+.chat__header-scroll #btn-logout {
+    order: 9;
+}
+
+/* Tema Escuro: fundo, borda, brilho externo e contorno branco no ícone */
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__header #btn-edit-name,
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__header #btn-edit-email {
+    background-color: #333 !important;
+    color: #f2f2f2 !important;
+    border-color: #555 !important;
+    filter: drop-shadow(0px 0px 4px rgba(255, 255, 255, 0.8)) !important;
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.9), 0 0 6px rgba(255, 255, 255, 0.6) !important;
+}
+
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__header #btn-edit-name:hover,
+body:not(.light-theme):not(.blue-theme):not(.pink-theme):not(.green-theme) .chat__header #btn-edit-email:hover {
+    background-color: #444 !important;
+    border-color: #555 !important;
+}
+
+/* Temas Claro e Coloridos: fundo branco, sombra escura e contorno escuro no ícone */
+body.light-theme .chat__header #btn-edit-name,
+body.light-theme .chat__header #btn-edit-email,
+body.blue-theme .chat__header #btn-edit-name,
+body.blue-theme .chat__header #btn-edit-email,
+body.pink-theme .chat__header #btn-edit-name,
+body.pink-theme .chat__header #btn-edit-email,
+body.green-theme .chat__header #btn-edit-name,
+body.green-theme .chat__header #btn-edit-email {
+    background-color: #ffffff !important;
+    filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.4)) !important;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.75), 0 0 4px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Borda e hover específicos de cada tema */
+body.light-theme .chat__header #btn-edit-name,
+body.light-theme .chat__header #btn-edit-email {
+    border-color: #ccd0d5 !important;
+    color: #1c1e21 !important;
+}
+body.light-theme .chat__header #btn-edit-name:hover,
+body.light-theme .chat__header #btn-edit-email:hover {
+    background-color: #e4e6eb !important;
+    border-color: #ccd0d5 !important;
+}
+
+body.blue-theme .chat__header #btn-edit-name,
+body.blue-theme .chat__header #btn-edit-email {
+    border-color: #b3d1ff !important;
+    color: #0d6efd !important;
+}
+body.blue-theme .chat__header #btn-edit-name:hover,
+body.blue-theme .chat__header #btn-edit-email:hover {
+    background-color: #f0f5ff !important;
+}
+
+body.pink-theme .chat__header #btn-edit-name,
+body.pink-theme .chat__header #btn-edit-email {
+    border-color: #ffb3c6 !important;
+    color: #ff477e !important;
+}
+body.pink-theme .chat__header #btn-edit-name:hover,
+body.pink-theme .chat__header #btn-edit-email:hover {
+    background-color: #fff0f3 !important;
+}
+
+body.green-theme .chat__header #btn-edit-name,
+body.green-theme .chat__header #btn-edit-email {
+    border-color: #a3e4c4 !important;
+    color: #2ecc71 !important;
+}
+body.green-theme .chat__header #btn-edit-name:hover,
+body.green-theme .chat__header #btn-edit-email:hover {
+    background-color: #e8f8f0 !important;
+}
+
+/* Tamanho no celular igual aos outros botões redondos */
+@media (max-width: 600px) {
+    #btn-edit-name,
+    #btn-edit-email {
+        width: 32px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        font-size: 0.95rem !important;
+    }
+}
+
+/* ================= FIM DO ARQUIVO ================= */

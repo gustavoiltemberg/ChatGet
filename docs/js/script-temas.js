@@ -19,22 +19,25 @@
         if (toggleBtns.length > 0) {
             clearInterval(configurarCarrosselTemas); // Para o timer
 
-            // Função auxiliar para atualizar o emoji em TODOS os botões encontrados
-            const atualizarEmojis = (emoji) => {
-                toggleBtns.forEach(btn => btn.textContent = emoji);
+            // Função auxiliar para atualizar o emoji e a mensagem (title) em TODOS os botões
+            const atualizarEmojis = (emoji, nomeTema) => {
+                toggleBtns.forEach(btn => {
+                    btn.textContent = emoji;
+                    btn.title = `Mudar tema (Atual: ${nomeTema})`;
+                });
             };
 
-            // Ajusta o emoji inicial baseado no tema que estava salvo
+            // Ajusta o emoji e a mensagem inicial baseado no tema que estava salvo
             if (document.body.classList.contains("light-theme")) {
-                atualizarEmojis("☀️");
+                atualizarEmojis("☀️", "Claro");
             } else if (document.body.classList.contains("pink-theme")) {
-                atualizarEmojis("🌸");
+                atualizarEmojis("🌸", "Rosa");
             } else if (document.body.classList.contains("blue-theme")) {
-                atualizarEmojis("💎");
+                atualizarEmojis("💎", "Azul");
             } else if (document.body.classList.contains("green-theme")) {
-                atualizarEmojis("🍀");
+                atualizarEmojis("🍀", "Verde");
             } else {
-                atualizarEmojis("🌙");
+                atualizarEmojis("🌙", "Escuro");
             }
 
             // 3. Configura a ação de clique cíclico para cada botão
@@ -45,34 +48,34 @@
                     // CASO 1: Modo Escuro -> Claro
                     if (!document.body.classList.contains("light-theme") && !document.body.classList.contains("pink-theme") && !document.body.classList.contains("blue-theme") && !document.body.classList.contains("green-theme")) {
                         document.body.classList.add("light-theme");
-                        atualizarEmojis("☀️");
+                        atualizarEmojis("☀️", "Claro");
                         localStorage.setItem("chat-tema", "light");
                     }
                     // CASO 2: Modo Claro -> Rosa
                     else if (document.body.classList.contains("light-theme")) {
                         document.body.classList.remove("light-theme");
                         document.body.classList.add("pink-theme");
-                        atualizarEmojis("🌸");
+                        atualizarEmojis("🌸", "Rosa");
                         localStorage.setItem("chat-tema", "pink");
                     }
                     // CASO 3: Modo Rosa -> Azul
                     else if (document.body.classList.contains("pink-theme")) {
                         document.body.classList.remove("pink-theme");
                         document.body.classList.add("blue-theme");
-                        atualizarEmojis("💎");
+                        atualizarEmojis("💎", "Azul");
                         localStorage.setItem("chat-tema", "blue");
                     }
                     // CASO 4: Modo Azul -> Verde
                     else if (document.body.classList.contains("blue-theme")) {
                         document.body.classList.remove("blue-theme");
                         document.body.classList.add("green-theme");
-                        atualizarEmojis("🍀");
+                        atualizarEmojis("🍀", "Verde");
                         localStorage.setItem("chat-tema", "green");
                     }
                     // CASO 5: Modo Verde -> Volta para o Escuro Padrão
                     else if (document.body.classList.contains("green-theme")) {
                         document.body.classList.remove("green-theme");
-                        atualizarEmojis("🌙");
+                        atualizarEmojis("🌙", "Escuro");
                         localStorage.setItem("chat-tema", "dark");
                     }
                 });
