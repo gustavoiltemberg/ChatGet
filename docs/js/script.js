@@ -22,7 +22,6 @@ import { anunciarEntrada, anunciarSaida } from "./presence.js";
 
 import { obterUrlAvatar } from "./avatar.js";
 
-
 const firebaseConfig = {
   apiKey: "AIzaSyDZlENtMvC3u6HRr4T1n_TnnlbkxRfNid4",
   authDomain: "chat-get-ed551.firebaseapp.com",

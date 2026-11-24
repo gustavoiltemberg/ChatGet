@@ -1,28 +1,19 @@
 // avatar.js
 
-/**
- * Retorna a URL de um avatar baseado no nome do usuário.
- * Se for admin, bot ou moderador, retorna uma imagem específica.
- * @param {string} nome - Nome do usuário
- * @param {boolean} isModerator - Indica se o usuário é moderador
- * @returns {string} URL da imagem do avatar
- */
 export const obterUrlAvatar = (nome, isModerator = false) => {
     if (!nome) nome = "Anonimo";
 
-    // Limpa espaços e transforma em minúsculo para comparação
     const nomeLimpo = nome.trim();
     const nomeMinusculo = nomeLimpo.toLowerCase();
 
-    // 1. Verifica se é o Bot (precisa ficar antes de isModerator)
+    // 1. Verifica se é o Bot
     if (nomeMinusculo === "bot") {
         return "./images/bot.png";
     }
 
     // 2. Verifica se é Admin
     if (nomeMinusculo === "admin") {
-        // Substitua pelo caminho real da sua imagem
-        return "./images/admin.png"; 
+        return "./images/admin.png";
     }
 
     // 3. Verifica se é Moderador
@@ -30,50 +21,49 @@ export const obterUrlAvatar = (nome, isModerator = false) => {
         return "./images/moderador.png";
     }
 
-    // Paleta de 30 cores de fundo (códigos HEX sem o #)
+    // Paleta de 30 cores de fundo
     const coresFundo = [
-        "212121", // cinza escuro
-        "1e3a8a", // azul escuro
-        "7c2d12", // marrom
-        "14532d", // verde escuro
-        "581c87", // roxo
-        "831843", // vinho
-        "0c4a6e", // azul petróleo
-        "713f12", // mostarda escuro
-        "3f6212", // oliva
-        "4c1d95", // índigo
-        "7f1d1d", // vermelho escuro
-        "134e4a", // teal escuro
-        "1e40af", // azul royal escuro
-        "9a3412", // laranja queimado
-        "166534", // verde floresta
-        "6b21a8", // púrpura
-        "9f1239", // framboesa escuro
-        "155e75", // ciano escuro
-        "854d0e", // âmbar escuro
-        "4d7c0f", // verde lima escuro
-        "3730a3", // azul índigo escuro
-        "991b1b", // vermelho sangue
-        "115e59", // verde esmeralda escuro
-        "5b21b6", // violeta escuro
-        "7e22ce", // roxo vibrante
-        "be123c", // rosa escuro
-        "0f766e", // turquesa escuro
-        "a16207", // dourado escuro
-        "365314", // verde musgo
-        "1e293b"  // cinza azulado
+        "212121", "1e3a8a", "7c2d12", "14532d", "581c87",
+        "831843", "0c4a6e", "713f12", "3f6212", "4c1d95",
+        "7f1d1d", "134e4a", "1e40af", "9a3412", "166534",
+        "6b21a8", "9f1239", "155e75", "854d0e", "4d7c0f",
+        "3730a3", "991b1b", "115e59", "5b21b6", "7e22ce",
+        "be123c", "0f766e", "a16207", "365314", "1e293b"
     ];
 
-    // Gera um índice de cor baseado no nome (hash simples)
     let hash = 0;
     for (let i = 0; i < nomeLimpo.length; i++) {
         hash = (hash * 31 + nomeLimpo.charCodeAt(i)) | 0;
     }
     const corIndex = Math.abs(hash) % coresFundo.length;
-    const corFundo = coresFundo[corIndex];
+    const corHex = coresFundo[corIndex];
 
-    // URL correta da API ui-avatars
-    const url = `https://ui-avatars.com{encodeURIComponent(nomeLimpo)}&background=${corFundo}&color=cadetblue&size=64&rounded=true&bold=true`;
+    // Pega as iniciais corretamente (ex: "João Silva" -> "JS", "Teste" -> "TE")
+    const partes = nomeLimpo.split(/\s+/).filter(Boolean);
+    const iniciais = partes.length > 1
+        ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
+        : nomeLimpo.slice(0, 2).toUpperCase();
 
-    return url;
+    // Gera um PNG local via Canvas
+    try {
+        const canvas = document.createElement("canvas");
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext("2d");
+
+        ctx.fillStyle = `#${corHex}`;
+        ctx.beginPath();
+        ctx.arc(32, 32, 32, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#5f9ea0";
+        ctx.font = "bold 26px Arial, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(iniciais, 32, 34);
+
+        return canvas.toDataURL("image/png");
+    } catch (e) {
+        return `https://ui-avatars.com{encodeURIComponent(nomeLimpo)}&background=${corHex}&color=5f9ea0&size=64&rounded=true&bold=true`;
+    }
 };
