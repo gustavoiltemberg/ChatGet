@@ -1,9 +1,18 @@
 // avatar.js
 
+// Calcula se a cor de fundo é clara ou escura para escolher letra preta ou branca
+const obterCorTexto = (hex) => {
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const brilho = (r * 299 + g * 587 + b * 114) / 1000;
+    return brilho > 140 ? "#121212" : "#ffffff";
+};
+
 export const obterUrlAvatar = (nome, isModerator = false) => {
     if (!nome) nome = "Anonimo";
 
-    const nomeLimpo = nome.trim();
+    const nomeLimpo = String(nome).trim() || "Anonimo";
     const nomeMinusculo = nomeLimpo.toLowerCase();
 
     // 1. Verifica se é o Bot
@@ -37,6 +46,7 @@ export const obterUrlAvatar = (nome, isModerator = false) => {
     }
     const corIndex = Math.abs(hash) % coresFundo.length;
     const corHex = coresFundo[corIndex];
+    const corTexto = obterCorTexto(corHex);
 
     // Pega as iniciais corretamente (ex: "João Silva" -> "JS", "Teste" -> "TE")
     const partes = nomeLimpo.split(/\s+/).filter(Boolean);
@@ -56,7 +66,7 @@ export const obterUrlAvatar = (nome, isModerator = false) => {
         ctx.arc(32, 32, 32, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = "#5f9ea0";
+        ctx.fillStyle = corTexto;
         ctx.font = "bold 26px Arial, sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -64,6 +74,7 @@ export const obterUrlAvatar = (nome, isModerator = false) => {
 
         return canvas.toDataURL("image/png");
     } catch (e) {
-        return `https://ui-avatars.com{encodeURIComponent(nomeLimpo)}&background=${corHex}&color=5f9ea0&size=64&rounded=true&bold=true`;
+        const corTextoHex = corTexto.replace("#", "");
+        return `https://ui-avatars.com{encodeURIComponent(nomeLimpo)}&background=${corHex}&color=${corTextoHex}&size=64&rounded=true&bold=true`;
     }
 };
