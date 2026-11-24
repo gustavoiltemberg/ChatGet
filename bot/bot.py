@@ -3,14 +3,15 @@ import json
 import time
 import random
 from collections import defaultdict
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, firestore, auth
 
 # ================= CONEXÃO SEGURA COM O FIREBASE =================
 chave_env = os.environ.get("FIREBASE_KEY")
 
 if chave_env:
-    # Quando rodar na nuvem (Render, Koyeb, etc.), lê a variável de ambiente
+    # Quando rodar na nuvem (Render), lê a variável de ambiente
     cred_dict = json.loads(chave_env)
     cred = credentials.Certificate(cred_dict)
 else:
@@ -34,7 +35,7 @@ historico_mensagens = defaultdict(list)
 
 # ================= FUNÇÕES DO BOT =================
 def enviar_mensagem_bot(texto):
-    """Envia uma mensagem no chat usando o visual de Moderador do seu CSS."""
+    """Envia uma mensagem no chat usando o identificador oficial do Bot."""
     db.collection("mensagens").add({
         "userId": "bot-python",
         "userName": "Bot",
@@ -64,6 +65,44 @@ def desbanir_usuario(nome_usuario):
     enviar_mensagem_bot(f"✅ O usuário {nome_usuario.capitalize()} foi desbanido.")
 
 
+def excluir_usuario_definitivo(nome_usuario):
+    """Exclui a conta do Firebase Auth e limpa todos os registros do usuário."""
+    nome_limpo = nome_usuario.strip().lower()
+    if nome_limpo == "admin":
+        enviar_mensagem_bot("❌ Não é possível excluir a conta do Administrador.")
+        return
+
+    try:
+        # 1. Busca o UID na coleção 'nomes_registrados'
+        reg_ref = db.collection("nomes_registrados").document(nome_limpo)
+        reg_snap = reg_ref.get()
+        uid_alvo = reg_snap.to_dict().get("uid") if reg_snap.exists else None
+
+        # 2. Se não achou em nomes_registrados, procura em usuarios_online
+        if not uid_alvo:
+            online_docs = db.collection("usuarios_online").where("name", "==", nome_limpo).stream()
+            for d in online_docs:
+                uid_alvo = d.id
+                break
+
+        if not uid_alvo:
+            enviar_mensagem_bot(f"⚠️ Usuário '{nome_usuario}' não encontrado no banco de dados.")
+            return
+
+        # 3. Apaga a conta do Firebase Authentication
+        auth.delete_user(uid_alvo)
+
+        # 4. Limpa registros nas coleções do Firestore
+        reg_ref.delete()
+        db.collection("cargos").document(nome_limpo).delete()
+        db.collection("banidos").document(nome_limpo).delete()
+        db.collection("usuarios_online").document(uid_alvo).delete()
+
+        enviar_mensagem_bot(f"🗑️ A conta de {nome_usuario.capitalize()} foi excluída permanentemente.")
+    except Exception as e:
+        enviar_mensagem_bot(f"❌ Erro ao excluir usuário: {e}")
+
+
 def limpar_chat():
     """Apaga todas as mensagens da coleção 'mensagens'."""
     docs = db.collection("mensagens").stream()
@@ -90,10 +129,16 @@ def pegar_usuarios_online():
 def processar_mensagem(doc_snap):
     dados = doc_snap.to_dict()
 
-    # Ignora mensagens antigas, avisos de sistema e mensagens do próprio Bot
+    # Ignora mensagens antigas, avisos de sistema e mensagens do próprio Bot oficial
     if dados.get("timestamp", 0) < INICIO_BOT:
         return
     if dados.get("isSystem") or dados.get("userId") == "bot-python":
+        return
+
+    # Blindagem definitiva: expulsa impostores que tentarem usar o nome "Bot"
+    if dados.get("userName", "").strip().lower() == "bot":
+        doc_snap.reference.delete()
+        banir_usuario("bot", "Tentativa de se passar pelo Bot oficial")
         return
 
     autor = dados.get("userName", "Anônimo")
@@ -132,6 +177,8 @@ def processar_mensagem(doc_snap):
         msg = "🤖 Comandos: !ajuda | !online | !dado"
         if eh_equipe:
             msg += " || 🛡️ Equipe: !sorteio | !aviso <msg> | !banir <nome> | !desbanir <nome> | !limpar"
+        if is_admin:
+            msg += " | !excluir <nome>"
         enviar_mensagem_bot(msg)
 
     elif texto_minusculo == "!online":
@@ -161,7 +208,7 @@ def processar_mensagem(doc_snap):
             return
         mensagem_aviso = texto[7:].strip()
         if mensagem_aviso:
-            doc_snap.reference.delete()  # Apaga o comando digitado e deixa só o aviso do Bot
+            doc_snap.reference.delete()
             enviar_mensagem_bot(f"📢 AVISO: {mensagem_aviso}")
 
     elif texto_minusculo.startswith("!banir "):
@@ -186,6 +233,15 @@ def processar_mensagem(doc_snap):
             return
         limpar_chat()
 
+    # 4. COMANDO EXCLUSIVO DO ADMIN
+    elif texto_minusculo.startswith("!excluir "):
+        if not is_admin:
+            enviar_mensagem_bot(f"🔒 {autor.capitalize()}, apenas o Administrador pode excluir contas.")
+            return
+        alvo = texto[9:].strip()
+        if alvo:
+            excluir_usuario_definitivo(alvo)
+
 
 # ================= OUVINTE EM TEMPO REAL =================
 def on_snapshot(col_snapshot, changes, read_time):
@@ -194,11 +250,20 @@ def on_snapshot(col_snapshot, changes, read_time):
             processar_mensagem(change.document)
 
 
-print("🤖 Bot conectado ao Firebase e monitorando o chat... (Ctrl+C para parar)")
+print("🤖 Bot conectado ao Firebase e monitorando o chat...")
 query_watch = db.collection("mensagens").on_snapshot(on_snapshot)
 
-try:
-    while True:
-        time.sleep(1)
-except KeyboardInterrupt:
-    print("\n🛑 Bot encerrado.")
+
+# ================= SERVIDOR PARA MANTER ONLINE NA NUVEM =================
+class HealthCheck(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot online!")
+
+    def log_message(self, format, *args):
+        pass  # Evita poluir o console com logs de verificação
+
+
+porta = int(os.environ.get("PORT", 10000))
+print(f"🌐 Servidor web ativo na porta {porta}")

@@ -844,21 +844,33 @@ const handleLogin = async (name, email, password) => {
 const handleSignup = async (name, email, password) => {
     if (!name) return alert("Digite um nome de usuário.");
     if (!email) return alert("Por favor, digite um e-mail válido para se cadastrar.");
-    if (name.toLowerCase() === "admin") {
+
+    const nomeMinusculo = name.trim().toLowerCase();
+    if (["admin", "bot", "sistema", "moderador"].includes(nomeMinusculo)) {
         return alert("Este nome é reservado. Escolha outro.");
     }
 
-    try {
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(cred.user, { displayName: name.toLowerCase() });
-        
-        await signOut(auth);
+    try {  // ⬅️ MUDOU DE LUGAR: Subiu para antes da consulta ao banco
+        // Verifica se o nome já está registrado por outra conta
+        const nomeRef = doc(db, "nomes_registrados", nomeMinusculo);
+        const nomeSnap = await getDoc(nomeRef);
+        if (nomeSnap.exists()) {
+            return alert("❌ Este nome de usuário já está em uso! Escolha outro.");
+        }
 
+        // (Antes o 'try {' ficava aqui embaixo)
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(cred.user, { displayName: nomeMinusculo });
+
+        // Salva o nome como propriedade exclusiva deste UID
+        await setDoc(nomeRef, { uid: cred.user.uid });
+
+        await signOut(auth);
         alert("Cadastro realizado com sucesso! Faça login.");
         toggleLink.click();
     } catch (error) {
         if (error.code === "auth/email-already-in-use") alert("Este e-mail já está em uso!");
-        else if (error.code === "auth/weak-password") alert("A senha precisa ter pelo menos 6 caracteres!");
+        else if (error.code === "auth/weak-password") alert("A senha precisa ter pelo menos 6 caracteres.");
         else alert("Erro ao cadastrar: " + error.message);
     }
 };
@@ -869,6 +881,15 @@ loginForm.addEventListener("submit", async (event) => {
     const name = usernameInput.value.trim();
     const password = passwordInput.value;
     const email = emailInput.value.trim();
+
+    // ================= ADICIONE ESTE BLOCO AQUI =================
+    const nomesReservados = ["bot", "sistema", "moderador"];
+    if (nomesReservados.includes(name.toLowerCase())) {
+        alert("❌ Este nome é reservado pelo sistema. Escolha outro apelido!");
+        submitBtn.disabled = false; // Reativa o botão antes de parar
+        return;
+    }
+    // ============================================================
 
     logandoManualmente = true; 
     try {
@@ -930,6 +951,33 @@ onAuthStateChanged(auth, async (firebaseUser) => {
             return;
         }
 
+        // Bloqueia nomes reservados do sistema (Bot, Moderador, etc.)
+        const nomesReservados = ["bot", "sistema", "moderador"];
+        if (nomesReservados.includes(nome.toLowerCase())) {
+            alert("❌ Este nome é reservado pelo sistema. Escolha outro apelido!");
+            await signOut(auth);
+            loginSection.style.display = "block";
+            chatSection.style.display = "none";
+            return;
+        }
+
+        // Registra ou valida o dono único do nome no banco
+        const nomeRegRef = doc(db, "nomes_registrados", nome.toLowerCase());
+        const nomeRegSnap = await getDoc(nomeRegRef);
+
+        if (!nomeRegSnap.exists()) {
+            // Se ninguém registrou ainda (contas/moderadores antigos), salva este UID como dono
+            await setDoc(nomeRegRef, { uid: uid });
+        } else if (nomeRegSnap.data().uid !== uid) {
+            // Se já pertence a outro UID, bloqueia o acesso
+            alert("❌ Este nome já pertence a outro usuário!");
+            await signOut(auth);
+            loginSection.style.display = "block";
+            chatSection.style.display = "none";
+            return;
+        }
+
+
         jaIniciado = true;
         await entrarNoChat(uid, nome);
     } catch (e) {
@@ -973,11 +1021,26 @@ btnEditName.addEventListener("click", async () => {
     if (!novoNome || !novoNome.trim() || novoNome.trim() === user.name) return;
     const nomeFormatado = novoNome.trim().toLowerCase();
 
-    if (nomeFormatado === "admin") {
+    if (["admin", "bot", "sistema", "moderador"].includes(nomeFormatado)) {
         return alert("Este nome é reservado.");
     }
 
+    // Verifica se o novo nome já pertence a outra pessoa
+    const novoNomeRef = doc(db, "nomes_registrados", nomeFormatado);
+    const novoNomeSnap = await getDoc(novoNomeRef);
+    if (novoNomeSnap.exists() && novoNomeSnap.data().uid !== user.id) {
+        return alert("❌ Este nome já está em uso por outro usuário!");
+    }
+
     try {
+        const nomeAntigo = user.name.toLowerCase();
+
+        // Apaga o registro do nome antigo e reserva o novo
+        if (nomeAntigo !== nomeFormatado) {
+            await deleteDoc(doc(db, "nomes_registrados", nomeAntigo));
+            await setDoc(novoNomeRef, { uid: user.id });
+        }
+
         user.name = nomeFormatado;
         await updateProfile(auth.currentUser, { displayName: user.name });
         await auth.currentUser.reload();
