@@ -267,3 +267,5 @@ class HealthCheck(BaseHTTPRequestHandler):
 
 porta = int(os.environ.get("PORT", 10000))
 print(f"🌐 Servidor web ativo na porta {porta}")
+servidor = HTTPServer(("0.0.0.0", porta), HealthCheck)
+servidor.serve_forever()
