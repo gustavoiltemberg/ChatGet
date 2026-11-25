@@ -1178,27 +1178,42 @@ forgotPasswordLink.addEventListener("click", async (e) => {
 
 btnEditName.addEventListener("click", async () => {
     const novoNome = prompt("Digite o seu novo nome de exibição:", user.name);
-    if (!novoNome || !novoNome.trim() || novoNome.trim() === user.name) return;
+    if (!novoNome || !novoNome.trim() || novoNome.trim().toLowerCase() === user.name) return;
     const nomeFormatado = novoNome.trim().toLowerCase();
+
     if (["admin", "bot", "sistema", "moderador", "guardiao", "ajudante", "vip"].includes(nomeFormatado)) {
         return alert("Este nome é reservado.");
     }
-    const novoNomeRef = doc(db, "nomes_registrados", nomeFormatado);
-    const novoNomeSnap = await getDoc(novoNomeRef);
-    if (novoNomeSnap.exists() && novoNomeSnap.data().uid !== user.id) {
-        return alert("❌ Este nome já está em uso por outro usuário!");
-    }
+
     try {
+        const novoNomeRef = doc(db, "nomes_registrados", nomeFormatado);
+        const novoNomeSnap = await getDoc(novoNomeRef);
+        if (novoNomeSnap.exists() && novoNomeSnap.data().uid !== user.id) {
+            return alert("❌ Este nome já está em uso por outro usuário!");
+        }
+
         const nomeAntigo = user.name.toLowerCase();
+
         if (nomeAntigo !== nomeFormatado) {
             if (unsubs.accountCheck) {
                 unsubs.accountCheck();
                 unsubs.accountCheck = null;
             }
-            await deleteDoc(doc(db, "nomes_registrados", nomeAntigo));
-            await setDoc(novoNomeRef, { uid: user.id });
+
+            // 1. Apaga o registro antigo apenas se ele existir
+            const antigoRef = doc(db, "nomes_registrados", nomeAntigo);
+            const antigoSnap = await getDoc(antigoRef);
+            if (antigoSnap.exists()) {
+                await deleteDoc(antigoRef);
+            }
+
+            // 2. Cria o novo registro apenas se ainda não existir (evita erro de 'update')
+            if (!novoNomeSnap.exists()) {
+                await setDoc(novoNomeRef, { uid: user.id });
+            }
+
             if (!user.isAdmin) {
-                unsubs.accountCheck = onSnapshot(doc(db, "nomes_registrados", nomeFormatado), (docSnap) => {
+                unsubs.accountCheck = onSnapshot(novoNomeRef, (docSnap) => {
                     if (!docSnap.exists() && jaIniciado) {
                         alert("Sua conta foi excluída pelo administrador.");
                         cleanupChatSession();
@@ -1206,13 +1221,19 @@ btnEditName.addEventListener("click", async () => {
                 });
             }
         }
+
         user.name = nomeFormatado;
         await updateProfile(auth.currentUser, { displayName: user.name });
         await auth.currentUser.reload();
+        await auth.currentUser.getIdToken(true);
+
         if (!user.isAdmin) listenToOwnBanStatus();
+
         await setDoc(doc(db, "usuarios_online", user.id), { name: user.name, color: user.color }, { merge: true });
+
         const q = query(collection(db, "mensagens"), where("userId", "==", user.id));
         const snap = await getDocs(q);
+
         const MAX = 500;
         const docs = snap.docs;
         for (let i = 0; i < docs.length; i += MAX) {
@@ -1220,8 +1241,10 @@ btnEditName.addEventListener("click", async () => {
             docs.slice(i, i + MAX).forEach((d) => batch.update(d.ref, { userName: user.name }));
             await batch.commit();
         }
+
         alert("Nome atualizado com sucesso!");
     } catch (e) {
+        console.error("Erro ao atualizar nome:", e);
         alert("Erro ao atualizar nome: " + e.message);
     }
 });

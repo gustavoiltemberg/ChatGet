@@ -334,18 +334,19 @@ const injetarEstilosDamas = () => {
             background: rgba(46, 204, 113, 0.85);
             box-shadow: 0 0 8px #2ecc71;
         }
+
         .damas-piece {
             width: 78%;
             height: 78%;
-            aspect-ratio: 1 / 1; /* Garante que a peça seja sempre um círculo perfeito */
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(0.75rem, 3.2vw, 1rem); /* Ajusta o tamanho da coroa no mobile e desktop */
-            line-height: 1;
+            font-size: 1.45rem; /* ⬅️ AUMENTADO (antes era 1rem) */
+            line-height: 1;     /* ⬅️ Mantém a coroa centralizada */
             transition: transform 0.15s, box-shadow 0.15s;
         }
+
         .damas-piece.white {
             background: radial-gradient(circle at 30% 30%, #ffffff, #cfd8dc);
             border: 2px solid #90a4ae;
