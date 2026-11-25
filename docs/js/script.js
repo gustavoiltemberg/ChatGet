@@ -268,6 +268,7 @@ const createMessageElement = (msg, docId) => {
     div.dataset.id = docId;
 
     const isAdminMessage = (msg.userName || "").toLowerCase() === "admin";
+    const isBotMessage = (msg.userName || "").toLowerCase() === "bot";
     const isStaffMessage = isAdminMessage || !!msg.isModerator;
 
     let podeApagar = false;
@@ -280,20 +281,24 @@ const createMessageElement = (msg, docId) => {
 
     const imgAvatar = document.createElement("img");
     imgAvatar.className = "message--avatar";
-    imgAvatar.src = obterUrlAvatar(msg.userName, msg.isModerator);
+    imgAvatar.src = obterUrlAvatar(msg.userName, {
+        isModerator: msg.isModerator,
+        isGuardian: msg.isGuardian,
+        isHelper: msg.isHelper,
+        isVip: msg.isVip
+    });
     imgAvatar.alt = "Avatar";
     imgAvatar.loading = "lazy";
 
-    if (isAdminMessage) {
-        imgAvatar.classList.add("is-admin");
+    if (isAdminMessage || isBotMessage) {
+        if (isAdminMessage) imgAvatar.classList.add("is-admin");
         imgAvatar.style.backgroundColor = "#f1c40f";
         imgAvatar.style.padding = "2px";
         imgAvatar.style.objectFit = "contain";
     } else if (msg.isModerator) {
         imgAvatar.classList.add("is-moderator");
-        imgAvatar.style.backgroundColor = "#f1c40f";
-        imgAvatar.style.padding = "2px";
-        imgAvatar.style.objectFit = "contain";
+        imgAvatar.style.border = "2px solid #f1c40f";
+        imgAvatar.style.boxShadow = "0 0 6px rgba(241, 196, 15, 0.75)";
     } else if (msg.isGuardian) {
         imgAvatar.style.border = "2px solid #3498db";
         imgAvatar.style.boxShadow = "0 0 6px rgba(52, 152, 219, 0.7)";
@@ -314,14 +319,14 @@ const createMessageElement = (msg, docId) => {
         const sender = document.createElement("span");
         sender.className = "message--sender";
         sender.style.color = msg.userColor || colorFromId(msg.userId);
-        sender.textContent = formatarNomeExibicao(msg.userName) || "Anônimo";
+        const nomeExibido = formatarNomeExibicao(msg.userName) || "Anônimo";
+        sender.textContent = isAdminMessage ? `${nomeExibido} 👑` : nomeExibido;
         headerMensagem.appendChild(sender);
     }
 
     div.appendChild(headerMensagem);
     div.appendChild(buildContentNode(msg.content));
 
-    // 🔑 NOVO: Container para agrupar os botões de ação
     const actionsContainer = document.createElement("div");
     actionsContainer.className = "message-actions";
 
@@ -336,14 +341,13 @@ const createMessageElement = (msg, docId) => {
             if (!user.isAdmin && isAdminMessage) {
                 return alert("Você não tem permissão para apagar mensagens do Administrador.");
             }
-            if (!confirm("Tem certeza que deseja apagar esta mensagem?")) return; // Confirmação para não apagar sem querer
+            if (!confirm("Tem certeza que deseja apagar esta mensagem?")) return;
             try { await deleteDoc(doc(db, "mensagens", docId)); }
             catch (e) { console.error("Erro ao apagar:", e); alert("Erro ao apagar. Verifique se você tem permissão."); }
         });
-        actionsContainer.appendChild(btn); // Adiciona ao container
+        actionsContainer.appendChild(btn);
     }
 
-    // 🔑 FIXAR: Botão de Fixar Mensagem
     if ((user.isAdmin || user.isModerator || user.isGuardian || user.isHelper) && !msg.isSystem) {
         const btnPin = document.createElement("button");
         btnPin.className = "pin-btn";
@@ -363,17 +367,15 @@ const createMessageElement = (msg, docId) => {
                 alert("Erro ao fixar a mensagem.");
             }
         });
-        actionsContainer.appendChild(btnPin); // Adiciona ao container
+        actionsContainer.appendChild(btnPin);
     }
 
-    // Se houver algum botão dentro do container, adiciona ele na mensagem
     if (actionsContainer.children.length > 0) {
         div.appendChild(actionsContainer);
     }
 
     return div;
 };
-
 
 // =====================================================================
 // REPRODUÇÃO DE SOM
@@ -715,14 +717,16 @@ const listenToOnlineUsers = () => {
             nameSpan.textContent = formatarNomeExibicao(u.name);
             userInfo.appendChild(nameSpan);
 
-            if (u.isModerator) {
-                userInfo.insertAdjacentHTML("beforeend", `<span class="moderator-badge" title="Moderador">🛡️</span>`);
+            if ((u.name || "").toLowerCase() === "admin") {
+                userInfo.insertAdjacentHTML("beforeend", `<span class="moderator-badge" title="Administrador" aria-label="Administrador">👑</span>`);
+            } else if (u.isModerator) {
+                userInfo.insertAdjacentHTML("beforeend", `<span class="moderator-badge" title="Moderador" aria-label="Moderador">🛡️</span>`);
             } else if (u.isGuardian) {
-                userInfo.insertAdjacentHTML("beforeend", `<span class="moderator-badge" title="Guardião">🔰</span>`);
+                userInfo.insertAdjacentHTML("beforeend", `<span class="moderator-badge" title="Guardião" aria-label="Guardião">🔰</span>`);
             } else if (u.isHelper) {
-                userInfo.insertAdjacentHTML("beforeend", `<span class="moderator-badge" title="Ajudante">🌟</span>`);
+                userInfo.insertAdjacentHTML("beforeend", `<span class="moderator-badge" title="Ajudante" aria-label="Ajudante">🌟</span>`);
             } else if (u.isVip) {
-                userInfo.insertAdjacentHTML("beforeend", `<span class="moderator-badge" title="VIP">💎</span>`);
+                userInfo.insertAdjacentHTML("beforeend", `<span class="moderator-badge" title="VIP" aria-label="VIP">💎</span>`);
             }
 
             li.appendChild(userInfo);

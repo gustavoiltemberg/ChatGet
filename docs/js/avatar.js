@@ -9,8 +9,11 @@ const obterCorTexto = (hex) => {
     return brilho > 140 ? "#121212" : "#ffffff";
 };
 
-export const obterUrlAvatar = (nome, isModerator = false) => {
+export const obterUrlAvatar = (nome, cargos = {}) => {
     if (!nome) nome = "Anonimo";
+
+    // Mantém compatibilidade caso seja passado apenas true/false (isModerator)
+    const roles = typeof cargos === "boolean" ? { isModerator: cargos } : (cargos || {});
 
     const nomeLimpo = String(nome).trim() || "Anonimo";
     const nomeMinusculo = nomeLimpo.toLowerCase();
@@ -25,12 +28,25 @@ export const obterUrlAvatar = (nome, isModerator = false) => {
         return "./images/admin.png";
     }
 
-    // 3. Verifica se é Moderador
-    if (isModerator) {
-        return "./images/moderador.png";
+    // Verifica se possui cargo com emoji exclusivo (Moderador, Guardião, Ajudante ou VIP)
+    let emojiCargo = "";
+    let fundoCargo = "";
+
+    if (roles.isModerator) {
+        emojiCargo = "🛡️";
+        fundoCargo = "4d3807"; // Dourado escuro para destacar o escudo 🛡️
+    } else if (roles.isGuardian) {
+        emojiCargo = "🔰";
+        fundoCargo = "163a5f"; // Azul escuro para destacar o escudo 🔰
+    } else if (roles.isHelper) {
+        emojiCargo = "🌟";
+        fundoCargo = "14452f"; // Verde escuro para destacar a estrela 🌟
+    } else if (roles.isVip) {
+        emojiCargo = "💎";
+        fundoCargo = "3b185f"; // Roxo escuro para destacar o diamante 💎
     }
 
-    // Paleta de 30 cores de fundo
+    // Paleta de 30 cores de fundo (para usuários comuns)
     const coresFundo = [
         "212121", "1e3a8a", "7c2d12", "14532d", "581c87",
         "831843", "0c4a6e", "713f12", "3f6212", "4c1d95",
@@ -45,7 +61,7 @@ export const obterUrlAvatar = (nome, isModerator = false) => {
         hash = (hash * 31 + nomeLimpo.charCodeAt(i)) | 0;
     }
     const corIndex = Math.abs(hash) % coresFundo.length;
-    const corHex = coresFundo[corIndex];
+    const corHex = fundoCargo || coresFundo[corIndex];
     const corTexto = obterCorTexto(corHex);
 
     // Pega as iniciais corretamente (ex: "João Silva" -> "JS", "Teste" -> "TE")
@@ -53,6 +69,8 @@ export const obterUrlAvatar = (nome, isModerator = false) => {
     const iniciais = partes.length > 1
         ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
         : nomeLimpo.slice(0, 2).toUpperCase();
+
+    const textoCentral = emojiCargo || iniciais;
 
     // Gera um PNG local via Canvas
     try {
@@ -67,15 +85,17 @@ export const obterUrlAvatar = (nome, isModerator = false) => {
         ctx.fill();
 
         ctx.fillStyle = corTexto;
-        ctx.font = "bold 26px Arial, sans-serif";
+        ctx.font = emojiCargo
+            ? "44px 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', Arial, sans-serif"
+            : "bold 26px Arial, sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(iniciais, 32, 34);
+        ctx.fillText(textoCentral, 32, 35);
 
         return canvas.toDataURL("image/png");
     } catch (e) {
         const corTextoHex = corTexto.replace("#", "");
         const urlBase = ["https://ui-avatars.com", "api", "?name="].join("/");
-        return urlBase + encodeURIComponent(nomeLimpo) + "&background=" + corHex + "&color=" + corTextoHex + "&size=64&rounded=true&bold=true";
+        return urlBase + encodeURIComponent(textoCentral) + "&background=" + corHex + "&color=" + corTextoHex + "&size=64&rounded=true&bold=true";
     }
 };

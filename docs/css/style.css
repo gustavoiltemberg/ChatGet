@@ -2103,7 +2103,6 @@ body.green-theme .chat__header #btn-edit-email:hover {
     }
 }
 
-/* ================= FIM DO ARQUIVO ================= */
 /* ================= MENU FLUTUANTE DE MODERAÇÃO (⋮) ================= */
 .btn-user-menu {
     background: transparent;
@@ -2215,3 +2214,23 @@ body.green-theme .user-context-menu button.danger {
     color: #c0392b;
 }
 
+/* ================= ALINHAMENTO VERTICAL DOS EMOJIS NA LISTA ONLINE ================= */
+.user-info {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px;
+}
+
+.user-name-text {
+    line-height: 1.2;
+}
+
+.moderator-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transform: translateY(-1.5px); /* Sobe levemente o emoji para alinhar ao centro do texto */
+}
+
+/* ================= FIM DO ARQUIVO ================= */
