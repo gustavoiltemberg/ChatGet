@@ -697,17 +697,36 @@ const listenToOnlineUsers = () => {
     
     unsubs.users = onSnapshot(q, (snapshot) => {
         onlineList.innerHTML = "";
-        let count = 0;
         const agora = Date.now();
         const TIMEOUT_MS = 60000;
 
+        // 1. Filtra os usuários online válidos
+        const usuariosAtivos = [];
         snapshot.forEach((docSnap) => {
             const u = docSnap.data();
-
             if (!u.name) return;
             if (u.ultimaAtividade && (agora - u.ultimaAtividade > TIMEOUT_MS)) return;
+            usuariosAtivos.push({ id: docSnap.id, ...u });
+        });
 
-            count++;
+        // 2. Define a prioridade de exibição (Admin sempre em 1º lugar)
+        const pesoCargo = (u) => {
+            if ((u.name || "").toLowerCase() === "admin" || u.isAdmin) return 1;
+            if (u.isModerator) return 2;
+            if (u.isGuardian) return 3;
+            if (u.isHelper) return 4;
+            if (u.isVip) return 5;
+            return 6;
+        };
+
+        usuariosAtivos.sort((a, b) => {
+            const diff = pesoCargo(a) - pesoCargo(b);
+            if (diff !== 0) return diff;
+            return (a.name || "").localeCompare(b.name || "");
+        });
+
+        // 3. Renderiza a lista já ordenada
+        usuariosAtivos.forEach((u) => {
             const li = document.createElement("li");
             const userInfo = document.createElement("div");
             userInfo.classList.add("user-info");
@@ -742,13 +761,13 @@ const listenToOnlineUsers = () => {
                 btnMenu.addEventListener("click", (e) => {
                     e.stopPropagation();
 
-                    const menuAberto = document.querySelector(`.user-context-menu[data-target="${docSnap.id}"]`);
+                    const menuAberto = document.querySelector(`.user-context-menu[data-target="${u.id}"]`);
                     document.querySelectorAll(".user-context-menu").forEach((m) => m.remove());
                     if (menuAberto) return;
 
                     const menu = document.createElement("div");
                     menu.className = "user-context-menu";
-                    menu.dataset.target = docSnap.id;
+                    menu.dataset.target = u.id;
                     menu.addEventListener("click", (ev) => ev.stopPropagation());
 
                     const criarOpcaoCargo = (campo, labelAtivo, labelInativo, valorAtual) => {
@@ -761,7 +780,7 @@ const listenToOnlineUsers = () => {
                             try {
                                 const novoValor = !valorAtual;
                                 await setDoc(doc(db, "cargos", (u.name || "").toLowerCase()), { [campo]: novoValor }, { merge: true });
-                                await setDoc(doc(db, "usuarios_online", docSnap.id), { [campo]: novoValor }, { merge: true }).catch(() => {});
+                                await setDoc(doc(db, "usuarios_online", u.id), { [campo]: novoValor }, { merge: true }).catch(() => {});
                             } catch (err) {
                                 alert("Erro ao alterar cargo: " + err.message);
                             }
@@ -777,7 +796,7 @@ const listenToOnlineUsers = () => {
                         if (!confirm(`Tem certeza que deseja BANIR "${u.name}"?`)) return;
                         try {
                             await setDoc(doc(db, "banidos", (u.name || "").toLowerCase()), { banido: true });
-                            await deleteDoc(doc(db, "usuarios_online", docSnap.id));
+                            await deleteDoc(doc(db, "usuarios_online", u.id));
                         } catch (err) {
                             console.error("Erro ao banir:", err);
                             alert("Erro ao banir: " + err.message);
@@ -806,7 +825,8 @@ const listenToOnlineUsers = () => {
 
             onlineList.appendChild(li);
         });
-        onlineCount.textContent = count;
+
+        onlineCount.textContent = usuariosAtivos.length;
     });
 };
 
