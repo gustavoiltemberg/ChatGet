@@ -698,7 +698,7 @@ const listenToOnlineUsers = () => {
     unsubs.users = onSnapshot(q, (snapshot) => {
         onlineList.innerHTML = "";
         const agora = Date.now();
-        const TIMEOUT_MS = 60000;
+        const TIMEOUT_MS = 35000;
 
         // 1. Filtra os usuários online válidos
         const usuariosAtivos = [];
